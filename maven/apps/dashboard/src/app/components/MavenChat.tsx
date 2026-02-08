@@ -173,6 +173,23 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
     const hasHoldings = profile?.retirementAccounts?.some((a: any) => a.holdings?.length) || 
                        profile?.investmentAccounts?.some((a: any) => a.holdings?.length);
     
+    // Voice-friendly versions (no markdown, conversational flow)
+    if (speakerEnabled && voiceAvailable) {
+      if (hasHoldings && netWorth > 0) {
+        const spokenNetWorth = netWorth >= 1000000 
+          ? `about ${(netWorth / 1000000).toFixed(1)} million dollars`
+          : `about ${Math.round(netWorth / 1000)} thousand dollars`;
+        return `Welcome back${welcomeName}. I can see your portfolio, which totals ${spokenNetWorth} across your accounts. I'm ready to help with analysis, planning, or any questions you have. Just ask me anything.`;
+      }
+      
+      if (profile?.firstName) {
+        return `Welcome${welcomeName}. I'm Maven Oracle, your AI wealth partner. Once you connect your accounts, I'll be able to give you personalized insights about your portfolio. What can I help you with today?`;
+      }
+      
+      return `Welcome to Maven Oracle. I'm designed to understand your complete financial picture and provide intelligent guidance. I can help with portfolio analysis, tax strategies, retirement planning, and investment research. What's on your mind?`;
+    }
+    
+    // Text versions (with markdown)
     if (hasHoldings && netWorth > 0) {
       return `Welcome back${welcomeName}. I can see your portfolio — **$${netWorth.toLocaleString()}** across your accounts.
 
@@ -198,18 +215,27 @@ I'm designed to understand your complete financial picture and provide intellige
 • Investment research
 
 What's on your mind?`;
-  }, [profile]);
+  }, [profile, speakerEnabled, voiceAvailable]);
 
   // Add welcome message when chat opens
   useEffect(() => {
     if ((isOpen || mode !== 'floating') && messages.length === 0 && historyLoaded) {
+      const welcomeMsg = getWelcomeMessage();
       setMessages([{
         role: 'assistant',
-        content: getWelcomeMessage(),
+        content: welcomeMsg,
         timestamp: new Date()
       }]);
+      
+      // Auto-speak welcome if speaker is enabled
+      if (speakerEnabled && voiceAvailable) {
+        // Small delay to let the UI render first
+        setTimeout(() => {
+          speakText(welcomeMsg);
+        }, 500);
+      }
     }
-  }, [isOpen, mode, getWelcomeMessage, historyLoaded, messages.length]);
+  }, [isOpen, mode, getWelcomeMessage, historyLoaded, messages.length, speakerEnabled, voiceAvailable]);
 
   // Handle opening animation
   const handleOpen = () => {
@@ -309,7 +335,8 @@ What's on your mind?`;
           message: userMessage,
           conversationId,
           context: profile,
-          history: historyForAPI
+          history: historyForAPI,
+          voiceMode: speakerEnabled // Tell API to optimize for spoken output
         })
       });
 

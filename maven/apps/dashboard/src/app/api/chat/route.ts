@@ -113,6 +113,39 @@ Use markdown formatting:
 Now embody the Oracle. Know their situation. Guide them wisely.`;
 
 /**
+ * Voice mode system prompt modifier
+ * When user has voice enabled, adjust output for spoken delivery
+ */
+const VOICE_MODE_PROMPT = `
+
+## VOICE MODE ACTIVE
+
+Your response will be READ ALOUD to the user. Adjust your style:
+
+1. **NO BULLET POINTS OR LISTS** — Convert to flowing sentences with natural transitions ("First... Also... And finally...")
+
+2. **NO MARKDOWN** — Don't use bold, headers, or code formatting. Speak naturally.
+
+3. **SHORTER SENTENCES** — Keep sentences concise. Pause naturally with periods.
+
+4. **CONVERSATIONAL TONE** — Speak like a warm, knowledgeable friend. More personal, less formal.
+
+5. **SPOKEN NUMBERS** — Say "about eight hundred thousand dollars" not "$800,000"
+
+6. **AVOID JARGON** — If you must use a technical term, briefly explain it.
+
+7. **WARM PERSONALITY** — You can be slightly warmer and more personable since this feels like a real conversation.
+
+Example bad (text): "Your allocation:
+• US Equity: 65%
+• International: 15%
+• Bonds: 20%"
+
+Example good (voice): "Looking at your portfolio, you're about 65% in US stocks, 15% in international, and 20% in bonds. That's a pretty solid growth-oriented mix."
+
+Remember: They're LISTENING, not reading. Make it pleasant to hear.`;
+
+/**
  * Tool definitions for Claude function calling
  */
 const TOOLS = [
@@ -771,7 +804,8 @@ async function callOracle(
   messages: { role: 'user' | 'assistant'; content: string }[],
   userContext: UserContext,
   query: string,
-  clerkId?: string
+  clerkId?: string,
+  voiceMode?: boolean
 ): Promise<string> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error('Anthropic API key not configured');
@@ -779,6 +813,11 @@ async function callOracle(
 
   // Build comprehensive system prompt
   let systemPrompt = MAVEN_ORACLE_PROMPT;
+  
+  // Add voice mode instructions if enabled
+  if (voiceMode) {
+    systemPrompt += VOICE_MODE_PROMPT;
+  }
   
   // Add knowledge base
   systemPrompt += '\n\n' + MAVEN_KNOWLEDGE_BASE;
@@ -845,7 +884,7 @@ async function callOracle(
       ];
       
       // Recursive call to get final response
-      return callOracle(continuedMessages, userContext, query, clerkId);
+      return callOracle(continuedMessages, userContext, query, clerkId, voiceMode);
     }
   }
   
@@ -905,7 +944,7 @@ export async function POST(request: NextRequest) {
       // Not authenticated - that's okay, just can't persist changes
     }
 
-    const { message, conversationId, context, history: clientHistory } = await request.json();
+    const { message, conversationId, context, history: clientHistory, voiceMode } = await request.json();
 
     if (!message) {
       return NextResponse.json({ error: 'Message required' }, { status: 400 });
@@ -956,7 +995,7 @@ export async function POST(request: NextRequest) {
           history = history.slice(-30);
         }
         
-        response = await callOracle(history, userContext, message, clerkId);
+        response = await callOracle(history, userContext, message, clerkId, voiceMode);
         usedClaude = true;
         
         // Update server-side cache (backup)
