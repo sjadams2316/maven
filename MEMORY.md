@@ -116,6 +116,26 @@ The approach:
 - [x] Fragility Index Alerts (personalized impact analysis)
 - [x] Life Transition Playbooks (Inheritance, Job Loss, New Baby)
 - [x] Client Engagement Tracking (milestones, NPS, referrals)
+- [x] **Advisor Dashboard** (2026-02-08)
+  - [x] Advisor home with AUM stats, meetings, alerts, activity
+  - [x] Client list with search, filter, sort
+  - [x] Client detail with portfolio, insights, activity, notes
+  - [x] **Insight curation controls** (show/hide/contextualize per client)
+  - [x] Client tone settings (conservative/moderate/engaged)
+  - [x] Meeting prep generator with talking points
+  - [x] Global insights view across all clients
+- [x] GitHub connected (https://github.com/sjadams2316/maven)
+
+### Tiering Strategy (2026-02-08)
+Full spec: `maven/docs/TIERING.md`
+
+| Tier | Price | Purpose |
+|------|-------|---------|
+| **Maven Basic** | Free | Top of funnel, lead gen |
+| **Maven Pro** | $29-49/mo | DIY investors, conversion funnel |
+| **Maven Partners** | AUM-included | **The business** — RIA clients |
+
+**Key Innovation:** Advisor-controlled UX — advisors curate what clients see. Solves the "client sees scary risk" problem.
 
 ---
 
