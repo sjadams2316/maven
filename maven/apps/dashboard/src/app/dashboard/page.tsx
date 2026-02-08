@@ -660,6 +660,33 @@ export default function Dashboard() {
           </>
         )}
 
+        {/* ==================== ADVISOR MODE BANNER ==================== */}
+        <a 
+          href="/advisor"
+          className="block bg-gradient-to-r from-amber-900/30 via-orange-900/20 to-amber-900/30 border border-amber-500/30 hover:border-amber-400/50 rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 transition group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20">
+                👔
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-white group-hover:text-amber-300 transition">Advisor Dashboard</h3>
+                  <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Pro</span>
+                </div>
+                <p className="text-sm text-gray-400">Manage clients, curate insights, prep meetings</p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-amber-400 group-hover:text-amber-300">
+              <span className="text-sm">Enter Advisor Mode</span>
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
         {/* ==================== PRIMARY TOOLS ==================== */}
         <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">🎯 Primary Tools</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
