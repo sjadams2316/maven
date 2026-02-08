@@ -117,6 +117,78 @@ Today we built the foundation for all of that.
 
 ---
 
+## The Business Model: Three Tiers
+
+### Maven Basic (Free)
+**Purpose:** Top of funnel, lead generation
+
+- Manual data entry only
+- Basic portfolio tracking
+- Limited AI interactions
+- Market overview & Fragility Index
+- Educational content
+
+**Why it exists:** Gets people in the door. Shows them what's possible. Creates demand for more.
+
+---
+
+### Maven Pro ($29-49/month)
+**Purpose:** DIY investors who want professional tools
+
+- Full Plaid account linking
+- Unlimited Oracle AI conversations
+- Complete portfolio analysis suite
+- Tax-loss harvesting scanner
+- Monte Carlo simulations
+- All optimization tools
+
+**Why it exists:** Revenue stream + conversion funnel. These users will eventually have a life event (inheritance, retirement, new baby) where they want an advisor. Maven Partners is waiting.
+
+**Comparison:** Betterment charges $4/month for basic, $40/month for premium. We offer 10x the intelligence.
+
+---
+
+### Maven Partners (Included in AUM)
+**Purpose:** This is THE business — RIA clients
+
+- Everything in Pro
+- Schwab/custodian direct integration
+- **Advisor-controlled client experience**
+- White-glove onboarding
+- Meeting prep & talking points
+- Insight curation (show/hide/contextualize)
+- Compliance workflows
+- Multi-household views
+
+**The Key Innovation:** Advisors control what clients see.
+
+When Maven finds a scary risk or complex tax situation, the advisor can:
+1. **Hide it** — Client doesn't need to see everything
+2. **Show it** — With advisor's context added
+3. **Discuss it** — Use as meeting talking point
+
+This solves the "client panics at dashboard" problem that kills every other robo-for-advisors.
+
+**Pricing:** Included in AUM fee (advisor charges 0.5-1%, Maven is a tool)
+
+---
+
+### The Flywheel
+
+```
+Maven Basic (Free)
+    ↓ upgrades to
+Maven Pro ($29-49/mo)
+    ↓ life event happens, wants advisor
+Maven Partners (AUM)
+    ↓ advisor refers other clients
+Maven Partners grows
+```
+
+**The E*Trade Model:** Morgan Stanley bought E*Trade not for the $0 trades — for the $360B in assets they could convert to wealth management. Maven Pro users are our E*Trade.
+
+---
+
 ## Technical Stats
 
 - **98 routes** in production
@@ -165,15 +237,23 @@ Today we built the foundation for all of that.
    - Advisor controls what clients see
    - Meeting prep, insight curation
    - 10x productivity
+   - Solves the "client panics at dashboard" problem
 
-4. **Fast Iteration**
+4. **Clear Business Model**
+   - Free tier for lead gen
+   - Pro tier for revenue + conversion funnel
+   - Partners tier is the real business (AUM)
+   - E*Trade playbook: DIY users → wealth management
+
+5. **Fast Iteration**
    - Built this entire feature set in one day
    - Can respond to client feedback immediately
 
-5. **Right Team**
+6. **Right Team**
    - Finance expertise (Sam @ Capital Group)
    - AI engineering (Eli)
    - Distribution channel (Jon's existing relationships)
+   - Built-in first customers
 
 ---
 
