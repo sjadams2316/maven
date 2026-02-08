@@ -773,7 +773,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium text-white flex items-center gap-2">
               <span>🛠</span>
               Additional Tools
-              <span className="text-xs text-gray-500">(7 more)</span>
+              <span className="text-xs text-gray-500">(8 more)</span>
             </span>
             <svg 
               className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showAdditionalTools ? 'rotate-180' : ''}`} 
@@ -909,6 +909,21 @@ export default function Dashboard() {
                 </div>
                 <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Link Accounts</h4>
                 <p className="text-xs sm:text-sm text-gray-500">Connect via Plaid</p>
+              </a>
+              
+              {/* Collaborative Planning */}
+              <a 
+                href="/collaborate"
+                className="bg-[#12121a] border border-white/10 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-sky-500/30 to-blue-600/30 border border-sky-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    👥
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-sky-500/20 text-sky-400 rounded-full">Live</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-sky-300 transition-colors">Collaborative Planning</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Plan together in real-time</p>
               </a>
             </div>
           )}
