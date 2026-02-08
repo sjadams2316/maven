@@ -144,16 +144,16 @@ export async function GET(request: NextRequest) {
       fetchYahooQuote('^DJI'),
     ]);
 
-    // Fetch crypto - try Polygon first, fall back to CoinGecko
-    let cryptoPrices = await fetchCryptoFromPolygon(CRYPTO_SYMBOLS);
+    // Fetch crypto - prefer CoinGecko for real-time prices (Polygon returns previous day close)
+    let cryptoPrices = await fetchCryptoFromCoinGecko(CRYPTO_SYMBOLS);
     
-    // Check if Polygon returned data
-    const polygonHasData = Object.values(cryptoPrices).some(v => v !== null);
+    // Check if CoinGecko returned data
+    const geckoHasData = Object.values(cryptoPrices).some(v => v !== null);
     
-    // If Polygon failed, try CoinGecko as fallback
-    if (!polygonHasData) {
-      console.log('Polygon crypto failed, falling back to CoinGecko');
-      cryptoPrices = await fetchCryptoFromCoinGecko(CRYPTO_SYMBOLS);
+    // If CoinGecko failed, try Polygon as fallback
+    if (!geckoHasData) {
+      console.log('CoinGecko crypto failed, falling back to Polygon');
+      cryptoPrices = await fetchCryptoFromPolygon(CRYPTO_SYMBOLS);
     }
 
     // Build response
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       source: {
         indices: 'yahoo',
-        crypto: polygonHasData ? 'polygon' : 'coingecko'
+        crypto: geckoHasData ? 'coingecko' : 'polygon'
       },
       indices: {
         sp500: spyData ? {
