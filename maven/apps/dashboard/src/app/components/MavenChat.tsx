@@ -406,7 +406,7 @@ What's on your mind?`;
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-purple-200">Online</span>
+              <span className="text-xs text-purple-200">Powered by Claude</span>
             </div>
             {/* Menu button */}
             <div className="relative">

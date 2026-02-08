@@ -831,6 +831,9 @@ async function callOracle(
 function generateFallbackResponse(message: string): string {
   const lowerMsg = message.toLowerCase();
 
+  // Always indicate this is fallback mode
+  const fallbackNote = '\n\n---\n*⚠️ Running in fallback mode — Claude API key not configured. Add ANTHROPIC_API_KEY to enable full AI capabilities.*';
+
   if (lowerMsg.includes('how you work') || lowerMsg.includes('what can you')) {
     return `I'm Maven, your AI wealth partner. I can see your complete financial picture and help with:
 
@@ -850,7 +853,7 @@ Ask me anything about your finances. I have your full context.`;
 • **Asset location** — Placing investments in the right account types
 • **Backdoor Roth** — Navigating the pro-rata rule
 
-What specific tax situation can I help with?`;
+What specific tax situation can I help with?` + fallbackNote;
   }
 
   return `I'm Maven, your AI wealth partner. I'm here to help you make smarter financial decisions.
@@ -859,7 +862,7 @@ What would you like to explore?
 • Your portfolio and holdings
 • Tax optimization strategies
 • Investment allocation
-• Retirement planning`;
+• Retirement planning` + fallbackNote;
 }
 
 export async function POST(request: NextRequest) {
