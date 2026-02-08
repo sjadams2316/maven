@@ -8,6 +8,7 @@ import {
   CAPE_PERCENTILES,
   estimateReturnFromCAPE,
 } from '@/lib/valuation-indicators';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface ValuationData {
   timestamp: string;
@@ -134,9 +135,12 @@ export default function MarketOutlookPage() {
             ← Dashboard
           </Link>
           <h1 className="text-3xl font-bold">Market Outlook</h1>
-          <p className="text-slate-400 mt-1">
-            Valuation-based analysis and expected return forecasts
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-slate-400">
+              Valuation-based analysis and expected return forecasts
+            </p>
+            <ToolExplainer toolName="market-outlook" />
+          </div>
           {data?.timestamp && (
             <p className="text-xs text-slate-500 mt-1">
               Data as of {new Date(data.timestamp).toLocaleString()}

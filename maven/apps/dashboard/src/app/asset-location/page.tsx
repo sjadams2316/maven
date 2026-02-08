@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface Holding {
   symbol: string;
@@ -50,7 +51,10 @@ export default function AssetLocationPage() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold">Asset Location Optimizer</h1>
-            <p className="text-slate-400 mt-1">Maximize tax efficiency across your accounts</p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-slate-400">Maximize tax efficiency across your accounts</p>
+              <ToolExplainer toolName="asset-location" />
+            </div>
           </div>
           <button
             onClick={() => setShowOptimized(!showOptimized)}

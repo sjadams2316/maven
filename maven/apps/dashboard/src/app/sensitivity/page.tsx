@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 // Simplified params for sensitivity analysis UI
 interface SensitivityParams {
@@ -106,9 +107,12 @@ export default function SensitivityPage() {
             ← Dashboard
           </Link>
           <h1 className="text-3xl font-bold">Sensitivity Analysis</h1>
-          <p className="text-slate-400 mt-1">
-            Understand which variables matter most for your retirement success
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-slate-400">
+              Understand which variables matter most for your retirement success
+            </p>
+            <ToolExplainer toolName="sensitivity" />
+          </div>
         </div>
         
         {/* Base Case Summary */}

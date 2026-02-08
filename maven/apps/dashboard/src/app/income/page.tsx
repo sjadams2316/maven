@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface IncomeSource {
   id: string;
@@ -76,7 +77,10 @@ export default function IncomePage() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold">Income Planner</h1>
-            <p className="text-slate-400 mt-1">Plan your investment income and retirement cash flow</p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-slate-400">Plan your investment income and retirement cash flow</p>
+              <ToolExplainer toolName="income" />
+            </div>
           </div>
           <div className="flex gap-3">
             <button

@@ -11,6 +11,7 @@ import {
 } from '@/lib/safe-withdrawal';
 import { SP500_ANNUAL_RETURNS } from '@/lib/historical-returns';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 export default function SafeWithdrawalPage() {
   const { financials } = useUserProfile();
@@ -76,9 +77,12 @@ export default function SafeWithdrawalPage() {
             ← Dashboard
           </Link>
           <h1 className="text-3xl font-bold">Safe Withdrawal Rate Calculator</h1>
-          <p className="text-slate-400 mt-1">
-            Based on 97 years of historical market data (1928-2024)
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-slate-400">
+              Based on 97 years of historical market data (1928-2024)
+            </p>
+            <ToolExplainer toolName="safe-withdrawal" />
+          </div>
         </div>
         
         <div className="grid grid-cols-12 gap-6">

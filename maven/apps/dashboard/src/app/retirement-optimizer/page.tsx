@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useUserProfile } from "@/providers/UserProvider";
 import Header from "@/app/components/Header";
 import DemoBanner from "@/app/components/DemoBanner";
+import { ToolExplainer } from "@/app/components/ToolExplainer";
 // Tooltip helper component
 function HelpIcon({ tooltip }: { tooltip: string }) {
   return (
@@ -402,9 +403,12 @@ export default function RetirementOptimizerPage() {
           <h1 className="text-3xl font-bold text-white mb-2">
             🏦 Retirement Optimizer
           </h1>
-          <p className="text-gray-400">
-            Maximize your 401(k), track old accounts, and make smarter retirement decisions.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-400">
+              Maximize your 401(k), track old accounts, and make smarter retirement decisions.
+            </p>
+            <ToolExplainer toolName="retirement-optimizer" />
+          </div>
         </div>
 
         {/* Summary Cards */}

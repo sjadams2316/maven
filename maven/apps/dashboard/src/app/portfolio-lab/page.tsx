@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 // Types
 interface Holding {
@@ -505,9 +506,12 @@ export default function PortfolioLab() {
             <span className="text-3xl">🧪</span>
             <h1 className="text-3xl font-bold text-white">Portfolio Lab</h1>
           </div>
-          <p className="text-gray-400">
-            Deep analysis, stress testing, and optimization for your ${totalValue.toLocaleString()} portfolio
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-400">
+              Deep analysis, stress testing, and optimization for your ${totalValue.toLocaleString()} portfolio
+            </p>
+            <ToolExplainer toolName="portfolio-lab" />
+          </div>
         </div>
 
         {/* Tab Navigation */}

@@ -9,6 +9,7 @@ import {
   StressScenario 
 } from '@/lib/stress-test-scenarios';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface Allocation {
   usEquity: number;
@@ -78,9 +79,12 @@ export default function StressTestPage() {
               ← Dashboard
             </Link>
             <h1 className="text-3xl font-bold">Historical Stress Test</h1>
-            <p className="text-slate-400 mt-1">
-              See how your portfolio would have performed during major market crises
-            </p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-slate-400">
+                See how your portfolio would have performed during major market crises
+              </p>
+              <ToolExplainer toolName="stress-test" />
+            </div>
           </div>
         </div>
         
