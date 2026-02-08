@@ -27,6 +27,7 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
     { href: '/portfolio-lab', label: 'Portfolio Lab' },
     { href: '/tax-harvesting', label: 'Tax Harvest' },
     { href: '/fragility', label: 'Fragility' },
+    { href: '/documents', label: 'Docs' },
     { href: '/oracle', label: 'Oracle' },
     { href: '/advisor', label: 'Advisor', highlight: true },
   ];
