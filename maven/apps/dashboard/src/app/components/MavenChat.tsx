@@ -46,6 +46,7 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -427,8 +428,16 @@ What's on your mind?`;
 
   // Voice: Speech-to-Text (Recording)
   const startRecording = async () => {
+    setVoiceError(null); // Clear any previous error
+    
     try {
       console.log('Requesting microphone access...');
+      
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Browser does not support audio recording');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log('Microphone access granted, stream tracks:', stream.getTracks().length);
       
@@ -506,13 +515,23 @@ What's on your mind?`;
     } catch (error) {
       console.error('Recording error:', error);
       const err = error as Error;
+      let errorMsg = '';
+      
       if (err.name === 'NotAllowedError') {
-        alert('Microphone access denied. Please allow microphone access in your browser settings.');
+        errorMsg = 'Microphone access denied. Please allow microphone access in your browser settings.';
       } else if (err.name === 'NotFoundError') {
-        alert('No microphone found. Please connect a microphone and try again.');
+        errorMsg = 'No microphone found. Please connect a microphone and try again.';
+      } else if (err.name === 'NotSupportedError') {
+        errorMsg = 'Audio recording not supported in this browser.';
+      } else if (err.name === 'SecurityError') {
+        errorMsg = 'Microphone access blocked. Try using HTTPS or check browser security settings.';
       } else {
-        alert('Unable to access microphone: ' + err.message);
+        errorMsg = 'Unable to access microphone: ' + err.message;
       }
+      
+      setVoiceError(errorMsg);
+      // Auto-clear error after 8 seconds
+      setTimeout(() => setVoiceError(null), 8000);
     }
   };
 
@@ -565,6 +584,9 @@ What's on your mind?`;
       
       if (!response.ok) {
         console.error('Transcription API error:', data);
+        const errDetail = data.details || data.error || 'Transcription failed';
+        setVoiceError(`Transcription error: ${errDetail}`);
+        setTimeout(() => setVoiceError(null), 8000);
         return;
       }
       
@@ -580,6 +602,8 @@ What's on your mind?`;
     } catch (error) {
       console.error('Transcription error:', error);
       setIsTranscribing(false);
+      setVoiceError('Network error during transcription. Please try again.');
+      setTimeout(() => setVoiceError(null), 8000);
     }
   };
 
@@ -964,6 +988,22 @@ What's on your mind?`;
         {/* Input Area */}
         <div className="px-6 py-5 border-t border-white/5 bg-white/[0.01]">
           <div className="max-w-3xl mx-auto">
+            {/* Voice error indicator */}
+            {voiceError && (
+              <div className="flex items-center justify-between gap-3 mb-4 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-400">⚠️</span>
+                  <span className="text-red-400 text-sm">{voiceError}</span>
+                </div>
+                <button
+                  onClick={() => setVoiceError(null)}
+                  className="text-red-400/60 hover:text-red-400 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            
             {/* Recording indicator */}
             {isRecording && (
               <div className="flex items-center justify-center gap-3 mb-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl">
