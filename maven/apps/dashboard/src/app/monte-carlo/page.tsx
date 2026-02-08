@@ -120,14 +120,37 @@ export default function MonteCarloPage() {
   
   // Update params when user profile loads
   useEffect(() => {
-    if (financials && financials.netWorth > 0) {
-      setParams(prev => ({
-        ...prev,
-        currentPortfolioValue: financials.netWorth,
-        annualSpendingRetirement: Math.round(financials.netWorth * 0.04),
-      }));
+    if (!profile && !financials) return;
+    
+    // Calculate age from DOB
+    let age = 35;
+    if (profile?.dateOfBirth) {
+      const birth = new Date(profile.dateOfBirth);
+      const today = new Date();
+      age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     }
-  }, [financials]);
+    
+    // Get Social Security info
+    const ssMonthly = profile?.socialSecurity?.benefitAtFRA || 2500;
+    const ssAge = profile?.socialSecurity?.fullRetirementAge || 67;
+    const retireAge = profile?.socialSecurity?.retirementAge || 65;
+    
+    // Calculate reasonable spending (higher of 4% rule or $50k minimum)
+    const portfolioValue = financials?.netWorth ?? 500000;
+    const spending = Math.max(Math.round(portfolioValue * 0.04), 50000);
+    
+    setParams(prev => ({
+      ...prev,
+      currentAge: age,
+      retirementAge: Math.max(retireAge, age + 5), // At least 5 years away
+      currentPortfolioValue: portfolioValue,
+      annualSpendingRetirement: spending,
+      socialSecurityMonthly: ssMonthly,
+      socialSecurityAge: ssAge,
+    }));
+  }, [profile, financials]);
   
   const totalAllocation = useMemo(() => {
     return Object.values(params.allocation).reduce((sum, val) => sum + val, 0);

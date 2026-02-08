@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
+import { useUserProfile } from '@/providers/UserProvider';
 
 interface FamilyMember {
   id: string;
@@ -14,69 +15,6 @@ interface FamilyMember {
   lastActivity: Date;
   age?: number;
 }
-
-const MOCK_FAMILY: FamilyMember[] = [
-  {
-    id: '1',
-    name: 'Sam Adams',
-    relationship: 'You',
-    avatar: '👨',
-    netWorth: 1150000,
-    accounts: 6,
-    lastActivity: new Date(),
-    age: 32,
-  },
-  {
-    id: '2',
-    name: 'Sammie Adams',
-    relationship: 'Spouse',
-    avatar: '👩',
-    netWorth: 320000,
-    accounts: 3,
-    lastActivity: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    age: 31,
-  },
-  {
-    id: '3',
-    name: 'Banks Adams',
-    relationship: 'Son',
-    avatar: '👦',
-    netWorth: 28000,
-    accounts: 1,
-    lastActivity: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    age: 4,
-  },
-  {
-    id: '4',
-    name: 'Navy Adams',
-    relationship: 'Daughter',
-    avatar: '👧',
-    netWorth: 12000,
-    accounts: 1,
-    lastActivity: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-    age: 2,
-  },
-  {
-    id: '5',
-    name: 'Jon Adams',
-    relationship: 'Father',
-    avatar: '👴',
-    netWorth: 2800000,
-    accounts: 8,
-    lastActivity: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    age: 64,
-  },
-  {
-    id: '6',
-    name: 'Kelly Adams',
-    relationship: 'Mother',
-    avatar: '👵',
-    netWorth: 450000,
-    accounts: 4,
-    lastActivity: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    age: 62,
-  },
-];
 
 function formatCurrency(amount: number): string {
   if (amount >= 1000000) return `$${(amount / 1000000).toFixed(2)}M`;
@@ -96,279 +34,271 @@ function getRelativeTime(date: Date): string {
   return `${Math.floor(days / 30)} months ago`;
 }
 
+function calculateAge(dateOfBirth?: string): number | undefined {
+  if (!dateOfBirth) return undefined;
+  const today = new Date();
+  const birth = new Date(dateOfBirth);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 export default function FamilyPage() {
+  const { profile, financials } = useUserProfile();
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
-  
-  const totalFamilyWealth = MOCK_FAMILY.reduce((sum, m) => sum + m.netWorth, 0);
-  const householdWealth = MOCK_FAMILY.filter(m => ['You', 'Spouse'].includes(m.relationship))
-    .reduce((sum, m) => sum + m.netWorth, 0);
-  const kidsWealth = MOCK_FAMILY.filter(m => ['Son', 'Daughter'].includes(m.relationship))
-    .reduce((sum, m) => sum + m.netWorth, 0);
-  
-  return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <Header />
+
+  // Build family members from profile
+  const familyMembers = useMemo((): FamilyMember[] => {
+    const members: FamilyMember[] = [];
+    
+    // Primary user (from profile)
+    const userName = profile?.firstName && profile?.lastName 
+      ? `${profile.firstName} ${profile.lastName}`
+      : profile?.firstName || 'You';
+    
+    members.push({
+      id: 'primary',
+      name: userName,
+      relationship: 'You',
+      avatar: '👤',
+      netWorth: financials?.netWorth ?? 0,
+      accounts: (profile?.cashAccounts?.length || 0) + 
+                (profile?.retirementAccounts?.length || 0) + 
+                (profile?.investmentAccounts?.length || 0),
+      lastActivity: new Date(),
+      age: calculateAge(profile?.dateOfBirth),
+    });
+    
+    // Spouse (if social security has spouse info)
+    if (profile?.socialSecurity?.spouseDOB) {
+      const spouseAge = calculateAge(profile.socialSecurity.spouseDOB);
+      // Estimate spouse's benefit as their net worth contribution
+      const spouseEstimatedAssets = profile.socialSecurity.spouseBenefitAtFRA 
+        ? profile.socialSecurity.spouseBenefitAtFRA * 12 * 15 // 15 years of benefits as rough estimate
+        : 0;
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      members.push({
+        id: 'spouse',
+        name: 'Spouse',
+        relationship: 'Spouse',
+        avatar: '💑',
+        netWorth: spouseEstimatedAssets,
+        accounts: 0,
+        lastActivity: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        age: spouseAge,
+      });
+    }
+    
+    // If no real data, show placeholder for demo
+    if (members.length === 1 && !profile?.firstName) {
+      return [
+        {
+          id: 'demo-1',
+          name: 'Demo User',
+          relationship: 'You',
+          avatar: '👤',
+          netWorth: financials?.netWorth ?? 0,
+          accounts: 0,
+          lastActivity: new Date(),
+        }
+      ];
+    }
+    
+    return members;
+  }, [profile, financials]);
+
+  const totalFamilyNetWorth = familyMembers.reduce((sum, m) => sum + m.netWorth, 0);
+
+  return (
+    <div className="min-h-screen bg-[#0a0a12] text-white">
+      <Header profile={profile} />
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Family Wealth</h1>
-            <p className="text-gray-400 mt-1">Multi-generational wealth overview</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              Family Dashboard
+            </h1>
+            <p className="text-gray-400 mt-1">
+              Multi-generational wealth overview
+            </p>
           </div>
-          
-          <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2">
-            <span>+</span>
-            <span>Add Family Member</span>
+          <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm transition">
+            + Invite Family Member
           </button>
         </div>
-        
-        {/* Summary Cards */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-5">
-            <p className="text-indigo-300 text-sm mb-1">Total Family Wealth</p>
-            <p className="text-3xl font-bold text-white">{formatCurrency(totalFamilyWealth)}</p>
-            <p className="text-sm text-indigo-400 mt-1">{MOCK_FAMILY.length} members</p>
-          </div>
-          
-          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-5">
-            <p className="text-gray-400 text-sm mb-1">Your Household</p>
-            <p className="text-3xl font-bold text-white">{formatCurrency(householdWealth)}</p>
-            <p className="text-sm text-gray-500 mt-1">Sam + Sammie</p>
-          </div>
-          
-          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-5">
-            <p className="text-gray-400 text-sm mb-1">Kids' Accounts</p>
-            <p className="text-3xl font-bold text-emerald-400">{formatCurrency(kidsWealth)}</p>
-            <p className="text-sm text-gray-500 mt-1">529 + UTMA</p>
-          </div>
+
+        {/* Total Family Net Worth */}
+        <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 border border-indigo-500/30 rounded-2xl p-6 mb-8">
+          <p className="text-gray-400 text-sm mb-1">Total Family Net Worth</p>
+          <p className="text-4xl font-bold text-white">{formatCurrency(totalFamilyNetWorth)}</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Across {familyMembers.length} {familyMembers.length === 1 ? 'member' : 'members'} • {familyMembers.reduce((sum, m) => sum + m.accounts, 0)} accounts
+          </p>
         </div>
-        
-        {/* Family Tree Visual */}
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 mb-8">
-          <h2 className="text-lg font-semibold text-white mb-6">Family Tree</h2>
-          
-          <div className="flex flex-col items-center">
-            {/* Parents (Jon & Kelly) */}
-            <div className="flex gap-8 mb-4">
-              {MOCK_FAMILY.filter(m => ['Father', 'Mother'].includes(m.relationship)).map(member => (
-                <button
-                  key={member.id}
-                  onClick={() => setSelectedMember(member)}
-                  className="flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition"
-                >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center text-3xl mb-2 ring-2 ring-amber-500/30">
-                    {member.avatar}
-                  </div>
-                  <p className="text-white font-medium text-sm">{member.name.split(' ')[0]}</p>
-                  <p className="text-xs text-gray-500">{member.relationship}</p>
-                  <p className="text-sm text-emerald-400 mt-1">{formatCurrency(member.netWorth)}</p>
-                </button>
-              ))}
-            </div>
-            
-            {/* Connection Line */}
-            <div className="w-0.5 h-8 bg-white/20" />
-            
-            {/* You & Spouse */}
-            <div className="flex gap-8 mb-4">
-              {MOCK_FAMILY.filter(m => ['You', 'Spouse'].includes(m.relationship)).map(member => (
-                <button
-                  key={member.id}
-                  onClick={() => setSelectedMember(member)}
-                  className="flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition"
-                >
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-2 ring-2 ${
-                    member.relationship === 'You' 
-                      ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 ring-indigo-500/50' 
-                      : 'bg-gradient-to-br from-pink-500/20 to-rose-500/20 ring-pink-500/30'
-                  }`}>
-                    {member.avatar}
-                  </div>
-                  <p className="text-white font-medium text-sm">{member.name.split(' ')[0]}</p>
-                  <p className="text-xs text-gray-500">{member.relationship}</p>
-                  <p className="text-sm text-emerald-400 mt-1">{formatCurrency(member.netWorth)}</p>
-                </button>
-              ))}
-            </div>
-            
-            {/* Connection Line */}
-            <div className="w-0.5 h-8 bg-white/20" />
-            
-            {/* Kids */}
-            <div className="flex gap-8">
-              {MOCK_FAMILY.filter(m => ['Son', 'Daughter'].includes(m.relationship)).map(member => (
-                <button
-                  key={member.id}
-                  onClick={() => setSelectedMember(member)}
-                  className="flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition"
-                >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-3xl mb-2 ring-2 ring-emerald-500/30">
-                    {member.avatar}
-                  </div>
-                  <p className="text-white font-medium text-sm">{member.name.split(' ')[0]}</p>
-                  <p className="text-xs text-gray-500">{member.relationship}, {member.age}</p>
-                  <p className="text-sm text-emerald-400 mt-1">{formatCurrency(member.netWorth)}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Family Members List */}
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl overflow-hidden">
-          <div className="p-4 border-b border-white/10">
-            <h2 className="text-lg font-semibold text-white">All Family Members</h2>
-          </div>
-          
-          <div className="divide-y divide-white/5">
-            {MOCK_FAMILY.map(member => (
-              <button
-                key={member.id}
-                onClick={() => setSelectedMember(member)}
-                className="flex items-center gap-4 p-4 w-full hover:bg-white/5 transition text-left"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                  member.relationship === 'You' ? 'bg-indigo-500/20 ring-2 ring-indigo-500/50' :
-                  member.relationship === 'Spouse' ? 'bg-pink-500/20' :
-                  ['Father', 'Mother'].includes(member.relationship) ? 'bg-amber-500/20' :
-                  'bg-emerald-500/20'
-                }`}>
+
+        {/* Family Members Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {familyMembers.map((member) => (
+            <button
+              key={member.id}
+              onClick={() => setSelectedMember(member)}
+              className={`text-left p-6 rounded-2xl border transition-all ${
+                selectedMember?.id === member.id
+                  ? 'bg-indigo-600/20 border-indigo-500/50'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-2xl">
                   {member.avatar}
                 </div>
-                
-                <div className="flex-1">
-                  <p className="font-medium text-white">{member.name}</p>
-                  <p className="text-sm text-gray-500">{member.relationship}{member.age ? `, ${member.age}` : ''}</p>
+                <div>
+                  <h3 className="font-semibold text-white">{member.name}</h3>
+                  <p className="text-sm text-gray-400">{member.relationship}</p>
                 </div>
-                
-                <div className="text-right">
-                  <p className="font-semibold text-white">{formatCurrency(member.netWorth)}</p>
-                  <p className="text-xs text-gray-500">{member.accounts} accounts</p>
-                </div>
-                
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs text-gray-500">Last active</p>
-                  <p className="text-sm text-gray-400">{getRelativeTime(member.lastActivity)}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Insights */}
-        <div className="mt-8 grid sm:grid-cols-2 gap-4">
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">💡</span>
-              <div>
-                <p className="text-amber-300 font-medium">Estate Planning Opportunity</p>
-                <p className="text-sm text-amber-200/70 mt-1">
-                  Your parents' combined wealth of {formatCurrency(MOCK_FAMILY.filter(m => ['Father', 'Mother'].includes(m.relationship)).reduce((s, m) => s + m.netWorth, 0))} may benefit from gifting strategies to reduce estate taxes.
-                </p>
               </div>
-            </div>
-          </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-400 text-sm">Net Worth</span>
+                  <span className="text-white font-medium">{formatCurrency(member.netWorth)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400 text-sm">Accounts</span>
+                  <span className="text-white">{member.accounts}</span>
+                </div>
+                {member.age && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 text-sm">Age</span>
+                    <span className="text-white">{member.age}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-400 text-sm">Last Active</span>
+                  <span className="text-gray-300 text-sm">{getRelativeTime(member.lastActivity)}</span>
+                </div>
+              </div>
+              
+              {/* Contribution to family net worth */}
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400 text-sm">Family Share</span>
+                  <span className="text-indigo-400 font-medium">
+                    {totalFamilyNetWorth > 0 
+                      ? ((member.netWorth / totalFamilyNetWorth) * 100).toFixed(1) 
+                      : 0}%
+                  </span>
+                </div>
+                <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                    style={{ 
+                      width: `${totalFamilyNetWorth > 0 
+                        ? (member.netWorth / totalFamilyNetWorth) * 100 
+                        : 0}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            </button>
+          ))}
           
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📈</span>
-              <div>
-                <p className="text-emerald-300 font-medium">529 Contribution Room</p>
-                <p className="text-sm text-emerald-200/70 mt-1">
-                  Banks and Navy's 529 plans can each receive up to $18,000/year tax-free. Consider front-loading contributions.
-                </p>
-              </div>
+          {/* Add Family Member Card */}
+          <button
+            className="p-6 rounded-2xl border border-dashed border-white/20 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all flex flex-col items-center justify-center min-h-[200px]"
+          >
+            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center text-2xl mb-3">
+              ➕
             </div>
-          </div>
+            <p className="text-gray-400 font-medium">Add Family Member</p>
+            <p className="text-gray-500 text-sm mt-1">Invite spouse, children, or parents</p>
+          </button>
         </div>
-      </main>
-      
-      {/* Member Detail Modal */}
-      {selectedMember && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 max-w-md w-full">
+
+        {/* Selected Member Detail */}
+        {selectedMember && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center text-3xl">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-3xl">
                   {selectedMember.avatar}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">{selectedMember.name}</h2>
-                  <p className="text-gray-500">{selectedMember.relationship}{selectedMember.age ? `, ${selectedMember.age}` : ''}</p>
+                  <h2 className="text-xl font-bold text-white">{selectedMember.name}</h2>
+                  <p className="text-gray-400">{selectedMember.relationship} {selectedMember.age ? `• Age ${selectedMember.age}` : ''}</p>
                 </div>
               </div>
-              <button
+              <button 
                 onClick={() => setSelectedMember(null)}
-                className="p-2 hover:bg-white/10 rounded-lg transition"
+                className="text-gray-400 hover:text-white transition"
               >
                 ✕
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid sm:grid-cols-3 gap-6">
               <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-1">Net Worth</p>
-                <p className="text-xl font-bold text-white">{formatCurrency(selectedMember.netWorth)}</p>
+                <p className="text-gray-400 text-sm">Net Worth</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(selectedMember.netWorth)}</p>
               </div>
               <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-1">Accounts</p>
-                <p className="text-xl font-bold text-white">{selectedMember.accounts}</p>
+                <p className="text-gray-400 text-sm">Linked Accounts</p>
+                <p className="text-2xl font-bold text-white">{selectedMember.accounts}</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-4">
+                <p className="text-gray-400 text-sm">Family Share</p>
+                <p className="text-2xl font-bold text-indigo-400">
+                  {totalFamilyNetWorth > 0 
+                    ? ((selectedMember.netWorth / totalFamilyNetWorth) * 100).toFixed(1) 
+                    : 0}%
+                </p>
               </div>
             </div>
             
-            <div className="bg-white/5 rounded-xl p-4 mb-6">
-              <p className="text-xs text-gray-500 mb-2">Account Breakdown</p>
-              <div className="space-y-2">
-                {selectedMember.relationship === 'You' && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">401(k)</span>
-                      <span className="text-white">$83,000</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">IRA</span>
-                      <span className="text-white">$150,000</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Brokerage</span>
-                      <span className="text-white">$103,000</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">CIFR + IREN</span>
-                      <span className="text-white">$130,000</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">TAO (215 tokens)</span>
-                      <span className="text-white">$684,000</span>
-                    </div>
-                  </>
-                )}
-                {['Son', 'Daughter'].includes(selectedMember.relationship) && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">529 Plan</span>
-                    <span className="text-white">{formatCurrency(selectedMember.netWorth)}</span>
-                  </div>
-                )}
-                {!['You', 'Son', 'Daughter'].includes(selectedMember.relationship) && (
-                  <p className="text-sm text-gray-500">Detailed breakdown requires account linking</p>
-                )}
+            {selectedMember.relationship === 'You' && (
+              <div className="mt-6 p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-xl">
+                <p className="text-indigo-300 text-sm">
+                  💡 This is your profile. Your net worth is calculated from all linked accounts and assets.
+                </p>
               </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
-                View Details
-              </button>
-              {selectedMember.relationship !== 'You' && (
-                <button className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition">
-                  Link Accounts
-                </button>
-              )}
-            </div>
+            )}
+          </div>
+        )}
+
+        {/* Features Coming Soon */}
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 opacity-60">
+            <div className="text-2xl mb-2">🎓</div>
+            <h3 className="font-semibold text-white mb-1">529 Plan Tracking</h3>
+            <p className="text-gray-400 text-sm">Track education savings for children</p>
+            <span className="text-xs text-indigo-400 mt-2 inline-block">Coming Soon</span>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 opacity-60">
+            <div className="text-2xl mb-2">📜</div>
+            <h3 className="font-semibold text-white mb-1">Estate Planning</h3>
+            <p className="text-gray-400 text-sm">Inheritance and wealth transfer</p>
+            <span className="text-xs text-indigo-400 mt-2 inline-block">Coming Soon</span>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 opacity-60">
+            <div className="text-2xl mb-2">🔗</div>
+            <h3 className="font-semibold text-white mb-1">Shared Accounts</h3>
+            <p className="text-gray-400 text-sm">Joint account management</p>
+            <span className="text-xs text-indigo-400 mt-2 inline-block">Coming Soon</span>
           </div>
         </div>
-      )}
+
+        {/* Back Link */}
+        <div className="mt-8 text-center">
+          <Link href="/dashboard" className="text-gray-400 hover:text-white transition">
+            ← Back to Dashboard
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
