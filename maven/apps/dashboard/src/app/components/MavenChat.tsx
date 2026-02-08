@@ -33,8 +33,17 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
   const [profile, setProfile] = useState<any>(userProfile);
   const [showMenu, setShowMenu] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [claudeEnabled, setClaudeEnabled] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Check if Claude is enabled on mount
+  useEffect(() => {
+    fetch('/api/chat')
+      .then(res => res.json())
+      .then(data => setClaudeEnabled(data.claudeEnabled))
+      .catch(() => setClaudeEnabled(false));
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -405,8 +414,10 @@ What's on your mind?`;
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-purple-200">Powered by Claude</span>
+              <span className={`w-2 h-2 rounded-full ${claudeEnabled ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+              <span className="text-xs text-purple-200">
+                {claudeEnabled === null ? 'Connecting...' : claudeEnabled ? 'Powered by Claude' : '⚠️ Limited Mode'}
+              </span>
             </div>
             {/* Menu button */}
             <div className="relative">

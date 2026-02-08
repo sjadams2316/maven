@@ -304,30 +304,36 @@ Earnings yield (1/PE) minus 10-year Treasury yield. Shows stocks vs bonds attrac
   },
 
   'oracle': {
-    title: 'Maven Oracle (AI Assistant)',
-    summary: 'Maven Oracle is your AI-powered financial advisor, powered by Claude (Anthropic). Ask any question about your finances, investments, tax strategies, or retirement planning.',
-    methodology: `Oracle combines:
+    title: 'Maven Oracle',
+    summary: 'Maven Oracle is your AI wealth partner, powered by Claude (Anthropic). It sees your complete financial picture 24/7 and learns from every conversation to give increasingly personalized advice.',
+    methodology: `Maven Oracle combines:
 
-1. **Large language model**: Claude by Anthropic provides the reasoning and natural language capabilities.
+1. **Claude by Anthropic**: State-of-the-art reasoning and natural language understanding. Claude is known for being helpful, harmless, and honest.
 
-2. **Your financial context**: When you ask a question, Oracle has access to your portfolio, profile, and financial snapshot.
+2. **Your complete financial context**: Oracle sees your full portfolio, accounts, holdings, tax situation, and financial goals. Every response is personalized to YOUR situation.
 
-3. **Real-time data**: Oracle can pull current market data, news, and economic indicators.
+3. **Conversation memory**: Oracle remembers your entire conversation history. Ask follow-up questions, reference previous discussions, build on past advice.
 
-4. **Tool integration**: Oracle can run Monte Carlo simulations, look up stock research, calculate tax scenarios, and more.
+4. **Real-time data integration**: Oracle can pull live market data, stock research, economic indicators, and news to inform its analysis.
 
-5. **Guardrails**: Oracle is designed to give educational information, not specific investment advice. It will recommend you consult professionals for major decisions.`,
+5. **Tool calling**: Oracle can run Monte Carlo simulations, calculate tax scenarios, analyze Social Security timing, stress test portfolios, and more — all mid-conversation.
+
+6. **Guardrails**: Oracle gives educational information and analysis, not specific investment advice. For major decisions, it recommends consulting licensed professionals.
+
+**Note**: Oracle requires an API key to function. Without it, you'll see "Limited Mode" and receive basic responses.`,
     dataSources: [
-      'Your Maven profile and portfolio',
-      'Real-time market data',
+      'Your Maven profile and portfolio (real-time)',
+      'Live market data and stock quotes',
       'Financial news and research',
+      'Economic indicators (FRED, etc.)',
       'Claude\'s training data (general financial knowledge)'
     ],
     limitations: [
-      'Not a licensed financial advisor—for educational purposes',
-      'May not have the latest information on rapidly changing situations',
-      'Cannot execute trades or access external accounts',
-      'Complex tax situations require a CPA'
+      'Not a licensed financial advisor — for educational purposes',
+      'Requires ANTHROPIC_API_KEY to be configured',
+      'Cannot execute trades or access external brokerage accounts',
+      'Complex tax situations require a CPA',
+      'Conversation memory is per-session (clears if you clear chat)'
     ]
   },
 
