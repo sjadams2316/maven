@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FragilityGauge from '../components/FragilityGauge';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { OracleShowcase } from '@/app/components/OracleShowcase';
 
 interface FragilityData {
   compositeScore: number;
@@ -555,6 +556,45 @@ function OptimizationPanel({ fragilityData }: { fragilityData: FragilityData | n
           >
             💰 Find Tax Alpha
           </button>
+        </div>
+        
+        {/* Oracle Explain Button */}
+        <div className="mt-6 pt-6 border-t border-gray-800/50">
+          <OracleShowcase
+            trigger={<span>Have Maven Oracle Explain What This Means</span>}
+            data={{
+              type: 'market_analysis',
+              title: 'Market Fragility Analysis',
+              metrics: [
+                { label: 'Fragility Score', current: fragilityData.compositeScore, good: fragilityData.compositeScore < 50 },
+                { label: 'Market Zone', current: fragilityData.zone.charAt(0).toUpperCase() + fragilityData.zone.slice(1) },
+                { label: 'Risk Level', current: strategy.title },
+              ],
+              risks: [
+                { scenario: 'If markets correct 10%', impact: -10, color: 'bg-amber-500' },
+                { scenario: 'If we see 2008-style crash', impact: -45, color: 'bg-red-500' },
+                { scenario: 'If rates spike 1%', impact: -15, color: 'bg-orange-500' },
+                { scenario: 'If volatility doubles', impact: -20, color: 'bg-rose-500' },
+              ],
+              actionItems: strategy.actions.slice(0, 4).map((action, i) => ({
+                priority: i === 0 ? 'high' as const : i === 1 ? 'medium' as const : 'low' as const,
+                action: action.action,
+                impact: action.details
+              }))
+            }}
+            onAnalyze={async () => {
+              const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  message: `Explain the current market fragility conditions to me like I'm a regular investor. The Fragility Index score is ${fragilityData.compositeScore} (${fragilityData.zone} zone). ${fragilityData.interpretation}. What does this mean in plain English? Should I be worried? What should I actually do with my portfolio right now? Be specific and practical.`
+                })
+              });
+              const data = await response.json();
+              return data.response || 'Unable to generate analysis.';
+            }}
+            className="w-full justify-center"
+          />
         </div>
       </div>
     </div>

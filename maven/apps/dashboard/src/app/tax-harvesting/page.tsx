@@ -5,6 +5,7 @@ import { useUserProfile } from "@/providers/UserProvider";
 import Header from "@/app/components/Header";
 import DemoBanner from "@/app/components/DemoBanner";
 import { ToolExplainer } from "@/app/components/ToolExplainer";
+import { OracleShowcase } from "@/app/components/OracleShowcase";
 
 // Tax-efficient swap suggestions (similar ETFs that avoid wash sale)
 const SWAP_SUGGESTIONS: Record<string, { ticker: string; name: string; reason: string }[]> = {
@@ -365,6 +366,51 @@ export default function TaxHarvestingPage() {
               </p>
               <p className="text-xs text-gray-500">Excess loss to future years</p>
             </div>
+          </div>
+        )}
+
+        {/* Oracle Explain Button */}
+        {summary && summary.totalOpportunities > 0 && (
+          <div className="mb-6">
+            <OracleShowcase
+              trigger={<span>Have Maven Oracle Walk Me Through This</span>}
+              data={{
+                type: 'tax_harvest',
+                title: 'Tax-Loss Harvesting Analysis',
+                metrics: [
+                  { label: 'Harvestable Losses', current: summary.totalUnrealizedLoss, good: true },
+                  { label: 'Estimated Tax Savings', current: summary.estimatedTaxSavings, good: true },
+                  { label: 'Opportunities Found', current: summary.totalOpportunities },
+                  { label: 'Federal Rate', current: `${taxBracket}%` },
+                  { label: 'State Rate', current: `${stateTaxRate}%` },
+                  { label: 'Capital Loss Limit', current: 3000 },
+                ],
+                actionItems: opportunities.slice(0, 5).map(opp => ({
+                  priority: opp.unrealizedLoss > 5000 ? 'high' as const : opp.unrealizedLoss > 1000 ? 'medium' as const : 'low' as const,
+                  action: `Harvest ${opp.symbol} (${formatCurrency(opp.unrealizedLoss)} loss)`,
+                  impact: `Save ~${formatCurrency(Math.abs(opp.unrealizedLoss) * (taxBracket / 100 + stateTaxRate / 100))} in taxes`
+                })),
+                insights: [
+                  'Tax-loss harvesting lets you turn paper losses into real tax savings',
+                  'Losses offset gains dollar-for-dollar',
+                  'Up to $3,000 of net losses can offset ordinary income each year',
+                  'Excess losses carry forward indefinitely'
+                ]
+              }}
+              onAnalyze={async () => {
+                const topOpps = opportunities.slice(0, 5);
+                const response = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    message: `Walk me through my tax-loss harvesting opportunities like I'm new to this. I have ${summary.totalOpportunities} positions with total harvestable losses of ${formatCurrency(summary.totalUnrealizedLoss)}. Estimated tax savings: ${formatCurrency(summary.estimatedTaxSavings)} at my ${taxBracket}% federal + ${stateTaxRate}% state rate. Top opportunities: ${topOpps.map(o => `${o.symbol} with ${formatCurrency(o.unrealizedLoss)} loss`).join(', ')}. Explain: 1) What is tax-loss harvesting and why it matters 2) How much I could actually save 3) What I need to watch out for (wash sales) 4) Step-by-step what to do. Keep it simple and actionable.`
+                  })
+                });
+                const data = await response.json();
+                return data.response || 'Unable to generate analysis.';
+              }}
+              className="w-full justify-center"
+            />
           </div>
         )}
 

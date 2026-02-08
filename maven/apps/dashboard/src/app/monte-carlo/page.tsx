@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { OracleShowcase } from '@/app/components/OracleShowcase';
 
 interface PortfolioAllocation {
   usEquity: number;
@@ -742,6 +743,54 @@ export default function MonteCarloPage() {
                   </div>
                 </div>
                 
+                {/* Oracle Explain Button */}
+                <OracleShowcase
+                  trigger={<span>Have Maven Oracle Explain My Retirement Outlook</span>}
+                  data={{
+                    type: 'retirement_plan',
+                    title: 'Your Retirement Outlook',
+                    metrics: [
+                      { label: 'Success Rate', current: `${results.successRate.toFixed(1)}%`, good: results.successRate >= 80 },
+                      { label: 'Median Final Balance', current: results.medianFinalBalance, good: results.medianFinalBalance > 0 },
+                      { label: 'Worst Case (5%)', current: results.percentiles.p5 > 0 ? results.percentiles.p5 : 'Depleted' },
+                      { label: 'Retirement Age', current: params.retirementAge },
+                      { label: 'Annual Spending', current: params.annualSpendingRetirement },
+                      { label: 'Portfolio Value', current: params.currentPortfolioValue },
+                    ],
+                    risks: [
+                      { scenario: '2008 Financial Crisis', impact: -45, color: 'bg-red-500' },
+                      { scenario: 'Stagflation (1970s)', impact: -35, color: 'bg-orange-500' },
+                      { scenario: 'Dot-Com Bust', impact: -28, color: 'bg-amber-500' },
+                      { scenario: 'COVID Crash', impact: -20, color: 'bg-yellow-500' },
+                    ],
+                    chartData: {
+                      labels: results.yearlyPercentiles.filter((_, i) => i % 5 === 0).map(y => `Age ${y.age}`),
+                      datasets: [
+                        { label: 'Median (50th)', data: results.yearlyPercentiles.filter((_, i) => i % 5 === 0).map(y => y.p50), color: '#8b5cf6' },
+                        { label: 'Pessimistic (10th)', data: results.yearlyPercentiles.filter((_, i) => i % 5 === 0).map(y => y.p10), color: '#ef4444' },
+                        { label: 'Optimistic (90th)', data: results.yearlyPercentiles.filter((_, i) => i % 5 === 0).map(y => y.p90), color: '#22c55e' },
+                      ]
+                    },
+                    actionItems: results.insights.map(insight => ({
+                      priority: insight.type === 'danger' ? 'high' as const : insight.type === 'warning' ? 'medium' as const : 'low' as const,
+                      action: insight.message,
+                      impact: insight.type === 'success' ? 'Positive indicator' : 'Needs attention'
+                    }))
+                  }}
+                  onAnalyze={async () => {
+                    const response = await fetch('/api/chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        message: `Explain my Monte Carlo retirement simulation results in plain English. Success rate: ${results.successRate.toFixed(1)}%. Median final balance: $${results.medianFinalBalance.toLocaleString()}. Worst case (5th percentile): ${results.percentiles.p5 > 0 ? '$' + results.percentiles.p5.toLocaleString() : 'depleted'}. I'm ${params.currentAge} years old, planning to retire at ${params.retirementAge}, with a current portfolio of $${params.currentPortfolioValue.toLocaleString()}, contributing $${params.annualContribution.toLocaleString()}/year, and planning to spend $${params.annualSpendingRetirement.toLocaleString()}/year in retirement. What does this mean for me? Am I on track? What are the biggest risks? What could I do to improve my odds?`
+                      })
+                    });
+                    const data = await response.json();
+                    return data.response || 'Unable to generate analysis.';
+                  }}
+                  className="w-full justify-center"
+                />
+
                 {/* Methodology */}
                 <div className="bg-slate-800/30 rounded-xl border border-slate-700/30 p-4">
                   <details>

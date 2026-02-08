@@ -14,6 +14,7 @@ import {
   getRecommendationSummary,
 } from '@/lib/social-security-calculator';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { OracleShowcase } from '@/app/components/OracleShowcase';
 
 export default function SocialSecurityPage() {
   const router = useRouter();
@@ -241,6 +242,48 @@ export default function SocialSecurityPage() {
                 <p className="text-xs text-gray-500 mt-2">
                   Take this report to your Social Security appointment
                 </p>
+                
+                {/* Oracle Explain Button */}
+                <div className="mt-4">
+                  <OracleShowcase
+                    trigger={<span>Have Maven Oracle Compare My Claiming Options</span>}
+                    data={{
+                      type: 'general',
+                      title: 'Social Security Strategy',
+                      metrics: [
+                        { label: 'Optimal Age', current: analysis.optimalClaimingAge, good: true },
+                        { label: 'Monthly at Optimal', current: analysis.scenarios.find(s => s.claimingAge === analysis.optimalClaimingAge)?.monthlyBenefit || 0 },
+                        { label: 'Lifetime at Optimal', current: analysis.scenarios.find(s => s.claimingAge === analysis.optimalClaimingAge)?.lifetimeTotal || 0, good: true },
+                        { label: 'vs Claiming at 62', current: analysis.lifetimeAdvantage, change: analysis.lifetimeAdvantage >= 0 ? 'Gain' : 'Loss', good: analysis.lifetimeAdvantage >= 0 },
+                        { label: 'FRA', current: analysis.fullRetirementAge },
+                        { label: 'Break-Even (62→70)', current: analysis.breakEven62vs70.formattedBreakEven },
+                      ],
+                      chartData: {
+                        labels: analysis.scenarios.map(s => `Age ${s.claimingAge}`),
+                        datasets: [
+                          { label: 'Monthly Benefit', data: analysis.scenarios.map(s => s.monthlyBenefit), color: '#8b5cf6' },
+                        ]
+                      },
+                      actionItems: [
+                        { priority: 'high' as const, action: `Claim at age ${analysis.optimalClaimingAge}`, impact: recommendation?.headline || '' },
+                        { priority: 'medium' as const, action: 'Review break-even ages', impact: `70 catches up after ${Math.round(analysis.breakEven62vs70.monthsToRecoup / 12)} years` },
+                        { priority: 'low' as const, action: 'Consider spouse timing', impact: 'Coordinate for maximum household benefit' },
+                      ]
+                    }}
+                    onAnalyze={async () => {
+                      const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          message: `Walk me through my Social Security claiming decision. Born ${socialSecurity?.birthDate || 'unknown'}, FRA is ${analysis.fullRetirementAge}, life expectancy ${socialSecurity?.lifeExpectancy || 85}. The analysis shows optimal claiming age is ${analysis.optimalClaimingAge}. Monthly benefits: Age 62: $${analysis.scenarios.find(s => s.claimingAge === 62)?.monthlyBenefit}, Age 67: $${analysis.scenarios.find(s => s.claimingAge === 67)?.monthlyBenefit}, Age 70: $${analysis.scenarios.find(s => s.claimingAge === 70)?.monthlyBenefit}. Lifetime advantage of waiting vs 62: ${formatSSCurrency(analysis.lifetimeAdvantage)}. Explain in plain English: 1) Why is ${analysis.optimalClaimingAge} optimal for me? 2) What's the trade-off of claiming early vs waiting? 3) How does my life expectancy affect this? 4) Any special considerations I should know about?`
+                        })
+                      });
+                      const data = await response.json();
+                      return data.response || 'Unable to generate analysis.';
+                    }}
+                    className="w-full sm:w-auto"
+                  />
+                </div>
               </div>
             </div>
 
