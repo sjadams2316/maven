@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { MAVEN_KNOWLEDGE_BASE, getRelevantKnowledge } from '@/lib/knowledge-base';
 import { parseLocalStorageProfile, buildContextForChat, UserContext } from '@/lib/user-context';
+import { extractMemories, formatMemoriesForPrompt } from '@/app/api/oracle/memory/route';
+
+// In-memory store for Oracle memories (matches memory/route.ts)
+const memoryStore = new Map<string, Map<string, any>>();
+
+function getUserMemories(userId: string): any[] {
+  const memories = memoryStore.get(userId);
+  return memories ? Array.from(memories.values()) : [];
+}
+
+function storeMemory(userId: string, memory: any) {
+  if (!memoryStore.has(userId)) {
+    memoryStore.set(userId, new Map());
+  }
+  memoryStore.get(userId)!.set(memory.key, {
+    ...memory,
+    id: `mem_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+}
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -767,6 +788,14 @@ async function callOracle(
   
   // Add user context
   systemPrompt += '\n\n' + buildContextForChat(userContext);
+  
+  // Add persistent memories if user is authenticated
+  if (clerkId) {
+    const memories = getUserMemories(clerkId);
+    if (memories.length > 0) {
+      systemPrompt += formatMemoriesForPrompt(memories);
+    }
+  }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -933,6 +962,21 @@ export async function POST(request: NextRequest) {
         // Update server-side cache (backup)
         history.push({ role: 'assistant', content: response });
         conversationHistory.set(convId, history);
+        
+        // Extract and store memories from this conversation (if authenticated)
+        if (clerkId) {
+          try {
+            const newMemories = extractMemories(message, response);
+            for (const memory of newMemories) {
+              if (memory.key && memory.value) {
+                storeMemory(clerkId, memory);
+              }
+            }
+          } catch (memError) {
+            console.error('Memory extraction error:', memError);
+            // Don't fail the request if memory extraction fails
+          }
+        }
       } catch (error: any) {
         console.error('Claude error:', error);
         // Include error details for debugging (remove in production later)

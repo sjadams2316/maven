@@ -41,6 +41,7 @@ model User {
   conversations   Conversation[]
   insights        Insight[]
   taxAlphaEvents  TaxAlphaEvent[]
+  oracleMemories  OracleMemory[]
 }
 
 // ============================================
@@ -298,6 +299,44 @@ model Conversation {
   updatedAt   DateTime @updatedAt
   
   @@index([userId])
+}
+
+// ============================================
+// ORACLE MEMORY (Persistent Learning)
+// ============================================
+
+model OracleMemory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Memory type
+  type        String   // preference, fact, goal, concern, style, decision
+  
+  // The actual memory
+  key         String   // e.g., "preferred_withdrawal_rate", "risk_tolerance", "spouse_name"
+  value       String   // The value or description
+  context     String?  // Additional context about when/why this was learned
+  
+  // Confidence and usage
+  confidence  Float    @default(1.0)  // How confident we are (0-1)
+  useCount    Int      @default(1)    // How often this memory has been used
+  
+  // Source tracking
+  source      String   @default("conversation")  // conversation, onboarding, profile, inferred
+  sourceConversationId String?  // Which conversation this came from
+  
+  // Lifecycle
+  isActive    Boolean  @default(true)  // Can be deprecated without deleting
+  expiresAt   DateTime?  // Some memories may expire
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, key])
+  @@index([userId])
+  @@index([userId, type])
+  @@index([userId, isActive])
 }
 
 // ============================================

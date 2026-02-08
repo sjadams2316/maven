@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { OracleShowcase } from '@/app/components/OracleShowcase';
 
 // Types
 interface Holding {
@@ -779,6 +780,65 @@ export default function PortfolioLab() {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Oracle Showcase Button */}
+                  <div className="pt-4 border-t border-white/10">
+                    <OracleShowcase
+                      trigger={<span>Have Maven Oracle Explain These Changes</span>}
+                      data={{
+                        type: 'portfolio_comparison',
+                        title: 'Rebalancing Analysis',
+                        current: {
+                          usEquity: currentAllocation.usEquity / 100,
+                          intlEquity: currentAllocation.intl / 100,
+                          bonds: currentAllocation.bonds / 100,
+                          cash: currentAllocation.cash / 100,
+                          crypto: currentAllocation.crypto / 100,
+                        },
+                        proposed: {
+                          usEquity: (targetAllocation?.usEquity || 50) / 100,
+                          intlEquity: (targetAllocation?.intl || 15) / 100,
+                          bonds: (targetAllocation?.bonds || 25) / 100,
+                          cash: (targetAllocation?.cash || 5) / 100,
+                          crypto: (targetAllocation?.crypto || 5) / 100,
+                        },
+                        metrics: [
+                          { label: 'Trades Needed', current: rebalancingTrades.length, good: true },
+                          { label: 'Total Value', current: totalValue, good: true },
+                          { label: 'Risk Level', current: profile.riskTolerance || 'moderate' },
+                        ],
+                        risks: [
+                          { scenario: '2008 Financial Crisis', impact: -45, color: 'bg-red-500' },
+                          { scenario: 'COVID Crash (2020)', impact: -32, color: 'bg-orange-500' },
+                          { scenario: 'Rate Shock (2022)', impact: -22, color: 'bg-amber-500' },
+                          { scenario: 'Normal Volatility', impact: -12, color: 'bg-yellow-500' },
+                        ],
+                        chartData: {
+                          labels: ['Year 1', 'Year 5', 'Year 10', 'Year 15', 'Year 20', 'Year 25', 'Year 30'],
+                          datasets: [
+                            { label: 'Current', data: [totalValue, totalValue * 1.3, totalValue * 1.7, totalValue * 2.2, totalValue * 2.8, totalValue * 3.6, totalValue * 4.6], color: '#6b7280' },
+                            { label: 'Optimized', data: [totalValue, totalValue * 1.35, totalValue * 1.85, totalValue * 2.5, totalValue * 3.4, totalValue * 4.5, totalValue * 6.1], color: '#8b5cf6' },
+                          ]
+                        },
+                        actionItems: rebalancingTrades.map(t => ({
+                          priority: 'medium' as const,
+                          action: `${t.action === 'sell' ? 'Sell' : 'Buy'} $${t.amount.toLocaleString()} of ${t.asset}`,
+                          impact: t.reason
+                        }))
+                      }}
+                      onAnalyze={async () => {
+                        const response = await fetch('/api/chat', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            message: `Analyze these rebalancing trades and explain in plain English why they make sense for my portfolio: ${rebalancingTrades.map(t => `${t.action} ${t.asset} (~$${t.amount}): ${t.reason}`).join('; ')}. Current allocation: US ${currentAllocation.usEquity.toFixed(0)}%, Intl ${currentAllocation.intl.toFixed(0)}%, Bonds ${currentAllocation.bonds.toFixed(0)}%, Cash ${currentAllocation.cash.toFixed(0)}%, Crypto ${currentAllocation.crypto.toFixed(0)}%. Total portfolio: $${totalValue.toLocaleString()}. Give me the ELI5 version of what these changes accomplish and why.`,
+                          })
+                        });
+                        const data = await response.json();
+                        return data.response || 'Unable to generate analysis.';
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
