@@ -177,7 +177,7 @@ export default function RiskQuestionnairePage() {
     const profile = getProfile(score);
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 md:p-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">📊</div>
@@ -266,7 +266,7 @@ export default function RiskQuestionnairePage() {
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         {/* Progress */}
         <div className="mb-8">

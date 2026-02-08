@@ -252,9 +252,9 @@ export default function MonteCarloPage() {
           </button>
         </div>
         
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Parameters Panel */}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-1 lg:col-span-4 space-y-6">
             {/* Basic Info */}
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">📊 Your Situation</h2>
@@ -493,11 +493,11 @@ export default function MonteCarloPage() {
           </div>
           
           {/* Results Panel */}
-          <div className="col-span-8 space-y-6">
+          <div className="col-span-1 lg:col-span-8 space-y-6">
             {results ? (
               <>
                 {/* Success Rate & Key Metrics */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                   <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
                     <div className="text-slate-400 text-sm mb-1">Success Rate</div>
                     <div className={`text-4xl font-bold ${
@@ -540,7 +540,7 @@ export default function MonteCarloPage() {
                 {/* Retirement Milestone Card */}
                 <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-xl border border-purple-500/30 p-6">
                   <h3 className="text-lg font-semibold mb-4">🎯 At Retirement (Age {params.retirementAge})</h3>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                     {/* Balance at Retirement */}
                     <div>
                       <div className="text-slate-400 text-sm mb-1">Portfolio Balance</div>
@@ -757,7 +757,7 @@ export default function MonteCarloPage() {
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-slate-700">
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                       <div>
                         <span className="text-slate-400">Max Drawdown (Median)</span>
                         <div className="font-medium text-red-400">-{(results.maxDrawdownMedian * 100).toFixed(1)}%</div>
@@ -861,7 +861,7 @@ export default function MonteCarloPage() {
                 )}
                 
                 {/* Historical context */}
-                <div className="mt-8 grid grid-cols-3 gap-4 text-left">
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left">
                   <div className="bg-slate-700/30 rounded-lg p-4">
                     <div className="text-2xl mb-2">📈</div>
                     <div className="font-semibold">S&P 500</div>

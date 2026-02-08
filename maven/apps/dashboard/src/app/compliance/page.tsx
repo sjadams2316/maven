@@ -73,7 +73,7 @@ export default function CompliancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -97,7 +97,7 @@ export default function CompliancePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
             <div className="text-2xl font-bold">{stats.total}</div>
             <div className="text-slate-400 text-sm">Total Tasks</div>

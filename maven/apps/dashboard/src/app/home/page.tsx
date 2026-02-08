@@ -357,7 +357,7 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div className="bg-white/5 rounded-xl p-3 text-center">
                   <p className="text-2xl font-bold text-white">$5.3M</p>
                   <p className="text-xs text-gray-500">Total AUM</p>

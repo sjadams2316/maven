@@ -149,7 +149,7 @@ export default function MarketOutlookPage() {
         </div>
         
         {/* Overall Assessment */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
           <div className="col-span-2 bg-gradient-to-br from-slate-800/70 to-slate-900/70 rounded-xl border border-slate-700/50 p-6">
             <div className="flex items-center gap-4 mb-6">
               <div className="text-5xl">
@@ -221,7 +221,7 @@ export default function MarketOutlookPage() {
         </div>
         
         {/* Key Indicators */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
           <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
             <div className="text-slate-400 text-sm">CAPE Ratio</div>
             <div className="text-3xl font-bold">{cape.toFixed(1)}</div>
@@ -361,7 +361,7 @@ export default function MarketOutlookPage() {
         {/* What This Means */}
         <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl border border-blue-500/30 p-6">
           <h3 className="text-lg font-semibold mb-4">💡 What This Means For Your Planning</h3>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <div>
               <h4 className="text-purple-400 font-medium mb-2">Monte Carlo Inputs</h4>
               <p className="text-sm text-slate-400">

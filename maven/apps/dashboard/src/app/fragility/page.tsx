@@ -819,7 +819,7 @@ export default function FragilityPage() {
         {/* Risk Zones */}
         <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 mb-8">
           <h2 className="text-lg font-semibold text-white mb-4">Understanding the Zones</h2>
-          <div className="grid grid-cols-5 gap-2 text-center text-sm">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-2 text-center text-sm">
             <div className="p-3 rounded-lg bg-emerald-950/50 border border-emerald-800/30">
               <div className="text-2xl mb-1">🟢</div>
               <div className="text-emerald-400 font-semibold">0-25</div>

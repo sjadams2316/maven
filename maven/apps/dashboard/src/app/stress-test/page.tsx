@@ -105,9 +105,9 @@ export default function StressTestPage() {
           </div>
         </div>
         
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Allocation Panel */}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-1 lg:col-span-4 space-y-6">
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">📊 Your Allocation</h2>
@@ -203,7 +203,7 @@ export default function StressTestPage() {
           </div>
           
           {/* Scenarios */}
-          <div className="col-span-8 space-y-6">
+          <div className="col-span-1 lg:col-span-8 space-y-6">
             {/* Overview Chart */}
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">Impact Comparison</h2>
@@ -260,7 +260,7 @@ export default function StressTestPage() {
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
                   <div className="bg-slate-700/30 rounded-lg p-4">
                     <div className="text-slate-400 text-sm">Duration</div>
                     <div className="text-xl font-bold">{selectedScenario.durationMonths} months</div>
@@ -301,7 +301,7 @@ export default function StressTestPage() {
                     const impact = calculateScenarioImpact(selectedScenario, allocation);
                     return (
                       <>
-                        <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                           <div>
                             <div className="text-slate-400 text-sm">Return</div>
                             <div className={`text-2xl font-bold ${impact.portfolioReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}>

@@ -194,7 +194,7 @@ export default function RetirementHubPage() {
         </div>
         
         {/* Big Picture Summary */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
           <div className={`rounded-xl border p-6 ${requiredSavingsAnalysis.onTrack 
             ? 'bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-green-500/30' 
             : 'bg-gradient-to-br from-orange-900/30 to-red-900/30 border-orange-500/30'}`}>
@@ -230,9 +230,9 @@ export default function RetirementHubPage() {
           </div>
         </div>
         
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Input Panel */}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-1 lg:col-span-4 space-y-6">
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">👤 Your Situation</h2>
               
@@ -374,12 +374,12 @@ export default function RetirementHubPage() {
           </div>
           
           {/* Results Panel */}
-          <div className="col-span-8 space-y-6">
+          <div className="col-span-1 lg:col-span-8 space-y-6">
             {/* Accumulation Phase */}
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">📈 Accumulation Phase (Now → Retirement)</h2>
               
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-slate-700/30 rounded-lg p-4">
                   <div className="text-slate-400 text-sm">Starting Portfolio</div>
                   <div className="text-xl font-bold">{formatCurrency(portfolioValue)}</div>
@@ -424,7 +424,7 @@ export default function RetirementHubPage() {
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">📉 Distribution Phase (Retirement → End)</h2>
               
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
                 <div className="bg-slate-700/30 rounded-lg p-4">
                   <div className="text-slate-400 text-sm">Starting Balance</div>
                   <div className="text-lg font-bold">{formatCurrency(accumulationResult.projectedAtRetirement)}</div>
@@ -454,7 +454,7 @@ export default function RetirementHubPage() {
               </div>
               
               {/* Outcome Distribution */}
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                 {[
                   { label: 'Worst Case', value: distributionResult.percentiles.p5, color: 'text-red-400' },
                   { label: 'Poor', value: distributionResult.percentiles.p25, color: 'text-orange-400' },
@@ -513,7 +513,7 @@ export default function RetirementHubPage() {
             {/* Quick Links */}
             <div className="bg-slate-800/30 rounded-xl border border-slate-700/30 p-6">
               <h3 className="text-lg font-semibold mb-4">🔗 Deep Dive Tools</h3>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 {[
                   { href: '/monte-carlo', label: 'Monte Carlo', icon: '🎲', desc: '1000+ simulations' },
                   { href: '/safe-withdrawal', label: 'Safe Withdrawal', icon: '📊', desc: 'Historical SWR' },

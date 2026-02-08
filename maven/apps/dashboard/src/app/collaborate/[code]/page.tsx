@@ -409,7 +409,7 @@ export default function CollaborativePlanning() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-5xl mx-auto space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-[#12121a] border border-white/10 rounded-xl p-4">
                 <div className="text-sm text-gray-400 mb-1">Portfolio at Retirement</div>
                 <div className="text-2xl font-bold text-white">{fmt(projection.portfolioAtRetirement)}</div>

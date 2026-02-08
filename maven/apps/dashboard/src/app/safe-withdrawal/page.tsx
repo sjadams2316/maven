@@ -85,9 +85,9 @@ export default function SafeWithdrawalPage() {
           </div>
         </div>
         
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Controls */}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-1 lg:col-span-4 space-y-6">
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
               <h2 className="text-lg font-semibold mb-4">📊 Your Situation</h2>
               
@@ -190,9 +190,9 @@ export default function SafeWithdrawalPage() {
           </div>
           
           {/* Results */}
-          <div className="col-span-8 space-y-6">
+          <div className="col-span-1 lg:col-span-8 space-y-6">
             {/* Historical SWR Summary */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
                 <div className="text-slate-400 text-sm">Worst Historical</div>
                 <div className="text-2xl font-bold text-red-400">
@@ -275,7 +275,7 @@ export default function SafeWithdrawalPage() {
                 The order of returns matters enormously. Getting bad returns early in retirement is much worse than late.
               </p>
               
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
                 <div className={`bg-slate-700/30 rounded-lg p-4 ${sequenceAnalysis.worstCase.survived ? '' : 'border border-red-500/50'}`}>
                   <div className="text-slate-400 text-sm">Worst Sequence</div>
                   <div className={`text-xl font-bold ${sequenceAnalysis.worstCase.survived ? 'text-yellow-400' : 'text-red-400'}`}>

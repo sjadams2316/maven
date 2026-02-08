@@ -211,7 +211,7 @@ export default function FundXrayPage() {
               {/* Performance */}
               <div className="mt-6">
                 <h3 className="text-sm font-medium text-gray-400 mb-3">Performance</h3>
-                <div className="grid grid-cols-5 gap-2 text-center">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-2 text-center">
                   {[
                     { label: 'YTD', value: fundData.performance.ytd },
                     { label: '1Y', value: fundData.performance.oneYear },

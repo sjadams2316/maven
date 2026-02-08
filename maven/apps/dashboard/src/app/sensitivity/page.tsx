@@ -116,7 +116,7 @@ export default function SensitivityPage() {
         </div>
         
         {/* Base Case Summary */}
-        <div className="grid grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4 mb-8">
           <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
             <div className="text-slate-400 text-sm">Portfolio</div>
             <div className="text-xl font-bold">{formatCurrency(params.portfolio)}</div>

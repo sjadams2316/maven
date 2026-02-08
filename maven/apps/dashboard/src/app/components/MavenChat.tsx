@@ -852,7 +852,7 @@ What's on your mind?`;
 
         {/* Context Bar */}
         {showContext && profile && (
-          <div className="px-6 py-3 bg-white/[0.02] border-b border-white/5 flex items-center gap-6 text-sm">
+          <div className="px-4 md:px-6 py-3 bg-white/[0.02] border-b border-white/5 flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <span className="text-emerald-400">💰</span>
               <span>Net Worth: <strong className="text-white">${calculateNetWorth(profile).toLocaleString()}</strong></span>
@@ -860,13 +860,14 @@ What's on your mind?`;
             {profile.riskTolerance && (
               <div className="flex items-center gap-2 text-gray-400">
                 <span>📊</span>
-                <span>{profile.riskTolerance} Risk</span>
+                <span className="hidden sm:inline">{profile.riskTolerance} Risk</span>
+                <span className="sm:hidden">{profile.riskTolerance}</span>
               </div>
             )}
             {countHoldings(profile) > 0 && (
               <div className="flex items-center gap-2 text-gray-400">
                 <span>📈</span>
-                <span>{countHoldings(profile)} holdings</span>
+                <span>{countHoldings(profile)} <span className="hidden sm:inline">holdings</span></span>
               </div>
             )}
           </div>

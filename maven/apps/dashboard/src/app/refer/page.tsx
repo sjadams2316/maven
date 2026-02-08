@@ -51,7 +51,7 @@ export default function ReferPage() {
         </div>
         
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-[#12121a] border border-white/10 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-white">{totalReferred}</p>
             <p className="text-sm text-gray-500">Referred</p>

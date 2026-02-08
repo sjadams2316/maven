@@ -153,7 +153,7 @@ export default function AlertSettingsPage() {
   const categories = [...new Set(settings.map(s => s.category))];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -174,7 +174,7 @@ export default function AlertSettingsPage() {
         {/* Global Settings */}
         <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">Notification Channels</h2>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
               <div>
                 <div className="font-medium">📧 Email</div>
