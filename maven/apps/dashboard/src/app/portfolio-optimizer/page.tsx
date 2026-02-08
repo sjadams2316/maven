@@ -373,53 +373,58 @@ export default function PortfolioOptimizerPage() {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Demo Intro Modal */}
+        {/* Demo Intro Modal - Lead with VALUE not features */}
         {showDemoIntro && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-gray-900 to-indigo-950 rounded-2xl max-w-lg w-full p-8 border border-indigo-500/30 shadow-2xl shadow-indigo-500/20">
               <div className="text-center">
-                <div className="text-6xl mb-4">🔮</div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-xs font-medium mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  Institutional Preview
+                {/* The Hook - Money Found */}
+                <div className="mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 mb-4">
+                    <span className="text-4xl">💰</span>
+                  </div>
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    We found <span className="text-emerald-400">$4,185</span>
+                  </h2>
+                  <p className="text-gray-400">
+                    Hidden in this sample portfolio. Tax savings, fee reductions, and optimization opportunities.
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Portfolio Optimizer Pro</h2>
-                <p className="text-gray-400 mb-6">
-                  A preview of what Maven delivers with full Morningstar data integration. 
-                  This is the future of wealth management — coming soon.
-                </p>
                 
-                <div className="grid grid-cols-2 gap-3 mb-6 text-left">
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-indigo-400 font-medium">🔍 X-Ray Vision</div>
-                    <div className="text-xs text-gray-500">See through funds to actual holdings</div>
-                  </div>
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-indigo-400 font-medium">📊 Factor Analysis</div>
-                    <div className="text-xs text-gray-500">Understand your return drivers</div>
-                  </div>
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-indigo-400 font-medium">🌪️ Stress Testing</div>
-                    <div className="text-xs text-gray-500">See how you'd fare in 2008</div>
-                  </div>
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-indigo-400 font-medium">💰 Tax Alpha</div>
-                    <div className="text-xs text-gray-500">Find hidden tax savings</div>
+                {/* Value Breakdown */}
+                <div className="bg-black/30 rounded-xl p-4 mb-6">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-emerald-400">$3,700</div>
+                      <div className="text-xs text-gray-500">Tax Savings</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-400">$485</div>
+                      <div className="text-xs text-gray-500">Fee Reduction</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-purple-400">7.2%</div>
+                      <div className="text-xs text-gray-500">Hidden Risk</div>
+                    </div>
                   </div>
                 </div>
+                
+                <p className="text-sm text-gray-500 mb-6">
+                  This is what Maven does. Let us show you how.
+                </p>
                 
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDemoIntro(false)}
                     className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
                   >
-                    Explore Manually
+                    I'll Explore
                   </button>
                   <button
                     onClick={startDemo}
-                    className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2"
                   >
-                    <span>▶️</span> Watch Demo Tour
+                    <span>✨</span> Show Me The Money
                   </button>
                 </div>
               </div>
