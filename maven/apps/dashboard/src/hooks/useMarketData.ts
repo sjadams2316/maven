@@ -163,7 +163,7 @@ export function useTaoPrice() {
 }
 
 // Hook for a portfolio of holdings
-export function usePortfolioPrices(holdings: { symbol: string; shares: number }[]) {
+export function usePortfolioPrices(holdings: { symbol: string; shares: number; account?: string }[]) {
   const symbols = holdings.map(h => h.symbol);
   const { data, loading, error, refresh } = useMarketData(symbols);
   
