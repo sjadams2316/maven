@@ -387,7 +387,7 @@ export default function TaxHarvestingPage() {
                 ],
                 actionItems: opportunities.slice(0, 5).map(opp => ({
                   priority: opp.unrealizedLoss > 5000 ? 'high' as const : opp.unrealizedLoss > 1000 ? 'medium' as const : 'low' as const,
-                  action: `Harvest ${opp.symbol} (${formatCurrency(opp.unrealizedLoss)} loss)`,
+                  action: `Harvest ${opp.ticker} (${formatCurrency(opp.unrealizedLoss)} loss)`,
                   impact: `Save ~${formatCurrency(Math.abs(opp.unrealizedLoss) * (taxBracket / 100 + stateTaxRate / 100))} in taxes`
                 })),
                 insights: [
