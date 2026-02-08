@@ -12,6 +12,25 @@ export default function OraclePage() {
   const { profile, isLoading } = useUserProfile();
   const [insights, setInsights] = useState<any[]>([]);
 
+  // Clear any stale chat history on page load (fresh start)
+  useEffect(() => {
+    // Only clear if there's corrupted/old data
+    const savedHistory = localStorage.getItem('maven_chat_history');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        // If history is very old or malformed, clear it
+        if (!Array.isArray(parsed) || parsed.length > 50) {
+          localStorage.removeItem('maven_chat_history');
+          localStorage.removeItem('maven_conversation_id');
+        }
+      } catch {
+        localStorage.removeItem('maven_chat_history');
+        localStorage.removeItem('maven_conversation_id');
+      }
+    }
+  }, []);
+
   // Generate insights based on profile
   useEffect(() => {
     if (profile) {
@@ -36,7 +55,7 @@ export default function OraclePage() {
               </h1>
               <div className="flex items-center gap-4 mt-2">
                 <p className="text-gray-400">
-                  Your AI wealth partner. I see everything. I know everything. Ask me anything.
+                  Your AI wealth partner — ask me anything about your finances.
                 </p>
                 <ToolExplainer toolName="oracle" />
               </div>
@@ -44,7 +63,7 @@ export default function OraclePage() {
             
             <MavenChat 
               userProfile={profile} 
-              mode="embedded" 
+              mode="fullscreen" 
               showContext={true}
             />
           </div>

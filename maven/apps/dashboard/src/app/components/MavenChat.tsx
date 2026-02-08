@@ -655,7 +655,7 @@ What's on your mind?`;
 
   // Embedded or Fullscreen mode
   const containerClass = mode === 'fullscreen' 
-    ? 'h-screen w-full bg-[#0a0a12]'
+    ? 'h-[calc(100vh-200px)] min-h-[500px] w-full bg-gradient-to-b from-[#12121f] to-[#0a0a14] border border-white/10 rounded-2xl'
     : 'h-[700px] w-full bg-gradient-to-b from-[#12121f] to-[#0a0a14] border border-white/10 rounded-2xl';
 
   return (
