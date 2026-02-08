@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "@/providers/Providers";
 import DemoBanner from "./components/DemoBanner";
+import { KeyboardShortcuts } from "./components/KeyboardShortcuts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body className="antialiased">
         <Providers>
           <DemoBanner />
+          <KeyboardShortcuts />
           {children}
         </Providers>
         <Analytics />

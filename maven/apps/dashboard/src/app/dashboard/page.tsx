@@ -11,6 +11,7 @@ import { useFundProfiles, categorizeWithProfiles } from '@/lib/useFundProfiles';
 import { useUserProfile } from '@/providers/UserProvider';
 import { Term } from '../components/InfoTooltip';
 import { ThesisInsight } from '../components/ThesisInsight';
+import { QuickStartTips } from '../components/QuickStartTips';
 
 interface MarketData {
   timestamp: string;
@@ -1513,6 +1514,9 @@ export default function Dashboard() {
 
       {/* Maven AI Chat */}
       <MavenChat userProfile={profile ? { firstName: profile.firstName, riskTolerance: profile.riskTolerance } : undefined} />
+      
+      {/* Quick Start Tips for new users */}
+      <QuickStartTips />
     </div>
   );
 }
