@@ -661,31 +661,8 @@ export default function Dashboard() {
         )}
 
         {/* ==================== ADVISOR MODE BANNER ==================== */}
-        <a 
-          href="/advisor"
-          className="block bg-gradient-to-r from-amber-900/30 via-orange-900/20 to-amber-900/30 border border-amber-500/30 hover:border-amber-400/50 rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 transition group"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20">
-                👔
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-white group-hover:text-amber-300 transition">Advisor Dashboard</h3>
-                  <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Pro</span>
-                </div>
-                <p className="text-sm text-gray-400">Manage clients, curate insights, prep meetings</p>
-              </div>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 text-amber-400 group-hover:text-amber-300">
-              <span className="text-sm">Enter Advisor Mode</span>
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </div>
-          </div>
-        </a>
+        {/* Hidden from client view - advisors access via advisor.mavenwealth.ai or direct /advisor URL */}
+        {/* TODO: Add role-based check when Clerk organizations are set up */}
 
         {/* ==================== PRIMARY TOOLS ==================== */}
         <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">🎯 Primary Tools</h3>
@@ -742,19 +719,22 @@ export default function Dashboard() {
             </div>
           </a>
           
-          {/* Tax-Loss Harvester */}
+          {/* Retirement Hub - Featured */}
           <a 
-            href="/tax-harvesting"
-            className="bg-[#12121a] border border-white/10 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+            href="/retirement"
+            className="bg-gradient-to-br from-emerald-900/40 to-teal-900/30 border border-emerald-500/30 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group relative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                🌾
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/30">
+                  🎯
+                </div>
+                <span className="text-xs px-2 py-1 bg-emerald-500/30 text-emerald-300 rounded-full">Plan</span>
               </div>
-              <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full">Tax</span>
+              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Retirement Hub</h4>
+              <p className="text-xs sm:text-sm text-gray-400">Monte Carlo + Planning</p>
             </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-amber-300 transition-colors">Tax-Loss Harvester</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Turn losses into savings</p>
           </a>
           
           {/* Financial Snapshot / Build Profile */}
