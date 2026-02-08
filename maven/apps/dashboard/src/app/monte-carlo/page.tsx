@@ -458,7 +458,7 @@ export default function MonteCarloPage() {
           <div className="col-span-8 space-y-6">
             {results ? (
               <>
-                {/* Success Rate */}
+                {/* Success Rate & Key Metrics */}
                 <div className="grid grid-cols-4 gap-4">
                   <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
                     <div className="text-slate-400 text-sm mb-1">Success Rate</div>
@@ -496,6 +496,76 @@ export default function MonteCarloPage() {
                       {formatCurrency(results.percentiles.p95)}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">95th percentile</div>
+                  </div>
+                </div>
+                
+                {/* Retirement Milestone Card */}
+                <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-xl border border-purple-500/30 p-6">
+                  <h3 className="text-lg font-semibold mb-4">🎯 At Retirement (Age {params.retirementAge})</h3>
+                  <div className="grid grid-cols-4 gap-4">
+                    {/* Balance at Retirement */}
+                    <div>
+                      <div className="text-slate-400 text-sm mb-1">Portfolio Balance</div>
+                      <div className="text-2xl font-bold text-purple-300">
+                        {(() => {
+                          const retirementYear = params.retirementAge - params.currentAge;
+                          const retirementData = results.yearlyPercentiles.find(y => y.age === params.retirementAge);
+                          return retirementData ? formatCurrency(retirementData.p50) : '—';
+                        })()}
+                      </div>
+                      <div className="text-xs text-slate-500">Median projection</div>
+                    </div>
+                    
+                    {/* Social Security */}
+                    <div>
+                      <div className="text-slate-400 text-sm mb-1">Social Security</div>
+                      <div className="text-2xl font-bold text-emerald-400">
+                        {formatCurrency(params.socialSecurityMonthly * 12)}/yr
+                      </div>
+                      <div className="text-xs text-slate-500">Starting age {params.socialSecurityAge}</div>
+                    </div>
+                    
+                    {/* Retirement Income */}
+                    <div>
+                      <div className="text-slate-400 text-sm mb-1">Target Spending</div>
+                      <div className="text-2xl font-bold text-white">
+                        {formatCurrency(params.annualSpendingRetirement)}/yr
+                      </div>
+                      <div className="text-xs text-slate-500">{formatCurrency(params.annualSpendingRetirement / 12)}/month</div>
+                    </div>
+                    
+                    {/* Initial Withdrawal Rate */}
+                    <div>
+                      <div className="text-slate-400 text-sm mb-1">Initial Withdrawal Rate</div>
+                      {(() => {
+                        const retirementData = results.yearlyPercentiles.find(y => y.age === params.retirementAge);
+                        const withdrawalRate = retirementData ? (params.annualSpendingRetirement / retirementData.p50) * 100 : 0;
+                        return (
+                          <>
+                            <div className={`text-2xl font-bold ${
+                              withdrawalRate <= 3.5 ? 'text-green-400' :
+                              withdrawalRate <= 4 ? 'text-yellow-400' : 'text-orange-400'
+                            }`}>
+                              {withdrawalRate.toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {withdrawalRate <= 3.5 ? 'Conservative' :
+                               withdrawalRate <= 4 ? 'Traditional' : 'Aggressive'}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-purple-500/20">
+                    <Link 
+                      href="/social-security"
+                      className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-2"
+                    >
+                      <span>🏛️</span>
+                      <span>Optimize your Social Security claiming strategy →</span>
+                    </Link>
                   </div>
                 </div>
                 
