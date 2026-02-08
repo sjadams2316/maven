@@ -428,31 +428,71 @@ What's on your mind?`;
   // Voice: Speech-to-Text (Recording)
   const startRecording = async () => {
     try {
+      console.log('Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('Microphone access granted, stream tracks:', stream.getTracks().length);
       
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
-      });
+      // Try different audio formats in order of preference
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/wav',
+        '' // Default fallback
+      ];
+      
+      let selectedMimeType = '';
+      for (const mimeType of mimeTypes) {
+        if (mimeType === '' || MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
+      console.log('Selected mime type:', selectedMimeType || 'default');
+      
+      const mediaRecorderOptions: MediaRecorderOptions = selectedMimeType 
+        ? { mimeType: selectedMimeType }
+        : {};
+        
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
+      console.log('MediaRecorder created, actual mimeType:', mediaRecorder.mimeType);
       
       audioChunksRef.current = [];
       
       mediaRecorder.ondataavailable = (event) => {
+        console.log('Data available:', event.data.size, 'bytes');
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
       
       mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, chunks:', audioChunksRef.current.length);
         stream.getTracks().forEach(track => track.stop());
         
-        if (audioChunksRef.current.length === 0) return;
+        if (audioChunksRef.current.length === 0) {
+          console.warn('No audio chunks captured');
+          return;
+        }
         
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const totalSize = audioChunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0);
+        console.log('Total audio size:', totalSize, 'bytes');
+        
+        // Use the actual mimeType from the recorder
+        const audioBlob = new Blob(audioChunksRef.current, { 
+          type: mediaRecorder.mimeType || 'audio/webm' 
+        });
         await transcribeAudio(audioBlob);
       };
       
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+      };
+      
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(100); // Collect data every 100ms
+      mediaRecorder.start(250); // Collect data every 250ms for better chunks
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -461,9 +501,18 @@ What's on your mind?`;
         setRecordingTime(t => t + 1);
       }, 1000);
       
+      console.log('Recording started');
+      
     } catch (error) {
       console.error('Recording error:', error);
-      alert('Unable to access microphone. Please check your permissions.');
+      const err = error as Error;
+      if (err.name === 'NotAllowedError') {
+        alert('Microphone access denied. Please allow microphone access in your browser settings.');
+      } else if (err.name === 'NotFoundError') {
+        alert('No microphone found. Please connect a microphone and try again.');
+      } else {
+        alert('Unable to access microphone: ' + err.message);
+      }
     }
   };
 
@@ -484,8 +533,8 @@ What's on your mind?`;
       setIsTranscribing(true);
       
       // Check if we have audio data
-      if (audioBlob.size < 1000) {
-        console.warn('Audio too short:', audioBlob.size, 'bytes');
+      if (audioBlob.size < 500) {
+        console.warn('Audio too short:', audioBlob.size, 'bytes - need at least 500 bytes');
         setIsTranscribing(false);
         return;
       }
@@ -493,8 +542,17 @@ What's on your mind?`;
       console.log('Transcribing audio:', audioBlob.size, 'bytes, type:', audioBlob.type);
       
       const formData = new FormData();
-      // Use proper file extension based on mime type
-      const ext = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
+      // Determine file extension from mime type
+      let ext = 'webm';
+      if (audioBlob.type.includes('mp4') || audioBlob.type.includes('m4a')) {
+        ext = 'mp4';
+      } else if (audioBlob.type.includes('ogg')) {
+        ext = 'ogg';
+      } else if (audioBlob.type.includes('wav')) {
+        ext = 'wav';
+      }
+      
+      console.log('Sending with extension:', ext);
       formData.append('audio', audioBlob, `recording.${ext}`);
       
       const response = await fetch('/api/transcribe', {

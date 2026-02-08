@@ -30,14 +30,44 @@ export async function POST(request: NextRequest) {
       size: audioFile.size,
     });
 
+    // Check minimum size
+    if (audioFile.size < 500) {
+      console.error('Whisper: Audio file too small:', audioFile.size);
+      return NextResponse.json(
+        { error: 'Audio file too small', details: 'Please record for longer' },
+        { status: 400 }
+      );
+    }
+
     // Convert to buffer and create a proper file for the API
     const bytes = await audioFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
+    // Determine correct filename/type for Whisper
+    // Whisper accepts: flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm
+    let filename = audioFile.name || 'recording.webm';
+    let mimeType = audioFile.type || 'audio/webm';
+    
+    // Ensure we have a valid extension
+    if (!filename.includes('.')) {
+      const extMap: Record<string, string> = {
+        'audio/webm': 'webm',
+        'audio/mp4': 'mp4',
+        'audio/m4a': 'm4a',
+        'audio/ogg': 'ogg',
+        'audio/wav': 'wav',
+        'audio/mpeg': 'mp3',
+      };
+      const ext = extMap[mimeType] || 'webm';
+      filename = `recording.${ext}`;
+    }
+    
+    console.log('Whisper: Sending as', filename, 'type:', mimeType);
+    
     // Forward to OpenAI Whisper API
     const whisperFormData = new FormData();
-    const blob = new Blob([buffer], { type: audioFile.type || 'audio/webm' });
-    whisperFormData.append('file', blob, audioFile.name || 'recording.webm');
+    const blob = new Blob([buffer], { type: mimeType });
+    whisperFormData.append('file', blob, filename);
     whisperFormData.append('model', 'whisper-1');
     whisperFormData.append('language', 'en');
 
