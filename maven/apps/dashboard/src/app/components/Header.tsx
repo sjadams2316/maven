@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
+import { openOracle } from '@/lib/open-oracle';
 
 interface HeaderProps {
   profile?: {
@@ -69,24 +70,34 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
           {/* Navigation */}
           <nav className="hidden sm:flex items-center gap-6">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm transition ${
-                  pathname === link.href || pathname?.startsWith(link.href + '/')
-                    ? 'text-indigo-400 font-medium'
-                    : link.highlight
-                    ? 'text-amber-400 hover:text-amber-300'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {link.label}
-                {link.highlight && (
-                  <span className="ml-1 text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
-                    Pro
-                  </span>
-                )}
-              </Link>
+              link.href === '/oracle' ? (
+                <button
+                  key={link.href}
+                  onClick={() => openOracle()}
+                  className="text-sm transition text-purple-400 hover:text-purple-300"
+                >
+                  🔮 {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm transition ${
+                    pathname === link.href || pathname?.startsWith(link.href + '/')
+                      ? 'text-indigo-400 font-medium'
+                      : link.highlight
+                      ? 'text-amber-400 hover:text-amber-300'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {link.label}
+                  {link.highlight && (
+                    <span className="ml-1 text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
+                      Pro
+                    </span>
+                  )}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -136,17 +147,27 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
         {/* Mobile Navigation */}
         <nav className="sm:hidden flex items-center gap-4 mt-3 overflow-x-auto pb-1">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm whitespace-nowrap transition ${
-                pathname === link.href
-                  ? 'text-indigo-400 font-medium'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {link.label}
-            </Link>
+            link.href === '/oracle' ? (
+              <button
+                key={link.href}
+                onClick={() => openOracle()}
+                className="text-sm whitespace-nowrap transition text-purple-400 hover:text-purple-300"
+              >
+                🔮 Oracle
+              </button>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-sm whitespace-nowrap transition ${
+                  pathname === link.href
+                    ? 'text-indigo-400 font-medium'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {link.label}
+              </Link>
+            )
           ))}
         </nav>
       </div>

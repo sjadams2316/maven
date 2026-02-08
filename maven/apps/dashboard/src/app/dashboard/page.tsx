@@ -12,6 +12,7 @@ import { useUserProfile } from '@/providers/UserProvider';
 import { Term } from '../components/InfoTooltip';
 import { ThesisInsight } from '../components/ThesisInsight';
 import { QuickStartTips } from '../components/QuickStartTips';
+import { openOracle } from '@/lib/open-oracle';
 
 interface MarketData {
   timestamp: string;
@@ -437,12 +438,12 @@ export default function Dashboard() {
                   <h3 className="font-semibold text-white">Maven Oracle Suggestions</h3>
                   <p className="text-xs text-gray-400">Personalized insights based on your portfolio</p>
                 </div>
-                <a 
-                  href="/oracle"
+                <button 
+                  onClick={() => openOracle()}
                   className="ml-auto px-3 py-1.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 text-sm rounded-lg transition"
                 >
                   Open Oracle →
-                </a>
+                </button>
               </div>
               
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -451,7 +452,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       localStorage.setItem('maven_chat_prompt', 'My crypto allocation is over 15%. Should I rebalance or is this okay given my goals?');
-                      router.push('/oracle');
+                      openOracle();
                     }}
                     className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-orange-500/30 rounded-xl transition group"
                   >
@@ -468,7 +469,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       localStorage.setItem('maven_chat_prompt', 'I have very little bond exposure. Should I add fixed income for my risk profile?');
-                      router.push('/oracle');
+                      openOracle();
                     }}
                     className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/30 rounded-xl transition group"
                   >
@@ -485,7 +486,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       localStorage.setItem('maven_chat_prompt', 'Scan my portfolio for tax-loss harvesting opportunities');
-                      router.push('/oracle');
+                      openOracle();
                     }}
                     className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/30 rounded-xl transition group"
                   >
@@ -502,7 +503,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       localStorage.setItem('maven_chat_prompt', 'My largest position is over 20% of my portfolio. Analyze my concentration risk.');
-                      router.push('/oracle');
+                      openOracle();
                     }}
                     className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-500/30 rounded-xl transition group"
                   >
@@ -519,7 +520,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => {
                     localStorage.setItem('maven_chat_prompt', 'Analyze my portfolio and give me 3 actionable recommendations');
-                    router.push('/oracle');
+                    openOracle();
                   }}
                   className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/30 rounded-xl transition group"
                 >
@@ -635,9 +636,9 @@ export default function Dashboard() {
             </div>
 
             {/* Oracle - The Central Intelligence */}
-            <a 
-              href="/oracle"
-              className="block bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-purple-600/20 border border-violet-500/30 hover:border-violet-400/50 rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8 transition group"
+            <button 
+              onClick={() => openOracle()}
+              className="w-full text-left bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-purple-600/20 border border-violet-500/30 hover:border-violet-400/50 rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8 transition group"
             >
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0">
@@ -658,7 +659,7 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-            </a>
+            </button>
           </>
         )}
 
@@ -671,9 +672,9 @@ export default function Dashboard() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           
           {/* Maven Oracle - Featured */}
-          <a 
-            href="/oracle"
-            className="bg-gradient-to-br from-violet-900/50 to-purple-900/30 border border-violet-500/30 hover:border-violet-400/50 hover:shadow-lg hover:shadow-violet-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group relative overflow-hidden"
+          <button 
+            onClick={() => openOracle()}
+            className="text-left bg-gradient-to-br from-violet-900/50 to-purple-900/30 border border-violet-500/30 hover:border-violet-400/50 hover:shadow-lg hover:shadow-violet-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-2xl" />
             <div className="relative">
@@ -686,7 +687,7 @@ export default function Dashboard() {
               <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-violet-300 transition-colors">Maven Oracle</h4>
               <p className="text-xs sm:text-sm text-gray-400">Ask anything</p>
             </div>
-          </a>
+          </button>
           
           {/* Portfolio Lab */}
           <a 
@@ -843,15 +844,9 @@ export default function Dashboard() {
               </a>
               
               {/* Roth Converter */}
-              <a 
-                href="/oracle"
-                onClick={(e) => {
-                  e.preventDefault();
-                  localStorage.setItem('maven_chat_prompt', 'Should I do a Roth conversion this year? Analyze my situation.');
-                  localStorage.setItem('maven_chat_autosubmit', 'true');
-                  router.push('/oracle');
-                }}
-                className="bg-[#12121a] border border-white/10 hover:border-pink-500/50 hover:shadow-lg hover:shadow-pink-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              <button 
+                onClick={() => openOracle('Should I do a Roth conversion this year? Analyze my situation.', true)}
+                className="text-left bg-[#12121a] border border-white/10 hover:border-pink-500/50 hover:shadow-lg hover:shadow-pink-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
               >
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
@@ -861,18 +856,12 @@ export default function Dashboard() {
                 </div>
                 <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-pink-300 transition-colors">Roth Converter</h4>
                 <p className="text-xs sm:text-sm text-gray-500">Optimize conversions</p>
-              </a>
+              </button>
               
               {/* Rebalancing */}
-              <a 
-                href="/oracle"
-                onClick={(e) => {
-                  e.preventDefault();
-                  localStorage.setItem('maven_chat_prompt', 'Analyze my current allocation and suggest rebalancing trades');
-                  localStorage.setItem('maven_chat_autosubmit', 'true');
-                  router.push('/oracle');
-                }}
-                className="bg-[#12121a] border border-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              <button 
+                onClick={() => openOracle('Analyze my current allocation and suggest rebalancing trades', true)}
+                className="text-left bg-[#12121a] border border-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
               >
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
@@ -882,7 +871,7 @@ export default function Dashboard() {
                 </div>
                 <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-purple-300 transition-colors">Rebalancing</h4>
                 <p className="text-xs sm:text-sm text-gray-500">Get back on target</p>
-              </a>
+              </button>
               
               {/* Investment Thesis */}
               <a 
@@ -915,15 +904,9 @@ export default function Dashboard() {
               </a>
               
               {/* Risk Analysis */}
-              <a 
-                href="/oracle"
-                onClick={(e) => {
-                  e.preventDefault();
-                  localStorage.setItem('maven_chat_prompt', 'What are my biggest portfolio risks right now?');
-                  localStorage.setItem('maven_chat_autosubmit', 'true');
-                  router.push('/oracle');
-                }}
-                className="bg-[#12121a] border border-white/10 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              <button 
+                onClick={() => openOracle('What are my biggest portfolio risks right now?', true)}
+                className="text-left bg-[#12121a] border border-white/10 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
               >
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-600/30 border border-red-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
@@ -933,7 +916,7 @@ export default function Dashboard() {
                 </div>
                 <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-red-300 transition-colors">Risk Analysis</h4>
                 <p className="text-xs sm:text-sm text-gray-500">Spot vulnerabilities</p>
-              </a>
+              </button>
               
               {/* Link Accounts */}
               <a 
