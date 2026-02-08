@@ -64,7 +64,7 @@ export default function RetirementHubPage() {
         intlEquity: 0,
         bonds: (100 - stockAllocation - 5) / 100,
         reits: 0,
-        commodities: 0,
+        gold: 0,
         crypto: 0,
         cash: 0.05,
       },
