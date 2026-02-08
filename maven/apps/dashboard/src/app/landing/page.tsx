@@ -2,10 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues with framer-motion
+const OracleWelcome = dynamic(() => import('../components/OracleWelcome'), { ssr: false });
 
 export default function LandingPage() {
   const router = useRouter();
   const [marketData, setMarketData] = useState<any>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     fetch('/api/market-data')
@@ -13,8 +18,31 @@ export default function LandingPage() {
       .then(data => setMarketData(data))
       .catch(() => {});
   }, []);
+  
+  const handleEnterDemo = () => {
+    // Check if user has seen the welcome before (in this session)
+    const hasSeenWelcome = sessionStorage.getItem('maven_seen_welcome');
+    
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+    } else {
+      router.push('/dashboard');
+    }
+  };
+  
+  const handleWelcomeComplete = () => {
+    sessionStorage.setItem('maven_seen_welcome', 'true');
+    setShowWelcome(false);
+    router.push('/dashboard');
+  };
 
   return (
+    <>
+      {/* Epic Welcome Experience */}
+      {showWelcome && (
+        <OracleWelcome onComplete={handleWelcomeComplete} />
+      )}
+      
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
@@ -62,7 +90,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={handleEnterDemo}
                 className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-semibold text-lg rounded-xl transition transform hover:scale-105 flex items-center gap-2"
               >
                 Enter Maven
@@ -258,5 +286,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

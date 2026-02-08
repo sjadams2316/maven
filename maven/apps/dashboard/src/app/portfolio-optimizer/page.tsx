@@ -40,39 +40,31 @@ interface DemoStep {
 }
 
 const ENHANCED_DEMO_TOUR: DemoStep[] = [
-  // Overview Tab - Multiple steps
-  { tab: 'overview', elementId: 'portfolio-stats', action: 'spotlight', message: '📊 Your Portfolio at a Glance', subMessage: '$161K across 7 funds with Morningstar data', duration: 3500 },
-  { tab: 'overview', elementId: 'voo-row', action: 'cursor-move', message: '⭐ VOO: 5-Star Fund', subMessage: 'Ultra-low 0.03% expense ratio — best in class', duration: 3500 },
-  { tab: 'overview', elementId: 'arkk-row', action: 'hover', message: '📉 ARKK: Down 63%', subMessage: 'But this loss is actually an opportunity...', duration: 3500 },
-  { tab: 'overview', elementId: 'insights-recommendations', action: 'spotlight', message: '💡 AI-Powered Insights', subMessage: 'Maven identifies actionable opportunities', duration: 3000 },
+  // 🎬 ACT 1: THE HOOK - Lead with money! Show immediate value
+  { tab: 'tax', elementId: 'tax-loss-section', action: 'spotlight', message: '💰 Found: $3,700 in Tax Savings', subMessage: 'Maven scanned your portfolio and found hidden money', duration: 4000 },
+  { tab: 'tax', elementId: 'arkk-harvest', action: 'cursor-move', message: '🎉 Turn This Loss Into Cash', subMessage: 'ARKK is down 63% — but that\'s $3,700 back in your pocket', duration: 4500 },
+  { tab: 'tax', elementId: 'total-tax-alpha', action: 'spotlight', message: '✨ Real Money. Not Theory.', subMessage: 'Tax-loss harvesting that actually works', duration: 3500 },
   
-  // X-Ray Holdings Tab
-  { tab: 'holdings', elementId: 'overlap-alert', action: 'spotlight', message: '⚠️ Hidden Concentration Detected!', subMessage: 'Apple appears in 4 different funds', duration: 4000 },
-  { tab: 'holdings', elementId: 'aapl-row', action: 'cursor-move', message: '🍎 Apple: 7.2% of Portfolio', subMessage: 'A 10% drop in Apple costs you ~$1,160', duration: 4000 },
-  { tab: 'holdings', elementId: 'holdings-table', action: 'scroll', message: '🔍 See Through Your Funds', subMessage: 'Know exactly what stocks you own', duration: 3000 },
+  // 🎬 ACT 2: MORE VALUE - Fee savings
+  { tab: 'optimize', elementId: 'fee-reduction', action: 'spotlight', message: '💵 Save $485/Year in Fees', subMessage: 'Same investments, lower costs — it adds up', duration: 4000 },
+  { tab: 'optimize', elementId: 'rebalance-trades', action: 'cursor-move', message: '📊 One-Click Optimization', subMessage: 'Smart trades to improve your portfolio', duration: 3500 },
   
-  // Sectors Tab
-  { tab: 'sectors', elementId: 'tech-sector', action: 'spotlight', message: '🖥️ Tech Concentration: 42%', subMessage: 'vs S&P 500 weight of 29% — overweight alert', duration: 4000 },
-  { tab: 'sectors', elementId: 'geo-breakdown', action: 'cursor-move', message: '🌍 Geographic Exposure', subMessage: 'Only 8% international — consider diversifying', duration: 3500 },
+  // 🎬 ACT 3: THE MAGIC - X-Ray vision (reframed as superpower, not warning)
+  { tab: 'holdings', elementId: 'holdings-table', action: 'spotlight', message: '🔮 X-Ray Vision for Your Funds', subMessage: 'See exactly what you own inside every fund', duration: 4000 },
+  { tab: 'holdings', elementId: 'aapl-row', action: 'cursor-move', message: '🍎 Example: You Own Apple 4 Ways', subMessage: 'Hidden inside VOO, QQQ, and more — 7.2% total', duration: 4000 },
   
-  // Factor Analysis Tab
-  { tab: 'factors', elementId: 'factor-bars', action: 'spotlight', message: '📈 Factor Exposures Explained', subMessage: 'Growth tilt from QQQ, quality from VOO', duration: 4000 },
-  { tab: 'factors', elementId: 'factor-insights', action: 'hover', message: '⚖️ Balance Your Factors', subMessage: 'Add value exposure to reduce volatility', duration: 3500 },
+  // 🎬 ACT 4: INTELLIGENCE - Show the smarts
+  { tab: 'overview', elementId: 'portfolio-stats', action: 'spotlight', message: '📊 Institutional-Grade Analysis', subMessage: 'Morningstar data, factor analysis, risk metrics', duration: 3500 },
+  { tab: 'overview', elementId: 'voo-row', action: 'cursor-move', message: '⭐ 5-Star Funds Identified', subMessage: 'VOO: 0.03% expense ratio — best in class', duration: 3500 },
+  { tab: 'overview', elementId: 'insights-recommendations', action: 'spotlight', message: '🧠 AI That Actually Helps', subMessage: 'Not generic advice — specific to YOUR portfolio', duration: 3500 },
   
-  // Risk Analysis Tab
-  { tab: 'risk', elementId: 'stress-tests', action: 'spotlight', message: '🌪️ Historical Stress Tests', subMessage: 'See how you would have performed in past crises', duration: 3500 },
-  { tab: 'risk', elementId: 'crash-2008', action: 'cursor-move', message: '💥 2008 Financial Crisis', subMessage: '-48.2% — portfolio loss of ~$78K', duration: 4000 },
-  { tab: 'risk', elementId: 'concentration-risk', action: 'hover', message: '🎯 Concentration Risk Analysis', subMessage: 'Top 10 stocks = 38.5% of portfolio', duration: 3500 },
+  // 🎬 ACT 5: DEEPER ANALYSIS - For the curious
+  { tab: 'factors', elementId: 'factor-bars', action: 'spotlight', message: '📈 Factor Analysis', subMessage: 'Understand what\'s really driving your returns', duration: 3500 },
+  { tab: 'sectors', elementId: 'geo-breakdown', action: 'cursor-move', message: '🌍 Global Perspective', subMessage: 'See your geographic and sector exposure', duration: 3500 },
   
-  // Optimize Tab
-  { tab: 'optimize', elementId: 'model-selector', action: 'spotlight', message: '🎯 Model Portfolio Comparison', subMessage: 'See how you stack up against targets', duration: 3500 },
-  { tab: 'optimize', elementId: 'rebalance-trades', action: 'cursor-move', message: '📊 Smart Rebalancing', subMessage: 'Sell overweight US equity, buy international', duration: 4000 },
-  { tab: 'optimize', elementId: 'fee-reduction', action: 'hover', message: '💰 Save $485/year in Fees', subMessage: 'Switch QQQ to QQQM — same exposure, lower cost', duration: 4000 },
-  
-  // Tax Alpha Tab - The Big Finale
-  { tab: 'tax', elementId: 'tax-loss-section', action: 'spotlight', message: '💰 Tax-Loss Harvesting', subMessage: 'Turn losses into tax savings', duration: 3500 },
-  { tab: 'tax', elementId: 'arkk-harvest', action: 'cursor-move', message: '🎉 ARKK: $3,700 Tax Savings!', subMessage: 'Sell at -63%, swap to SOXQ, keep exposure', duration: 5000 },
-  { tab: 'tax', elementId: 'total-tax-alpha', action: 'spotlight', message: '✨ Total Tax Alpha: $3,700', subMessage: 'That\'s real money back in your pocket', duration: 4000 },
+  // 🎬 ACT 6: PROTECTION - Show you're covered
+  { tab: 'risk', elementId: 'stress-tests', action: 'spotlight', message: '🛡️ Stress-Tested', subMessage: 'See how your portfolio handles market crashes', duration: 3500 },
+  { tab: 'risk', elementId: 'crash-2008', action: 'cursor-move', message: '💪 2008 Simulation', subMessage: 'Know your downside before it happens', duration: 3500 },
 ];
 
 // Animated cursor component
