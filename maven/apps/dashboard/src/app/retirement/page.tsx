@@ -51,23 +51,37 @@ export default function RetirementHubPage() {
   // Distribution phase Monte Carlo
   const distributionResult = useMemo(() => {
     const params: MonteCarloParams = {
-      initialPortfolio: accumulationResult.projectedAtRetirement,
-      withdrawalRate: (desiredIncome - (yearsUntilSS > 0 ? 0 : socialSecurity)) / accumulationResult.projectedAtRetirement,
-      years: retirementYears,
-      stockAllocation: stockAllocation / 100,
-      bondAllocation: (100 - stockAllocation - 5) / 100,
-      cashAllocation: 0.05,
-      expectedReturn: riskTolerance === 'conservative' ? 0.05 : riskTolerance === 'moderate' ? 0.07 : 0.09,
-      inflation: 0.025,
-      simulations: 1000,
-      useHistoricalData: true,
-      withdrawalStrategy: 'guardrails',
-      socialSecurityAmount: socialSecurity,
-      socialSecurityStartYear: Math.max(0, yearsUntilSS),
+      currentAge: retirementAge, // Starting from retirement
+      retirementAge: retirementAge,
+      lifeExpectancy: lifeExpectancy,
+      currentPortfolioValue: accumulationResult.projectedAtRetirement,
+      annualContribution: 0, // No more contributions in retirement
+      contributionGrowthRate: 0,
+      annualSpendingRetirement: desiredIncome - (yearsUntilSS > 0 ? 0 : socialSecurity),
+      spendingFlexibility: 'guardrails',
+      allocation: {
+        usEquity: stockAllocation / 100,
+        intlEquity: 0,
+        bonds: (100 - stockAllocation - 5) / 100,
+        reits: 0,
+        commodities: 0,
+        crypto: 0,
+        cash: 0.05,
+      },
+      rebalanceFrequency: 'annual',
+      glidePathEnabled: true,
+      socialSecurityAge: ssStartAge,
+      socialSecurityMonthly: socialSecurity / 12,
+      effectiveTaxRate: 0.22,
+      capitalGainsTaxRate: 0.15,
+      taxDeferredPercent: 0.6,
+      numSimulations: 1000,
+      simulationMethod: 'historical_bootstrap',
+      includeFatTails: true,
     };
     
     return runMonteCarloSimulation(params);
-  }, [accumulationResult.projectedAtRetirement, desiredIncome, socialSecurity, yearsUntilSS, retirementYears, stockAllocation, riskTolerance]);
+  }, [accumulationResult.projectedAtRetirement, desiredIncome, socialSecurity, yearsUntilSS, retirementYears, stockAllocation, riskTolerance, retirementAge, lifeExpectancy, ssStartAge]);
   
   // Safe withdrawal rate analysis
   const swrAnalysis = useMemo(() => {
