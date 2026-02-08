@@ -43,6 +43,7 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
   const [voiceAvailable, setVoiceAvailable] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   
@@ -480,27 +481,47 @@ What's on your mind?`;
 
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
-      setIsTyping(true); // Show typing indicator while transcribing
+      setIsTranscribing(true);
+      
+      // Check if we have audio data
+      if (audioBlob.size < 1000) {
+        console.warn('Audio too short:', audioBlob.size, 'bytes');
+        setIsTranscribing(false);
+        return;
+      }
+      
+      console.log('Transcribing audio:', audioBlob.size, 'bytes, type:', audioBlob.type);
       
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      // Use proper file extension based on mime type
+      const ext = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
+      formData.append('audio', audioBlob, `recording.${ext}`);
       
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData
       });
       
-      if (!response.ok) throw new Error('Transcription failed');
-      
       const data = await response.json();
+      setIsTranscribing(false);
+      
+      if (!response.ok) {
+        console.error('Transcription API error:', data);
+        return;
+      }
+      
+      console.log('Transcription result:', data);
       
       if (data.text && data.text.trim()) {
-        // Auto-send the transcribed message
-        sendMessage(data.text.trim());
+        // Put transcribed text in input (don't auto-send, let user review)
+        setInput(data.text.trim());
+        inputRef.current?.focus();
+      } else {
+        console.warn('No text returned from transcription');
       }
     } catch (error) {
       console.error('Transcription error:', error);
-      setIsTyping(false);
+      setIsTranscribing(false);
     }
   };
 
@@ -893,8 +914,27 @@ What's on your mind?`;
                   onClick={stopRecording}
                   className="ml-2 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition"
                 >
-                  Stop & Send
+                  Stop Recording
                 </button>
+              </div>
+            )}
+            
+            {/* Transcribing indicator */}
+            {isTranscribing && (
+              <div className="flex items-center justify-center gap-3 mb-4 py-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span 
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-purple-400"
+                      style={{ 
+                        animation: 'oracle-thinking 1s ease-in-out infinite',
+                        animationDelay: `${i * 0.15}s`
+                      }} 
+                    />
+                  ))}
+                </div>
+                <span className="text-purple-400 font-medium">Transcribing with Whisper...</span>
               </div>
             )}
             

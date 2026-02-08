@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
+      console.error('Whisper: OPENAI_API_KEY not configured');
       return NextResponse.json(
         { error: 'OpenAI API key not configured' },
         { status: 500 }
@@ -13,21 +14,35 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData();
-    const audioFile = formData.get('audio') as File;
+    const audioFile = formData.get('audio') as File | null;
     
     if (!audioFile) {
+      console.error('Whisper: No audio file in request');
       return NextResponse.json(
         { error: 'No audio file provided' },
         { status: 400 }
       );
     }
 
+    console.log('Whisper: Received file', {
+      name: audioFile.name,
+      type: audioFile.type,
+      size: audioFile.size,
+    });
+
+    // Convert to buffer and create a proper file for the API
+    const bytes = await audioFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
     // Forward to OpenAI Whisper API
     const whisperFormData = new FormData();
-    whisperFormData.append('file', audioFile);
+    const blob = new Blob([buffer], { type: audioFile.type || 'audio/webm' });
+    whisperFormData.append('file', blob, audioFile.name || 'recording.webm');
     whisperFormData.append('model', 'whisper-1');
     whisperFormData.append('language', 'en');
 
+    console.log('Whisper: Sending to OpenAI...');
+    
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -38,14 +53,15 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Whisper API error:', error);
+      console.error('Whisper API error:', response.status, error);
       return NextResponse.json(
-        { error: 'Transcription failed' },
+        { error: 'Transcription failed', details: error },
         { status: 500 }
       );
     }
 
     const result = await response.json();
+    console.log('Whisper: Success, text length:', result.text?.length || 0);
     
     return NextResponse.json({
       text: result.text,
@@ -55,7 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Transcription error:', error);
     return NextResponse.json(
-      { error: 'Failed to transcribe audio' },
+      { error: 'Failed to transcribe audio', details: String(error) },
       { status: 500 }
     );
   }
