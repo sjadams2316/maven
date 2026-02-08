@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import MavenChat from '../components/MavenChat';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 export default function OraclePage() {
   // Use centralized UserProvider
@@ -33,9 +34,12 @@ export default function OraclePage() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 Maven Oracle
               </h1>
-              <p className="text-gray-400 mt-2">
-                Your AI wealth partner. I see everything. I know everything. Ask me anything.
-              </p>
+              <div className="flex items-center gap-4 mt-2">
+                <p className="text-gray-400">
+                  Your AI wealth partner. I see everything. I know everything. Ask me anything.
+                </p>
+                <ToolExplainer toolName="oracle" />
+              </div>
             </div>
             
             <MavenChat 

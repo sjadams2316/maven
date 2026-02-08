@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useUserProfile } from "@/providers/UserProvider";
 import Header from "@/app/components/Header";
 import DemoBanner from "@/app/components/DemoBanner";
+import { ToolExplainer } from "@/app/components/ToolExplainer";
 
 // Tax-efficient swap suggestions (similar ETFs that avoid wash sale)
 const SWAP_SUGGESTIONS: Record<string, { ticker: string; name: string; reason: string }[]> = {
@@ -328,9 +329,12 @@ export default function TaxHarvestingPage() {
           <h1 className="text-3xl font-bold text-white mb-2">
             🌾 Tax-Loss Harvesting
           </h1>
-          <p className="text-gray-400">
-            Turn market losses into tax savings. Harvest losses strategically while maintaining your investment exposure.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-400">
+              Turn market losses into tax savings. Harvest losses strategically while maintaining your investment exposure.
+            </p>
+            <ToolExplainer toolName="tax-harvesting" />
+          </div>
         </div>
 
         {/* Summary Cards */}

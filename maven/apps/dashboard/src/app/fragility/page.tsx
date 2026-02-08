@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import FragilityGauge from '../components/FragilityGauge';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface FragilityData {
   compositeScore: number;
@@ -635,6 +636,9 @@ export default function FragilityPage() {
             Not predicting <span className="text-red-400">when</span> the avalanche happens. 
             Measuring <span className="text-emerald-400">how ripe</span> conditions are for one.
           </p>
+          <div className="mt-4">
+            <ToolExplainer toolName="fragility-index" />
+          </div>
         </div>
         
         {/* Main Three Column Layout */}

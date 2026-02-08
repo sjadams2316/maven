@@ -13,6 +13,7 @@ import {
   formatSSCurrency,
   getRecommendationSummary,
 } from '@/lib/social-security-calculator';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 export default function SocialSecurityPage() {
   const router = useRouter();
@@ -144,9 +145,12 @@ export default function SocialSecurityPage() {
                   <span className="text-4xl">🎯</span>
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white">Social Security Optimizer</h1>
-                    <p className="text-gray-400 text-sm sm:text-base">
-                      Find your optimal claiming strategy • Worth $100K+ in lifetime benefits
-                    </p>
+                    <div className="flex items-center gap-4">
+                      <p className="text-gray-400 text-sm sm:text-base">
+                        Find your optimal claiming strategy • Worth $100K+ in lifetime benefits
+                      </p>
+                      <ToolExplainer toolName="social-security" />
+                    </div>
                   </div>
                 </div>
               </div>

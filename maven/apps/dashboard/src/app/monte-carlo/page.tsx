@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useUserProfile } from '@/providers/UserProvider';
+import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 interface PortfolioAllocation {
   usEquity: number;
@@ -190,9 +191,12 @@ export default function MonteCarloPage() {
               ← Dashboard
             </Link>
             <h1 className="text-3xl font-bold">Monte Carlo Retirement Simulator</h1>
-            <p className="text-slate-400 mt-1">
-              {params.numSimulations.toLocaleString()} scenarios using historical market data (1928-2024)
-            </p>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-slate-400">
+                {params.numSimulations.toLocaleString()} scenarios using historical market data (1928-2024)
+              </p>
+              <ToolExplainer toolName="monte-carlo" />
+            </div>
           </div>
           <button
             onClick={runSimulation}
