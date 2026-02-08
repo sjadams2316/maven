@@ -76,7 +76,7 @@ export default function NetWorthCard({
         
         {/* Period Selector */}
         <div className="flex gap-1 mb-4">
-          {Object.keys(periodData).map((p) => (
+          {(Object.keys(periodData) as Array<'1D' | '1W' | '1M' | '3M' | 'YTD' | '1Y'>).map((p) => (
             <button
               key={p}
               onClick={() => setSelectedPeriod(p)}
