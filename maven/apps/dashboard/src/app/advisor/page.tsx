@@ -383,6 +383,13 @@ export default function AdvisorDashboard() {
                   <span className="text-xl">🔮</span>
                   <span className="text-white">Ask Maven Oracle</span>
                 </Link>
+                <Link
+                  href="/advisor/settings"
+                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                >
+                  <span className="text-xl">⚙️</span>
+                  <span className="text-white">Settings</span>
+                </Link>
               </div>
             </div>
             
