@@ -24,6 +24,9 @@ const CHAT_STORAGE_KEY = 'maven_chat_history';
 const CONVERSATION_ID_KEY = 'maven_conversation_id';
 const MAX_STORED_MESSAGES = 100;
 
+const VOICE_ENABLED_KEY = 'maven_voice_enabled';
+const SPEAKER_ENABLED_KEY = 'maven_speaker_enabled';
+
 export default function MavenChat({ userProfile, mode = 'floating', showContext = false }: MavenChatProps) {
   const [isOpen, setIsOpen] = useState(mode !== 'floating');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -35,16 +38,40 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [claudeEnabled, setClaudeEnabled] = useState<boolean | null>(null);
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+  
+  // Voice features
+  const [voiceAvailable, setVoiceAvailable] = useState(false);
+  const [speakerEnabled, setSpeakerEnabled] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Check if Claude is enabled on mount
+  // Check if Claude and voice features are enabled on mount
   useEffect(() => {
     fetch('/api/chat')
       .then(res => res.json())
       .then(data => setClaudeEnabled(data.claudeEnabled))
       .catch(() => setClaudeEnabled(false));
+    
+    // Check voice availability
+    fetch('/api/speak')
+      .then(res => res.json())
+      .then(data => setVoiceAvailable(data.available))
+      .catch(() => setVoiceAvailable(false));
+    
+    // Load speaker preference
+    const savedSpeaker = localStorage.getItem(SPEAKER_ENABLED_KEY);
+    if (savedSpeaker === 'true') {
+      setSpeakerEnabled(true);
+    }
   }, []);
 
   // Only scroll to bottom on NEW messages, not on initial load
@@ -292,11 +319,17 @@ What's on your mind?`;
         setConversationId(data.conversationId);
       }
 
+      const assistantMessage = data.response;
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.response,
+        content: assistantMessage,
         timestamp: new Date()
       }]);
+      
+      // Speak the response if speaker is enabled
+      if (speakerEnabled && voiceAvailable) {
+        speakText(assistantMessage);
+      }
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
@@ -307,6 +340,157 @@ What's on your mind?`;
     } finally {
       setIsTyping(false);
     }
+  };
+
+  // Voice: Text-to-Speech
+  const speakText = async (text: string) => {
+    if (!voiceAvailable || isPlaying) return;
+    
+    try {
+      setIsPlaying(true);
+      
+      // Strip markdown for cleaner speech
+      const cleanText = text
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/^[•\-] /gm, '')
+        .replace(/^## /gm, '')
+        .replace(/\n+/g, '. ');
+      
+      const response = await fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText })
+      });
+      
+      if (!response.ok) throw new Error('TTS failed');
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.onended = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      audioRef.current.onerror = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      await audioRef.current.play();
+    } catch (error) {
+      console.error('TTS error:', error);
+      setIsPlaying(false);
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+  };
+
+  // Voice: Speech-to-Text (Recording)
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      });
+      
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunksRef.current.length === 0) return;
+        
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAudio(audioBlob);
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(100); // Collect data every 100ms
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(t => t + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Recording error:', error);
+      alert('Unable to access microphone. Please check your permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    try {
+      setIsTyping(true); // Show typing indicator while transcribing
+      
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) throw new Error('Transcription failed');
+      
+      const data = await response.json();
+      
+      if (data.text && data.text.trim()) {
+        // Auto-send the transcribed message
+        sendMessage(data.text.trim());
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      setIsTyping(false);
+    }
+  };
+
+  const toggleSpeaker = () => {
+    const newValue = !speakerEnabled;
+    setSpeakerEnabled(newValue);
+    localStorage.setItem(SPEAKER_ENABLED_KEY, String(newValue));
+    
+    if (!newValue && isPlaying) {
+      stopSpeaking();
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatMessage = (content: string) => {
@@ -482,6 +666,46 @@ What's on your mind?`;
             </p>
           </div>
           
+          {/* Voice Controls */}
+          {voiceAvailable && (
+            <div className="flex items-center gap-1">
+              {/* Speaker Toggle */}
+              <button
+                onClick={toggleSpeaker}
+                className={`p-2.5 rounded-xl transition ${
+                  speakerEnabled 
+                    ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30' 
+                    : 'hover:bg-white/5 text-gray-400 hover:text-white'
+                }`}
+                title={speakerEnabled ? 'Voice enabled - click to disable' : 'Enable voice responses'}
+              >
+                {speakerEnabled ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  </svg>
+                )}
+              </button>
+              
+              {/* Playing indicator */}
+              {isPlaying && (
+                <button
+                  onClick={stopSpeaking}
+                  className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition animate-pulse"
+                  title="Click to stop"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+          
           {/* Menu */}
           <div className="relative">
             <button
@@ -633,7 +857,39 @@ What's on your mind?`;
         {/* Input Area */}
         <div className="px-6 py-5 border-t border-white/5 bg-white/[0.01]">
           <div className="max-w-3xl mx-auto">
+            {/* Recording indicator */}
+            {isRecording && (
+              <div className="flex items-center justify-center gap-3 mb-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-red-400 font-medium">Recording... {formatRecordingTime(recordingTime)}</span>
+                <button
+                  onClick={stopRecording}
+                  className="ml-2 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition"
+                >
+                  Stop & Send
+                </button>
+              </div>
+            )}
+            
             <div className="flex gap-3 items-end">
+              {/* Microphone button */}
+              {voiceAvailable && (
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isTyping}
+                  className={`p-4 rounded-2xl transition-all duration-200 ${
+                    isRecording 
+                      ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' 
+                      : 'bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-purple-500/30 text-gray-400 hover:text-white'
+                  } ${isTyping ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  title={isRecording ? 'Stop recording' : 'Start voice input'}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+              )}
+              
               <div className="flex-1 relative">
                 <textarea
                   ref={inputRef}
@@ -645,9 +901,10 @@ What's on your mind?`;
                       sendMessage();
                     }
                   }}
-                  placeholder="Ask Oracle anything about your finances..."
+                  placeholder={isRecording ? 'Listening...' : 'Ask Oracle anything about your finances...'}
                   rows={1}
-                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-[15px] text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 resize-none transition-all"
+                  disabled={isRecording}
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-[15px] text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 resize-none transition-all disabled:opacity-50"
                   style={{ minHeight: '56px', maxHeight: '150px' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -658,7 +915,7 @@ What's on your mind?`;
               </div>
               <button
                 onClick={() => sendMessage()}
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isTyping || isRecording}
                 className="px-6 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl hover:shadow-purple-500/20 flex items-center gap-2 font-medium"
               >
                 <span>Send</span>
@@ -668,7 +925,10 @@ What's on your mind?`;
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-3 text-center">
-              Press Enter to send • Shift+Enter for new line • Esc to close
+              {voiceAvailable 
+                ? 'Press Enter to send • Click 🎤 for voice • Speaker icon for audio responses'
+                : 'Press Enter to send • Shift+Enter for new line • Esc to close'
+              }
             </p>
           </div>
         </div>
