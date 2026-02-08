@@ -51,7 +51,7 @@ const mockAlerts: Alert[] = [
     read: false,
     actionable: true,
     actionLabel: 'Review Opportunity',
-    actionUrl: '/tax-loss',
+    actionUrl: '/tax-harvesting',
   },
   {
     id: '4',

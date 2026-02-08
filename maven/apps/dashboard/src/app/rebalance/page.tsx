@@ -135,7 +135,7 @@ export default function RebalancePage() {
         <div className="mb-4 p-3 bg-slate-800/30 rounded-lg text-sm text-slate-400 flex items-center justify-between">
           <span>
             {isDemoMode ? (
-              <>📊 Showing Demo Portfolio holdings (~$732k across accounts)</>
+              <>📊 Showing Demo Portfolio holdings (~$800k across accounts)</>
             ) : holdings.length > 0 ? (
               <>📊 Showing your actual portfolio holdings</>
             ) : (

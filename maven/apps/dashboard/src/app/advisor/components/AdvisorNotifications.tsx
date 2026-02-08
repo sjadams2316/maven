@@ -186,7 +186,7 @@ export default function AdvisorNotifications() {
           {/* Footer */}
           <div className="px-4 py-3 border-t border-white/10 bg-white/5">
             <Link
-              href="/advisor/notifications"
+              href="/advisor"
               className="text-xs text-indigo-400 hover:text-indigo-300 transition"
             >
               View all notifications →

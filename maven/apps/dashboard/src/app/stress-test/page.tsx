@@ -129,7 +129,7 @@ export default function StressTestPage() {
                 {manualOverride ? (
                   <span>⚙️ Custom allocation (adjust sliders below)</span>
                 ) : isDemoMode ? (
-                  <span>📊 Derived from Demo Portfolio (~$732k across accounts)</span>
+                  <span>📊 Derived from Demo Portfolio (~$800k across accounts)</span>
                 ) : financials && financials.netWorth > 0 ? (
                   <span>📊 Derived from your actual portfolio</span>
                 ) : (

@@ -77,7 +77,7 @@ export default function TradePage() {
             <Link href="/rebalance" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg">
               ⚖️ Rebalance
             </Link>
-            <Link href="/tax-loss" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg">
+            <Link href="/tax-harvesting" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg">
               📋 Tax-Loss Harvest
             </Link>
           </div>

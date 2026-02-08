@@ -293,7 +293,7 @@ export default function HomePage() {
               </ul>
               
               <Link 
-                href="/contact"
+                href="/help"
                 className="block w-full py-3 bg-white/10 hover:bg-white/20 text-white text-center rounded-xl transition"
               >
                 Talk to Sales
