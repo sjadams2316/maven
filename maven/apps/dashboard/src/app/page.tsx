@@ -33,12 +33,8 @@ export default function LandingPage() {
     router.push('/dashboard');
   };
 
-  // Redirect to dashboard if signed in and onboarded (but not if showing first win)
-  useEffect(() => {
-    if (!checkingProfile && isOnboarded && !showFirstWin) {
-      router.replace('/dashboard');
-    }
-  }, [checkingProfile, isOnboarded, router, showFirstWin]);
+  // No auto-redirect - let users see landing page first
+  // They can click "Go to Dashboard" to proceed
 
   useEffect(() => {
     fetch('/api/market-data')
@@ -54,19 +50,7 @@ export default function LandingPage() {
     cash: financials.totalCash
   } : null;
   
-  // Show loading while checking if user should be redirected
-  if (checkingProfile && isLoaded && isSignedIn) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl font-bold mx-auto mb-4 animate-pulse">
-            M
-          </div>
-          <p className="text-gray-400">Loading your financial picture...</p>
-        </div>
-      </div>
-    );
-  }
+  // Landing page always shown - no auto-redirect
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
