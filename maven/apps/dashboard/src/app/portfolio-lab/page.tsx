@@ -790,14 +790,14 @@ export default function PortfolioLab() {
                         title: 'Rebalancing Analysis',
                         current: {
                           usEquity: currentAllocation.usEquity / 100,
-                          intlEquity: currentAllocation.intl / 100,
+                          intlEquity: currentAllocation.intlEquity / 100,
                           bonds: currentAllocation.bonds / 100,
                           cash: currentAllocation.cash / 100,
                           crypto: currentAllocation.crypto / 100,
                         },
                         proposed: {
                           usEquity: (targetAllocation?.usEquity || 50) / 100,
-                          intlEquity: (targetAllocation?.intl || 15) / 100,
+                          intlEquity: (targetAllocation?.intlEquity || 15) / 100,
                           bonds: (targetAllocation?.bonds || 25) / 100,
                           cash: (targetAllocation?.cash || 5) / 100,
                           crypto: (targetAllocation?.crypto || 5) / 100,
@@ -831,7 +831,7 @@ export default function PortfolioLab() {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
-                            message: `Analyze these rebalancing trades and explain in plain English why they make sense for my portfolio: ${rebalancingTrades.map(t => `${t.action} ${t.asset} (~$${t.amount}): ${t.reason}`).join('; ')}. Current allocation: US ${currentAllocation.usEquity.toFixed(0)}%, Intl ${currentAllocation.intl.toFixed(0)}%, Bonds ${currentAllocation.bonds.toFixed(0)}%, Cash ${currentAllocation.cash.toFixed(0)}%, Crypto ${currentAllocation.crypto.toFixed(0)}%. Total portfolio: $${totalValue.toLocaleString()}. Give me the ELI5 version of what these changes accomplish and why.`,
+                            message: `Analyze these rebalancing trades and explain in plain English why they make sense for my portfolio: ${rebalancingTrades.map(t => `${t.action} ${t.asset} (~$${t.amount}): ${t.reason}`).join('; ')}. Current allocation: US ${currentAllocation.usEquity.toFixed(0)}%, Intl ${currentAllocation.intlEquity.toFixed(0)}%, Bonds ${currentAllocation.bonds.toFixed(0)}%, Cash ${currentAllocation.cash.toFixed(0)}%, Crypto ${currentAllocation.crypto.toFixed(0)}%. Total portfolio: $${totalValue.toLocaleString()}. Give me the ELI5 version of what these changes accomplish and why.`,
                           })
                         });
                         const data = await response.json();
