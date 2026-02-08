@@ -35,9 +35,9 @@ function ValuationBadge({ valuation }: { valuation: 'cheap' | 'fair' | 'expensiv
   };
   
   const icons = {
-    cheap: '💚',
-    fair: '💛',
-    expensive: '❤️',
+    cheap: '✅',      // Good value = buy opportunity
+    fair: '➖',       // Neutral = fairly priced
+    expensive: '⚠️',  // Caution = overvalued
   };
   
   return (
