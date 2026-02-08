@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       const error = await response.text();
       console.error('Whisper API error:', response.status, error);
       return NextResponse.json(
-        { error: 'Transcription failed', details: error },
+        { error: 'Transcription failed', details: error, status: response.status },
         { status: 500 }
       );
     }

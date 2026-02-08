@@ -13,7 +13,18 @@ const isMarketingRoute = createRouteMatcher([
   '/landing',
 ]);
 
+// Voice API routes that should skip Clerk middleware entirely
+const isVoiceAPIRoute = createRouteMatcher([
+  '/api/transcribe',
+  '/api/speak',
+]);
+
 export default clerkMiddleware(async (auth, request: NextRequest) => {
+  // Skip Clerk processing for voice APIs - they handle file uploads and shouldn't go through auth
+  if (isVoiceAPIRoute(request)) {
+    return NextResponse.next();
+  }
+  
   const { userId } = await auth();
   
   // If user is signed in and hitting the marketing page, redirect to dashboard
@@ -38,7 +49,7 @@ export const config = {
   matcher: [
     // Skip Next.js internals and all static files
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Run for API routes EXCEPT voice APIs (transcribe/speak need to handle large files without middleware interference)
-    '/(api(?!/transcribe|/speak)|trpc)(.*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };
