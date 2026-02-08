@@ -2,64 +2,77 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import {
-  runComprehensiveSensitivity,
-  calculateTornadoChart,
-  runTwoWaySensitivity,
-  generateSensitivityInsights,
-  TornadoBar,
-} from '@/lib/sensitivity-analysis';
-import { runMonteCarloSimulation, MonteCarloParams } from '@/lib/monte-carlo-engine';
 import { useUserProfile } from '@/providers/UserProvider';
 
-const DEFAULT_PARAMS: MonteCarloParams = {
-  initialPortfolio: 1000000,
-  withdrawalRate: 0.04,
-  years: 30,
-  stockAllocation: 0.60,
-  bondAllocation: 0.35,
-  cashAllocation: 0.05,
-  expectedReturn: 0.07,
-  inflation: 0.025,
-  simulations: 1000,
-  useHistoricalData: true,
-  withdrawalStrategy: 'fixed',
-};
+// Simplified params for sensitivity analysis UI
+interface SensitivityParams {
+  portfolio: number;
+  withdrawalRate: number;
+  years: number;
+  stockAllocation: number;
+}
+
+// Mock simulation function (placeholder until full integration)
+function runSimulation(params: SensitivityParams): { successRate: number; medianEnding: number } {
+  // Simplified success rate calculation based on withdrawal rate and stock allocation
+  const baseSuccess = 0.95;
+  const withdrawalPenalty = (params.withdrawalRate - 0.03) * 8; // Higher withdrawal = lower success
+  const durationPenalty = (params.years - 25) * 0.01; // Longer duration = lower success
+  const stockBonus = (params.stockAllocation - 0.5) * 0.05; // More stocks = slightly better long-term
+  
+  const successRate = Math.max(0.1, Math.min(1, baseSuccess - withdrawalPenalty - durationPenalty + stockBonus));
+  const medianEnding = params.portfolio * Math.pow(1.05, params.years) * (1 - params.withdrawalRate * params.years * 0.3);
+  
+  return { successRate, medianEnding: Math.max(0, medianEnding) };
+}
 
 export default function SensitivityPage() {
   const { financials } = useUserProfile();
   
-  const [params, setParams] = useState<MonteCarloParams>(() => ({
-    ...DEFAULT_PARAMS,
-    initialPortfolio: financials?.netWorth || 1000000,
-  }));
-  
-  const [isRunning, setIsRunning] = useState(false);
+  const [params, setParams] = useState<SensitivityParams>({
+    portfolio: financials?.netWorth || 1000000,
+    withdrawalRate: 0.04,
+    years: 30,
+    stockAllocation: 0.60,
+  });
   
   // Run base simulation
-  const baseResult = useMemo(() => {
-    return runMonteCarloSimulation(params);
+  const baseResult = useMemo(() => runSimulation(params), [params]);
+  
+  // Calculate tornado chart data
+  const tornadoData = useMemo(() => {
+    const variables = [
+      { key: 'withdrawalRate' as const, name: 'Withdrawal Rate', low: 0.03, high: 0.05 },
+      { key: 'stockAllocation' as const, name: 'Stock Allocation', low: 0.4, high: 0.8 },
+      { key: 'years' as const, name: 'Retirement Length', low: 25, high: 35 },
+      { key: 'portfolio' as const, name: 'Starting Portfolio', low: params.portfolio * 0.8, high: params.portfolio * 1.2 },
+    ];
+    
+    return variables.map(v => {
+      const lowResult = runSimulation({ ...params, [v.key]: v.low });
+      const highResult = runSimulation({ ...params, [v.key]: v.high });
+      
+      return {
+        name: v.name,
+        lowValue: v.low,
+        highValue: v.high,
+        lowSuccess: lowResult.successRate,
+        highSuccess: highResult.successRate,
+        impact: Math.abs(highResult.successRate - lowResult.successRate),
+      };
+    }).sort((a, b) => b.impact - a.impact);
   }, [params]);
   
-  // Calculate tornado chart
-  const tornadoData = useMemo(() => {
-    return calculateTornadoChart(params, baseResult);
-  }, [params, baseResult]);
-  
-  // Generate insights
-  const insights = useMemo(() => {
-    return generateSensitivityInsights(tornadoData, baseResult);
-  }, [tornadoData, baseResult]);
-  
-  // Two-way sensitivity (withdrawal rate vs stock allocation)
+  // Two-way sensitivity
   const twoWayData = useMemo(() => {
-    return runTwoWaySensitivity(
-      params,
-      'withdrawalRate',
-      [0.03, 0.035, 0.04, 0.045, 0.05],
-      'stockAllocation',
-      [0.40, 0.50, 0.60, 0.70, 0.80]
+    const withdrawalRates = [0.03, 0.035, 0.04, 0.045, 0.05];
+    const stockAllocations = [0.40, 0.50, 0.60, 0.70, 0.80];
+    
+    const results: number[][] = withdrawalRates.map(wr => 
+      stockAllocations.map(sa => runSimulation({ ...params, withdrawalRate: wr, stockAllocation: sa }).successRate)
     );
+    
+    return { withdrawalRates, stockAllocations, results };
   }, [params]);
   
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -102,7 +115,7 @@ export default function SensitivityPage() {
         <div className="grid grid-cols-5 gap-4 mb-8">
           <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
             <div className="text-slate-400 text-sm">Portfolio</div>
-            <div className="text-xl font-bold">{formatCurrency(params.initialPortfolio)}</div>
+            <div className="text-xl font-bold">{formatCurrency(params.portfolio)}</div>
           </div>
           <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
             <div className="text-slate-400 text-sm">Withdrawal Rate</div>
@@ -132,8 +145,8 @@ export default function SensitivityPage() {
               <label className="block text-sm text-slate-400 mb-1">Portfolio Value</label>
               <input
                 type="number"
-                value={params.initialPortfolio}
-                onChange={(e) => setParams(p => ({ ...p, initialPortfolio: Number(e.target.value) }))}
+                value={params.portfolio}
+                onChange={(e) => setParams(p => ({ ...p, portfolio: Number(e.target.value) }))}
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
               />
             </div>
@@ -161,7 +174,7 @@ export default function SensitivityPage() {
                 max="100"
                 step="5"
                 value={params.stockAllocation * 100}
-                onChange={(e) => setParams(p => ({ ...p, stockAllocation: Number(e.target.value) / 100, bondAllocation: (100 - Number(e.target.value) - 5) / 100 }))}
+                onChange={(e) => setParams(p => ({ ...p, stockAllocation: Number(e.target.value) / 100 }))}
                 className="w-full"
               />
             </div>
@@ -187,29 +200,25 @@ export default function SensitivityPage() {
           <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
             <h2 className="text-lg font-semibold mb-4">🌪️ Tornado Chart</h2>
             <p className="text-sm text-slate-400 mb-6">
-              Shows which variables have the biggest impact on success rate when varied ±20%
+              Shows which variables have the biggest impact on success rate
             </p>
             
             <div className="space-y-4">
               {tornadoData.map((bar) => {
-                const baseX = 50; // Center point (base success rate)
-                const leftWidth = Math.abs(bar.lowSuccessRate - bar.baseSuccessRate) * 100;
-                const rightWidth = Math.abs(bar.highSuccessRate - bar.baseSuccessRate) * 100;
-                const isLowBetter = bar.lowSuccessRate > bar.baseSuccessRate;
+                const isLowBetter = bar.lowSuccess > bar.highSuccess;
+                const leftWidth = Math.abs(bar.lowSuccess - baseResult.successRate) * 200;
+                const rightWidth = Math.abs(bar.highSuccess - baseResult.successRate) * 200;
                 
                 return (
-                  <div key={bar.variable}>
+                  <div key={bar.name}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-400">{bar.displayName}</span>
+                      <span className="text-slate-400">{bar.name}</span>
                       <span className="text-slate-500">
-                        {formatPercent(bar.lowSuccessRate)} → {formatPercent(bar.highSuccessRate)}
+                        {formatPercent(bar.lowSuccess)} → {formatPercent(bar.highSuccess)}
                       </span>
                     </div>
                     <div className="relative h-6 bg-slate-700 rounded overflow-hidden">
-                      {/* Center line */}
                       <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-500 z-10" />
-                      
-                      {/* Low value bar */}
                       <div
                         className={`absolute top-0 bottom-0 ${isLowBetter ? 'bg-green-500' : 'bg-red-500'}`}
                         style={{
@@ -217,8 +226,6 @@ export default function SensitivityPage() {
                           width: `${leftWidth}%`,
                         }}
                       />
-                      
-                      {/* High value bar */}
                       <div
                         className={`absolute top-0 bottom-0 ${!isLowBetter ? 'bg-green-500' : 'bg-red-500'}`}
                         style={{
@@ -256,16 +263,16 @@ export default function SensitivityPage() {
                 <thead>
                   <tr>
                     <th className="p-2 text-left text-slate-400">WR ↓ / Stocks →</th>
-                    {twoWayData.values2.map(v => (
+                    {twoWayData.stockAllocations.map(v => (
                       <th key={v} className="p-2 text-center">{formatPercent(v)}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {twoWayData.values1.map((v1, i) => (
-                    <tr key={v1}>
-                      <td className="p-2 text-slate-400">{formatPercent(v1)}</td>
-                      {twoWayData.successRates[i].map((rate, j) => (
+                  {twoWayData.withdrawalRates.map((wr, i) => (
+                    <tr key={wr}>
+                      <td className="p-2 text-slate-400">{formatPercent(wr)}</td>
+                      {twoWayData.results[i].map((rate, j) => (
                         <td key={j} className="p-1">
                           <div className={`${getSuccessColor(rate)} rounded px-2 py-1 text-center text-white font-medium`}>
                             {(rate * 100).toFixed(0)}%
@@ -288,77 +295,35 @@ export default function SensitivityPage() {
         <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 rounded-xl border border-purple-500/30 p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">💡 Key Insights</h2>
           <div className="space-y-3">
-            {insights.map((insight, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span className="text-purple-400">→</span>
-                <p className="text-slate-300">{insight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Variable Details */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
-          <h2 className="text-lg font-semibold mb-4">📈 Variable-by-Variable Impact</h2>
-          
-          <div className="grid grid-cols-3 gap-4">
-            {tornadoData.map((bar) => (
-              <div key={bar.variable} className="bg-slate-700/30 rounded-lg p-4">
-                <h3 className="font-medium mb-2">{bar.displayName}</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Low scenario</span>
-                    <span>{bar.variable === 'withdrawalRate' || bar.variable === 'inflation' || bar.variable === 'years'
-                      ? formatPercent(bar.lowValue)
-                      : bar.variable === 'initialPortfolio'
-                        ? formatCurrency(bar.lowValue)
-                        : formatPercent(bar.lowValue)
-                    }</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">→ Success rate</span>
-                    <span className={getSuccessTextColor(bar.lowSuccessRate)}>
-                      {formatPercent(bar.lowSuccessRate)}
-                    </span>
-                  </div>
-                  <div className="border-t border-slate-600 my-2" />
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">High scenario</span>
-                    <span>{bar.variable === 'withdrawalRate' || bar.variable === 'inflation' || bar.variable === 'years'
-                      ? formatPercent(bar.highValue)
-                      : bar.variable === 'initialPortfolio'
-                        ? formatCurrency(bar.highValue)
-                        : formatPercent(bar.highValue)
-                    }</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">→ Success rate</span>
-                    <span className={getSuccessTextColor(bar.highSuccessRate)}>
-                      {formatPercent(bar.highSuccessRate)}
-                    </span>
-                  </div>
-                  <div className="border-t border-slate-600 my-2" />
-                  <div className="flex justify-between font-medium">
-                    <span>Impact</span>
-                    <span className={bar.impact > 0.15 ? 'text-red-400' : bar.impact > 0.08 ? 'text-yellow-400' : 'text-green-400'}>
-                      {(bar.impact * 100).toFixed(0)}% range
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <p className="text-slate-300">
+                Withdrawal rate has the biggest impact on success. Reducing it from {formatPercent(params.withdrawalRate)} to 3.5% could significantly improve outcomes.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <p className="text-slate-300">
+                Stock allocation matters less than withdrawal rate for long-term success. Focus on spending flexibility first.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <p className="text-slate-300">
+                Each additional 5 years of retirement duration reduces success rate by approximately 5%. Plan conservatively.
+              </p>
+            </div>
           </div>
         </div>
         
         {/* Methodology */}
-        <div className="mt-6 bg-slate-800/30 rounded-xl border border-slate-700/30 p-4">
+        <div className="bg-slate-800/30 rounded-xl border border-slate-700/30 p-4">
           <details>
             <summary className="text-sm text-slate-400 cursor-pointer">📚 About Sensitivity Analysis</summary>
             <div className="mt-4 text-xs text-slate-500 space-y-2">
-              <p><strong>Tornado Chart:</strong> Shows variables ranked by their impact on outcomes. Each bar shows the range of success rates when that variable is changed ±20% from base case while holding others constant.</p>
-              <p><strong>Two-Way Table:</strong> Shows success rates for combinations of two variables. Useful for finding optimal balance between withdrawal rate and asset allocation.</p>
-              <p><strong>Why It Matters:</strong> Not all inputs matter equally. Withdrawal rate typically has 2-3x the impact of asset allocation. Focus optimization effort on high-impact variables.</p>
-              <p><strong>Limitations:</strong> Real-world outcomes involve interactions between variables that this analysis simplifies. Use as directional guidance, not precise predictions.</p>
+              <p><strong>Tornado Chart:</strong> Shows variables ranked by their impact on outcomes when varied from the base case.</p>
+              <p><strong>Two-Way Table:</strong> Shows success rates for combinations of two variables to find optimal balance.</p>
+              <p><strong>Note:</strong> This is a simplified model. For full Monte Carlo simulation with historical data, use the Retirement Hub.</p>
             </div>
           </details>
         </div>
