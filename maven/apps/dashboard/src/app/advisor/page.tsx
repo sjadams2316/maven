@@ -349,6 +349,13 @@ export default function AdvisorDashboard() {
               
               <div className="space-y-2">
                 <Link
+                  href="/advisor/clients/invite"
+                  className="flex items-center gap-3 p-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl transition"
+                >
+                  <span className="text-xl">✉️</span>
+                  <span className="text-white font-medium">Invite New Client</span>
+                </Link>
+                <Link
                   href="/advisor/clients"
                   className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >

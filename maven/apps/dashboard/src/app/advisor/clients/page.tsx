@@ -215,10 +215,13 @@ export default function ClientsListPage() {
             </p>
           </div>
           
-          <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2">
+          <Link 
+            href="/advisor/clients/invite"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
+          >
             <span>+</span>
-            <span>Add Client</span>
-          </button>
+            <span>Invite Client</span>
+          </Link>
         </div>
         
         {/* Filters */}
