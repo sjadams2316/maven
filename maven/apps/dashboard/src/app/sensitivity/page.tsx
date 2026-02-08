@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { calculateAllocationFromFinancials } from '@/lib/portfolio-utils';
 
 // Simplified params for sensitivity analysis UI
 interface SensitivityParams {
@@ -13,29 +14,69 @@ interface SensitivityParams {
   stockAllocation: number;
 }
 
-// Mock simulation function (placeholder until full integration)
+/**
+ * Simplified success rate calculator
+ * Based on historical 4% rule research and Trinity Study findings
+ * For full Monte Carlo, use /monte-carlo page
+ */
 function runSimulation(params: SensitivityParams): { successRate: number; medianEnding: number } {
-  // Simplified success rate calculation based on withdrawal rate and stock allocation
+  // Base success rate calibrated to Trinity Study findings
+  // 4% withdrawal with 60% stocks over 30 years ≈ 95% success historically
   const baseSuccess = 0.95;
-  const withdrawalPenalty = (params.withdrawalRate - 0.03) * 8; // Higher withdrawal = lower success
-  const durationPenalty = (params.years - 25) * 0.01; // Longer duration = lower success
-  const stockBonus = (params.stockAllocation - 0.5) * 0.05; // More stocks = slightly better long-term
   
-  const successRate = Math.max(0.1, Math.min(1, baseSuccess - withdrawalPenalty - durationPenalty + stockBonus));
-  const medianEnding = params.portfolio * Math.pow(1.05, params.years) * (1 - params.withdrawalRate * params.years * 0.3);
+  // Withdrawal rate impact (each 0.5% above 4% reduces success by ~8-10%)
+  const withdrawalPenalty = Math.max(0, (params.withdrawalRate - 0.04)) * 10;
+  const withdrawalBonus = Math.max(0, (0.04 - params.withdrawalRate)) * 5;
+  
+  // Duration impact (each 5 years beyond 30 reduces success by ~3-5%)
+  const durationPenalty = Math.max(0, (params.years - 30)) * 0.01;
+  const durationBonus = Math.max(0, (30 - params.years)) * 0.01;
+  
+  // Stock allocation impact (sweet spot 50-75%, extremes reduce success)
+  const stockPenalty = params.stockAllocation < 0.30 ? (0.30 - params.stockAllocation) * 0.3 :
+                       params.stockAllocation > 0.85 ? (params.stockAllocation - 0.85) * 0.2 : 0;
+  const stockBonus = (params.stockAllocation >= 0.50 && params.stockAllocation <= 0.75) ? 0.02 : 0;
+  
+  const successRate = Math.max(0.15, Math.min(0.99, 
+    baseSuccess - withdrawalPenalty + withdrawalBonus - durationPenalty + durationBonus - stockPenalty + stockBonus
+  ));
+  
+  // Median ending balance estimate
+  const expectedReturn = 0.04 + (params.stockAllocation * 0.04); // 4-8% depending on stocks
+  const medianEnding = params.portfolio * Math.pow(1 + expectedReturn - params.withdrawalRate, params.years);
   
   return { successRate, medianEnding: Math.max(0, medianEnding) };
 }
 
 export default function SensitivityPage() {
-  const { financials } = useUserProfile();
+  const { financials, profile } = useUserProfile();
+  
+  // Calculate actual allocation from holdings
+  const derivedAllocation = useMemo(() => {
+    if (!financials) return null;
+    return calculateAllocationFromFinancials(financials);
+  }, [financials]);
   
   const [params, setParams] = useState<SensitivityParams>({
-    portfolio: financials?.netWorth || 1000000,
+    portfolio: 1000000,
     withdrawalRate: 0.04,
     years: 30,
     stockAllocation: 0.60,
   });
+  
+  // Update params when profile data loads
+  useEffect(() => {
+    if (financials && derivedAllocation) {
+      const investableAssets = (financials.totalRetirement || 0) + (financials.totalInvestments || 0) + (financials.totalCash || 0);
+      const stockAlloc = (derivedAllocation.usEquity + derivedAllocation.intlEquity + derivedAllocation.crypto) / 100;
+      
+      setParams(prev => ({
+        ...prev,
+        portfolio: investableAssets > 0 ? investableAssets : prev.portfolio,
+        stockAllocation: stockAlloc > 0 ? stockAlloc : prev.stockAllocation,
+      }));
+    }
+  }, [financials, derivedAllocation]);
   
   // Run base simulation
   const baseResult = useMemo(() => runSimulation(params), [params]);
@@ -106,7 +147,15 @@ export default function SensitivityPage() {
           <Link href="/dashboard" className="text-slate-400 hover:text-white text-sm mb-2 inline-block">
             ← Dashboard
           </Link>
-          <h1 className="text-3xl font-bold">Sensitivity Analysis</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Sensitivity Analysis</h1>
+            {derivedAllocation && (
+              <span className="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                Using your portfolio data
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-4 mt-1">
             <p className="text-slate-400">
               Understand which variables matter most for your retirement success

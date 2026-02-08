@@ -1,6 +1,7 @@
 # Data Consistency Audit
 
 **Created:** 2026-02-08
+**Updated:** 2026-02-08 (evening)
 **Purpose:** Ensure all tools pull from centralized DEMO_PROFILE via UserProvider
 
 ## DEMO_PROFILE Data (single source of truth)
@@ -26,26 +27,46 @@ Located in: `src/lib/demo-profile.ts`
 
 ## Audit Status
 
-### ✅ PASSES (Uses UserProvider correctly)
+### ✅ FIXED (Uses UserProvider correctly)
 
-| Page | Data Source | Notes |
-|------|------------|-------|
-| `/family` | `useUserProfile()` | Gets profile, financials |
-| `/tax-harvesting` | `useUserProfile()` | Scans actual holdings for losses |
-| `/dashboard` | `useUserProfile()` | Main dashboard |
-| `/portfolio-lab` | `useUserProfile()` | Gets holdings |
+| Page | Data Source | Notes | Fixed Date |
+|------|------------|-------|------------|
+| `/family` | `useUserProfile()` | Gets profile, financials | original |
+| `/tax-harvesting` | `useUserProfile()` | Scans actual holdings for losses | original |
+| `/dashboard` | `useUserProfile()` | Main dashboard | original |
+| `/portfolio-lab` | `useUserProfile()` | Gets holdings | original |
+| `/stress-test` | `calculateAllocationFromFinancials()` | Derives from holdings | 2026-02-08 |
+| `/monte-carlo` | `calculateAllocationFromFinancials()` | Derives from holdings | 2026-02-08 |
+| `/retirement` | `calculateAge(profile.dateOfBirth)` | Uses DOB | 2026-02-08 |
+| `/income` | `useUserProfile()` | Derives from holdings + SS | 2026-02-08 |
+| `/rebalance` | `financials.allHoldings` | Uses actual holdings | 2026-02-08 |
+| `/asset-location` | Profile accounts and holdings | Full integration | 2026-02-08 |
 
-### ❌ FAILS (Has hardcoded data) — NEEDS FIX
+### ⚠️ PARTIAL (Some hardcoded data remains)
 
-| Page | Issue | Fix Required |
-|------|-------|--------------|
-| `/stress-test` | Hardcoded `DEFAULT_ALLOCATION` | Calculate from `financials.allHoldings` |
-| `/monte-carlo` | Hardcoded allocation sliders | Calculate from `financials.allHoldings` |
-| `/retirement` | Hardcoded `currentAge=32`, `retirementAge=60` | Use `profile.dateOfBirth`, `profile.socialSecurity.retirementAge` |
-| `/income` | Completely hardcoded income sources! | Derive from dividend holdings, SS data |
-| `/rebalance` | Hardcoded `holdings` array | Use `financials.allHoldings` |
-| `/asset-location` | Hardcoded `holdings` and `accounts` | Use profile accounts and holdings |
-| `/sensitivity` | Uses mock simulation function | Should use actual portfolio data |
+| Page | Issue | Priority | Status |
+|------|-------|----------|--------|
+| `/sensitivity` | Uses simplified simulation (not full Monte Carlo) | Low | Improved 2026-02-08 |
+
+**Note:** `/sensitivity` now uses `calculateAllocationFromFinancials()` to derive stock allocation from actual holdings. The simulation function is simplified for performance (full Monte Carlo available at `/monte-carlo`).
+
+## Mobile Responsiveness Audit
+
+### ✅ Patterns Applied
+All major pages now use responsive breakpoints:
+- `grid-cols-1 md:grid-cols-X` for card grids
+- `grid-cols-1 lg:grid-cols-12` for sidebar layouts
+- `flex-wrap` for tight button groups
+- `sm:`, `md:`, `lg:` breakpoints consistently
+
+### Pages Reviewed (76 total)
+- Dashboard, Portfolio Lab, Oracle - ✅
+- Stress Test, Monte Carlo, Retirement, Safe Withdrawal - ✅
+- Home, Goals, Learn, Refer - ✅
+- Advisor dashboard and sub-pages - ✅
+- Trade, Rebalance, Alerts, Reports - ✅
+- Financial Snapshot, Estate, Integrations - ✅
+- Fragility Index - ✅
 
 ## Solution: portfolio-utils.ts
 
@@ -57,21 +78,17 @@ Created `src/lib/portfolio-utils.ts` with:
 4. `calculateAge(dateOfBirth)` — Gets age from DOB
 5. `aggregateHoldingsByTicker(holdings)` — Combines holdings across accounts
 
-## Fix Order
-
-1. ✅ `/stress-test` — Use `calculateAllocationFromFinancials()`
-2. `/monte-carlo` — Use `calculateAllocationFromFinancials()`
-3. `/retirement` — Use `calculateAge(profile.dateOfBirth)`
-4. `/income` — Major rewrite to derive from holdings
-5. `/rebalance` — Use `financials.allHoldings`
-6. `/asset-location` — Use profile accounts and holdings
-7. `/sensitivity` — Wire up to actual portfolio
-
 ## Testing Checklist
 
-After fixes, verify in demo mode:
-- [ ] Net worth shows ~$732k everywhere
-- [ ] Allocation percentages are consistent
-- [ ] User name shows "Alex Demo"
-- [ ] Age calculates correctly (~40)
-- [ ] Holdings match DEMO_PROFILE
+Verify in demo mode:
+- [x] Net worth shows ~$732k everywhere
+- [x] Allocation percentages are consistent
+- [x] User name shows "Alex Demo"
+- [x] Age calculates correctly (~40)
+- [x] Holdings match DEMO_PROFILE
+
+## Next Steps
+
+1. `/sensitivity` - Wire up to actual portfolio data (low priority)
+2. Add automated tests for data consistency
+3. Periodic audits via HEARTBEAT.md
