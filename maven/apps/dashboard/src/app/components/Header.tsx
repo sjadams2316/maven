@@ -25,9 +25,8 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
   const navLinks: { href: string; label: string; highlight?: boolean }[] = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/portfolio-lab', label: 'Portfolio Lab' },
-    { href: '/tax-harvesting', label: 'Tax Harvest' },
-    { href: '/fragility', label: 'Fragility' },
-    { href: '/documents', label: 'Docs' },
+    { href: '/goals', label: 'Goals' },
+    { href: '/family', label: 'Family' },
     { href: '/oracle', label: 'Oracle' },
     { href: '/advisor', label: 'Advisor', highlight: true },
   ];
