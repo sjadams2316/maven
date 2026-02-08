@@ -1,0 +1,33 @@
+{
+  "startingCapital": 10000,
+  "cash": 6000,
+  "positions": {
+    "BTC": {
+      "symbol": "BTC",
+      "direction": "LONG",
+      "quantity": 0.03143962020938787,
+      "costBasis": 2000,
+      "avgPrice": 63614,
+      "openedAt": "2026-02-05T21:40:43.662Z"
+    },
+    "ETH": {
+      "symbol": "ETH",
+      "direction": "LONG",
+      "quantity": 0.8054945468019181,
+      "costBasis": 1500,
+      "avgPrice": 1862.21,
+      "openedAt": "2026-02-05T21:40:47.699Z"
+    },
+    "SOL": {
+      "symbol": "SOL",
+      "direction": "LONG",
+      "quantity": 6.349206349206349,
+      "costBasis": 500,
+      "avgPrice": 78.75,
+      "openedAt": "2026-02-05T22:09:40.926Z"
+    }
+  },
+  "totalValue": 10000,
+  "createdAt": "2026-02-05T21:40:39.545Z",
+  "updatedAt": "2026-02-05T22:09:40.926Z"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "eli-trader",
+  "version": "1.0.0",
+  "description": "AI-powered crypto trading bot using Vanta/Bittensor signals with meta-strategy",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "trade": "node scripts/paper-trade.mjs",
+    "status": "node scripts/paper-trade.mjs status",
+    "context": "node scripts/paper-trade.mjs context",
+    "history": "node scripts/paper-trade.mjs history",
+    "test-context": "node scripts/test-market-context.mjs"
+  },
+  "keywords": ["trading", "crypto", "bittensor", "vanta", "ai"],
+  "author": "Eli (with Sam Adams)",
+  "license": "MIT"
+}

@@ -1,0 +1,450 @@
+// Maven Database Schema
+// Financial OS for Everyone
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  clerkId       String   @unique  // Clerk user ID
+  email         String   @unique
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Subscription
+  subscriptionTier  String  @default("free")  // free, premium, pro
+  subscriptionEnds  DateTime?
+  
+  // Onboarding
+  onboardingComplete Boolean @default(false)
+  riskProfile        String?  // conservative, moderate, aggressive
+  
+  // Full profile data (stores complete onboarding data as JSON)
+  profileData        Json?
+  
+  // Relations
+  plaidItems      PlaidItem[]
+  accounts        Account[]
+  holdings        Holding[]
+  transactions    Transaction[]
+  taxLots         TaxLot[]
+  conversations   Conversation[]
+  insights        Insight[]
+  taxAlphaEvents  TaxAlphaEvent[]
+}
+
+// ============================================
+// PLAID INTEGRATION
+// ============================================
+
+model PlaidItem {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  plaidItemId       String   @unique
+  accessToken       String   // ENCRYPTED - Plaid access token
+  institutionId     String
+  institutionName   String
+  
+  status            String   @default("active")  // active, error, pending_reauth
+  errorCode         String?
+  lastSyncedAt      DateTime?
+  consentExpiresAt  DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  accounts          Account[]
+  
+  @@index([userId])
+}
+
+// ============================================
+// ACCOUNTS
+// ============================================
+
+model Account {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Plaid connection (optional - for manual accounts)
+  plaidItemId     String?
+  plaidItem       PlaidItem? @relation(fields: [plaidItemId], references: [id], onDelete: SetNull)
+  plaidAccountId  String?
+  
+  // Account details
+  name            String
+  officialName    String?
+  type            String   // depository, investment, credit, loan, other
+  subtype         String?  // checking, savings, 401k, ira, brokerage, etc.
+  mask            String?  // last 4 digits
+  
+  // Balances
+  currentBalance    Decimal?  @db.Decimal(19, 4)
+  availableBalance  Decimal?  @db.Decimal(19, 4)
+  currency          String    @default("USD")
+  
+  // Manual account flag
+  isManual          Boolean   @default(false)
+  
+  // UI settings
+  isHidden          Boolean   @default(false)
+  displayOrder      Int       @default(0)
+  accountGroup      String?   // retirement, taxable, cash, crypto
+  
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  holdings          Holding[]
+  transactions      Transaction[]
+  taxLots           TaxLot[]
+  
+  @@unique([plaidAccountId, userId])
+  @@index([userId])
+}
+
+// ============================================
+// HOLDINGS (Investment Positions)
+// ============================================
+
+model Holding {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  // Security info
+  securityId      String?
+  security        Security? @relation(fields: [securityId], references: [id])
+  
+  // Position details
+  symbol          String?
+  name            String?
+  quantity        Decimal   @db.Decimal(19, 8)
+  costBasis       Decimal?  @db.Decimal(19, 4)
+  currentPrice    Decimal?  @db.Decimal(19, 4)
+  currentValue    Decimal?  @db.Decimal(19, 4)
+  
+  // For tax purposes
+  isShortPosition Boolean   @default(false)
+  
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([symbol])
+}
+
+// ============================================
+// SECURITIES (Reference Data)
+// ============================================
+
+model Security {
+  id              String   @id @default(cuid())
+  plaidSecurityId String?  @unique
+  
+  symbol          String?
+  name            String
+  type            String   // equity, etf, mutual_fund, bond, crypto, other
+  
+  cusip           String?
+  isin            String?
+  
+  currentPrice    Decimal?  @db.Decimal(19, 4)
+  priceUpdatedAt  DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  holdings        Holding[]
+  taxLots         TaxLot[]
+  
+  @@index([symbol])
+}
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+
+model Transaction {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId           String
+  account             Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  plaidTransactionId  String?
+  
+  // Transaction details
+  amount              Decimal   @db.Decimal(19, 4)
+  date                DateTime  @db.Date
+  name                String
+  merchantName        String?
+  
+  // Categorization
+  category            String[]
+  customCategory      String?
+  
+  // Status
+  pending             Boolean   @default(false)
+  
+  // Investment-specific
+  type                String?   // buy, sell, dividend, interest, transfer, fee
+  symbol              String?
+  quantity            Decimal?  @db.Decimal(19, 8)
+  price               Decimal?  @db.Decimal(19, 4)
+  fees                Decimal?  @db.Decimal(19, 4)
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@unique([plaidTransactionId, userId])
+  @@index([userId])
+  @@index([accountId])
+  @@index([date])
+}
+
+// ============================================
+// TAX LOTS (Cost Basis Tracking)
+// ============================================
+
+model TaxLot {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  securityId        String?
+  security          Security? @relation(fields: [securityId], references: [id])
+  
+  // Lot details
+  symbol            String
+  quantity          Decimal   @db.Decimal(19, 8)
+  remainingQuantity Decimal   @db.Decimal(19, 8)  // For partial sales
+  costBasis         Decimal   @db.Decimal(19, 4)
+  acquisitionDate   DateTime  @db.Date
+  acquisitionType   String    @default("purchase")  // purchase, gift, inheritance, transfer, dividend_reinvest
+  
+  // Tax tracking
+  isCovered         Boolean   @default(true)  // Broker reports to IRS
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  dispositions      Disposition[]
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([symbol])
+}
+
+// ============================================
+// DISPOSITIONS (Sales for Tax Reporting)
+// ============================================
+
+model Disposition {
+  id                    String   @id @default(cuid())
+  taxLotId              String
+  taxLot                TaxLot   @relation(fields: [taxLotId], references: [id], onDelete: Cascade)
+  
+  quantity              Decimal   @db.Decimal(19, 8)
+  proceeds              Decimal   @db.Decimal(19, 4)
+  saleDate              DateTime  @db.Date
+  
+  // Calculated fields
+  gainLoss              Decimal   @db.Decimal(19, 4)
+  isShortTerm           Boolean   // < 1 year holding
+  washSaleDisallowed    Decimal   @default(0) @db.Decimal(19, 4)
+  
+  createdAt             DateTime  @default(now())
+  
+  @@index([taxLotId])
+  @@index([saleDate])
+}
+
+// ============================================
+// AI CONVERSATIONS
+// ============================================
+
+model Conversation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String?
+  messages    Json     // [{role: 'user'|'assistant', content: '...', timestamp: '...'}]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// ============================================
+// INSIGHTS (Proactive AI Recommendations)
+// ============================================
+
+model Insight {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        String   // tax_loss_harvest, rebalance, roth_conversion, spending_alert
+  priority    String   @default("medium")  // low, medium, high
+  title       String
+  message     String
+  data        Json?    // Additional structured data
+  
+  // Status
+  isRead      Boolean  @default(false)
+  isDismissed Boolean  @default(false)
+  actionTaken Boolean  @default(false)
+  
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// TAX ALPHA (The Money We Save You)
+// ============================================
+
+model TaxAlphaEvent {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Event classification
+  type            String   // LOSS_HARVEST, ROTH_CONVERSION, ASSET_LOCATION, GAIN_DEFERRAL, WASH_SALE_AVOIDED
+  status          String   @default("potential") // potential, realized, expired, dismissed
+  
+  // What triggered it
+  ticker          String?
+  accountId       String?
+  description     String   // Human-readable: "Harvest $5,200 loss in MSFT"
+  
+  // The numbers (in dollars)
+  amount          Decimal  @db.Decimal(19, 4)  // The loss/gain/conversion amount
+  taxSaved        Decimal  @db.Decimal(19, 4)  // Calculated tax savings
+  
+  // Tax calculation details
+  federalRate     Decimal  @db.Decimal(5, 4)   // e.g., 0.32 for 32%
+  stateRate       Decimal  @db.Decimal(5, 4)   // e.g., 0.0575 for 5.75%
+  rateType        String   // ordinary_income, ltcg, stcg
+  
+  // Full calculation breakdown for transparency
+  calculation     Json?    // { income, filingStatus, federalBracket, stateBracket, niit, ... }
+  
+  // Timing
+  identifiedAt    DateTime @default(now())
+  expiresAt       DateTime? // Wash sale window, year-end deadline, etc.
+  realizedAt      DateTime? // When user actually executed
+  
+  // For potential events, track if user was notified
+  notifiedAt      DateTime?
+  
+  // Year for aggregation
+  taxYear         Int      @default(2026)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, taxYear])
+}
+
+// ============================================
+// TAX ALPHA SUMMARY (Cached Totals)
+// ============================================
+
+model TaxAlphaSummary {
+  id                  String   @id @default(cuid())
+  userId              String
+  taxYear             Int
+  
+  // Realized savings (actually executed)
+  realizedTotal       Decimal  @db.Decimal(19, 4) @default(0)
+  realizedCount       Int      @default(0)
+  
+  // Potential savings (identified, not yet executed)
+  potentialTotal      Decimal  @db.Decimal(19, 4) @default(0)
+  potentialCount      Int      @default(0)
+  
+  // Lifetime total (for the big counter)
+  lifetimeRealized    Decimal  @db.Decimal(19, 4) @default(0)
+  
+  // Breakdown by type
+  lossHarvestTotal    Decimal  @db.Decimal(19, 4) @default(0)
+  rothConversionTotal Decimal  @db.Decimal(19, 4) @default(0)
+  assetLocationTotal  Decimal  @db.Decimal(19, 4) @default(0)
+  gainDeferralTotal   Decimal  @db.Decimal(19, 4) @default(0)
+  
+  lastCalculatedAt    DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([userId, taxYear])
+  @@index([userId])
+}
+
+// ============================================
+// COLLABORATIVE PLANNING SESSIONS
+// ============================================
+
+model CollaborativeSession {
+  id              String   @id @default(cuid())
+  
+  // Session identification
+  sessionCode     String   @unique  // Short shareable code like "MAVEN-ABC123"
+  
+  // Who's involved
+  advisorId       String?  // User ID of advisor (host)
+  advisorName     String?
+  clientId        String?  // User ID of client (if logged in)
+  clientName      String?
+  
+  // Session state
+  status          String   @default("active")  // active, paused, ended
+  
+  // Planning parameters (synced in real-time)
+  planningState   Json     // { retirementAge, contribution, returnRate, ssAmount, ssStartAge, ... }
+  
+  // Presence tracking
+  participants    Json     @default("[]")  // [{ id, name, role, lastSeen, cursor }]
+  
+  // Chat/notes during session
+  messages        Json     @default("[]")  // [{ sender, role, content, timestamp }]
+  
+  // Session metadata
+  title           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  endedAt         DateTime?
+  
+  @@index([sessionCode])
+  @@index([advisorId])
+  @@index([status])
+}

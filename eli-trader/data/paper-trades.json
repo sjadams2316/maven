@@ -1,0 +1,29 @@
+[
+  {
+    "id": "trade_1770327643663",
+    "timestamp": "2026-02-05T21:40:43.663Z",
+    "symbol": "BTC",
+    "direction": "BUY",
+    "amount": 2000,
+    "price": 63614,
+    "quantity": 0.03143962020938787
+  },
+  {
+    "id": "trade_1770327647702",
+    "timestamp": "2026-02-05T21:40:47.702Z",
+    "symbol": "ETH",
+    "direction": "BUY",
+    "amount": 1500,
+    "price": 1862.21,
+    "quantity": 0.8054945468019181
+  },
+  {
+    "id": "trade_1770329380927",
+    "timestamp": "2026-02-05T22:09:40.927Z",
+    "symbol": "SOL",
+    "direction": "BUY",
+    "amount": 500,
+    "price": 78.75,
+    "quantity": 6.349206349206349
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "minConfidence": 0.6,
+  "basePositionPct": 0.1,
+  "maxExposurePct": 0.5,
+  "stopLossPct": 0.05,
+  "takeProfitPct": 0.15,
+  "regimeWeight": 1,
+  "sentimentWeight": 1,
+  "lossCooldownMinutes": 60,
+  "version": 1,
+  "updatedAt": "2026-02-05T22:05:14.071Z",
+  "updatedReason": "Initial configuration"
+}
