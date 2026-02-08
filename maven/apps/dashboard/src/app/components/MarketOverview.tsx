@@ -2,48 +2,157 @@
 
 import { useState, useEffect } from 'react';
 
-interface MarketIndex {
+interface MarketQuote {
   symbol: string;
   name: string;
-  value: number;
+  price: number;
   change: number;
   changePercent: number;
 }
 
-const MOCK_INDICES: MarketIndex[] = [
-  { symbol: 'SPY', name: 'S&P 500', value: 5234.18, change: 23.45, changePercent: 0.45 },
-  { symbol: 'QQQ', name: 'Nasdaq', value: 18456.32, change: -45.23, changePercent: -0.24 },
-  { symbol: 'DIA', name: 'Dow Jones', value: 42156.89, change: 156.78, changePercent: 0.37 },
-  { symbol: 'IWM', name: 'Russell 2000', value: 2087.45, change: 12.34, changePercent: 0.59 },
-  { symbol: 'BTC', name: 'Bitcoin', value: 97845.23, change: 2345.67, changePercent: 2.45 },
-  { symbol: 'TAO', name: 'Bittensor', value: 3180.45, change: 145.23, changePercent: 4.78 },
-];
+// CoinGecko IDs
+const CRYPTO_IDS: Record<string, string> = {
+  BTC: 'bitcoin',
+  TAO: 'bittensor',
+};
+
+const CRYPTO_NAMES: Record<string, string> = {
+  BTC: 'Bitcoin',
+  TAO: 'Bittensor',
+};
+
+const STOCK_NAMES: Record<string, string> = {
+  SPY: 'S&P 500',
+  QQQ: 'Nasdaq 100',
+  DIA: 'Dow Jones',
+  IWM: 'Russell 2000',
+};
 
 export default function MarketOverview() {
-  const [indices, setIndices] = useState(MOCK_INDICES);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [indices, setIndices] = useState<MarketQuote[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndices(prev => prev.map(idx => ({
-        ...idx,
-        change: idx.change + (Math.random() - 0.5) * 10,
-        changePercent: idx.changePercent + (Math.random() - 0.5) * 0.1,
-      })));
+  const fetchMarketData = async () => {
+    try {
+      // Fetch crypto from CoinGecko
+      const cryptoResponse = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,bittensor&vs_currencies=usd&include_24hr_change=true'
+      );
+      
+      let cryptoData: MarketQuote[] = [];
+      if (cryptoResponse.ok) {
+        const crypto = await cryptoResponse.json();
+        cryptoData = [
+          {
+            symbol: 'BTC',
+            name: 'Bitcoin',
+            price: crypto.bitcoin?.usd || 0,
+            change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bitcoin?.usd_24h_change || 0,
+          },
+          {
+            symbol: 'TAO',
+            name: 'Bittensor',
+            price: crypto.bittensor?.usd || 0,
+            change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bittensor?.usd_24h_change || 0,
+          },
+        ];
+      }
+      
+      // Fetch stocks from Yahoo Finance
+      const stockSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
+      const stockData: MarketQuote[] = await Promise.all(
+        stockSymbols.map(async (symbol) => {
+          try {
+            const response = await fetch(
+              `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`
+            );
+            if (!response.ok) throw new Error('Yahoo API error');
+            
+            const data = await response.json();
+            const result = data.chart?.result?.[0];
+            const meta = result?.meta;
+            
+            if (!meta) {
+              return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
+            }
+            
+            const price = meta.regularMarketPrice || 0;
+            const previousClose = meta.previousClose || meta.chartPreviousClose || price;
+            const change = price - previousClose;
+            const changePercent = previousClose ? (change / previousClose) * 100 : 0;
+            
+            return {
+              symbol,
+              name: STOCK_NAMES[symbol],
+              price,
+              change,
+              changePercent,
+            };
+          } catch {
+            return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
+          }
+        })
+      );
+      
+      setIndices([...stockData, ...cryptoData]);
       setLastUpdate(new Date());
-    }, 30000); // Update every 30 seconds
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching market data:', err);
+      setError('Failed to load market data');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchMarketData();
     
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchMarketData, 60000);
     return () => clearInterval(interval);
   }, []);
+  
+  if (loading) {
+    return (
+      <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-white">Markets</h3>
+          <span className="text-xs text-gray-500">Loading...</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white/5 rounded-xl p-3 animate-pulse">
+              <div className="h-3 bg-white/10 rounded w-12 mb-2" />
+              <div className="h-5 bg-white/10 rounded w-20 mb-1" />
+              <div className="h-3 bg-white/10 rounded w-16" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-white">Markets</h3>
-        <span className="text-xs text-gray-500">
-          Updated {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div className="flex items-center gap-2">
+          {error && <span className="text-xs text-red-400">{error}</span>}
+          <span className="text-xs text-gray-500">
+            {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+          </span>
+          <button 
+            onClick={fetchMarketData}
+            className="text-xs text-indigo-400 hover:text-indigo-300"
+          >
+            ↻
+          </button>
+        </div>
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -54,16 +163,20 @@ export default function MarketOverview() {
           >
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-500">{idx.symbol}</span>
-              <span className={`text-xs font-medium ${
-                idx.change >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {idx.change >= 0 ? '▲' : '▼'} {Math.abs(idx.changePercent).toFixed(2)}%
-              </span>
+              {idx.price > 0 && (
+                <span className={`text-xs font-medium ${
+                  idx.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'
+                }`}>
+                  {idx.changePercent >= 0 ? '▲' : '▼'} {Math.abs(idx.changePercent).toFixed(2)}%
+                </span>
+              )}
             </div>
             <p className="text-white font-semibold">
-              {idx.value < 1000 
-                ? `$${idx.value.toFixed(2)}`
-                : idx.value.toLocaleString(undefined, { maximumFractionDigits: 0 })
+              {idx.price > 0 
+                ? idx.price < 100 
+                  ? `$${idx.price.toFixed(2)}`
+                  : `$${idx.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                : '—'
               }
             </p>
             <p className="text-xs text-gray-500">{idx.name}</p>
