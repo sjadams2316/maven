@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { useUserProfile } from '@/providers/UserProvider';
+import { calculateAge, classifyTicker } from '@/lib/portfolio-utils';
 
 interface IncomeSource {
   id: string;
@@ -15,20 +17,126 @@ interface IncomeSource {
   endAge?: number;
 }
 
-const incomeSources: IncomeSource[] = [
-  { id: '1', name: 'VTI Dividends', type: 'dividend', amount: 1875, frequency: 'annual', taxTreatment: 'qualified' },
-  { id: '2', name: 'SCHD Dividends', type: 'dividend', amount: 1225, frequency: 'annual', taxTreatment: 'qualified' },
-  { id: '3', name: 'Bond Interest (BND)', type: 'interest', amount: 2080, frequency: 'annual', taxTreatment: 'ordinary' },
-  { id: '4', name: 'Social Security', type: 'social_security', amount: 3200, frequency: 'monthly', taxTreatment: 'partially_taxed', startAge: 67 },
-  { id: '5', name: 'Rental Property', type: 'rental', amount: 1800, frequency: 'monthly', taxTreatment: 'ordinary' },
-];
-
-const currentAge = 32;
-const retirementAge = 55;
+// Estimated dividend yields for common holdings
+const DIVIDEND_YIELDS: Record<string, { yield: number; treatment: 'qualified' | 'ordinary' }> = {
+  'VTI': { yield: 0.015, treatment: 'qualified' },
+  'VOO': { yield: 0.015, treatment: 'qualified' },
+  'SCHD': { yield: 0.035, treatment: 'qualified' },
+  'VYM': { yield: 0.03, treatment: 'qualified' },
+  'VNQ': { yield: 0.04, treatment: 'ordinary' }, // REITs are ordinary income
+  'BND': { yield: 0.04, treatment: 'ordinary' },
+  'AGG': { yield: 0.035, treatment: 'ordinary' },
+  'VXUS': { yield: 0.03, treatment: 'qualified' },
+  'VEA': { yield: 0.03, treatment: 'qualified' },
+  'AAPL': { yield: 0.005, treatment: 'qualified' },
+  'MSFT': { yield: 0.008, treatment: 'qualified' },
+  'CAIBX': { yield: 0.025, treatment: 'qualified' }, // Capital Income Builder
+};
 
 export default function IncomePage() {
+  const { profile, financials, isDemoMode } = useUserProfile();
   const [showRetirement, setShowRetirement] = useState(false);
   const [targetMonthlyIncome, setTargetMonthlyIncome] = useState(8000);
+
+  // Calculate age from profile
+  const currentAge = useMemo(() => {
+    return calculateAge(profile?.dateOfBirth);
+  }, [profile]);
+  
+  const retirementAge = profile?.socialSecurity?.retirementAge || 55;
+  
+  // Derive income sources from actual holdings and profile data
+  const incomeSources = useMemo((): IncomeSource[] => {
+    const sources: IncomeSource[] = [];
+    
+    // Add dividend and interest income from holdings
+    if (financials?.allHoldings) {
+      // Group holdings by similar type
+      const dividendHoldings: { ticker: string; value: number; yield: number; treatment: 'qualified' | 'ordinary' }[] = [];
+      const bondHoldings: { ticker: string; value: number; yield: number }[] = [];
+      
+      financials.allHoldings.forEach(holding => {
+        const value = holding.currentValue || (holding.shares * (holding.currentPrice || 0));
+        if (value <= 0) return;
+        
+        const yieldInfo = DIVIDEND_YIELDS[holding.ticker];
+        const assetClass = classifyTicker(holding.ticker);
+        
+        if (assetClass === 'bonds') {
+          bondHoldings.push({
+            ticker: holding.ticker,
+            value,
+            yield: yieldInfo?.yield || 0.03,
+          });
+        } else if (yieldInfo && yieldInfo.yield > 0) {
+          dividendHoldings.push({
+            ticker: holding.ticker,
+            value,
+            yield: yieldInfo.yield,
+            treatment: yieldInfo.treatment,
+          });
+        }
+      });
+      
+      // Add aggregated dividend income
+      const qualifiedDividends = dividendHoldings
+        .filter(h => h.treatment === 'qualified')
+        .reduce((sum, h) => sum + (h.value * h.yield), 0);
+      
+      if (qualifiedDividends > 0) {
+        sources.push({
+          id: 'dividends-qualified',
+          name: 'Stock Dividends (Qualified)',
+          type: 'dividend',
+          amount: Math.round(qualifiedDividends),
+          frequency: 'annual',
+          taxTreatment: 'qualified',
+        });
+      }
+      
+      // Add bond interest
+      const bondInterest = bondHoldings.reduce((sum, h) => sum + (h.value * h.yield), 0);
+      if (bondInterest > 0) {
+        sources.push({
+          id: 'bond-interest',
+          name: 'Bond Interest',
+          type: 'interest',
+          amount: Math.round(bondInterest),
+          frequency: 'annual',
+          taxTreatment: 'ordinary',
+        });
+      }
+    }
+    
+    // Add Social Security from profile
+    if (profile?.socialSecurity?.benefitAtFRA) {
+      const ssAge = profile.socialSecurity.fullRetirementAge || 67;
+      sources.push({
+        id: 'social-security',
+        name: 'Social Security',
+        type: 'social_security',
+        amount: profile.socialSecurity.benefitAtFRA,
+        frequency: 'monthly',
+        taxTreatment: 'partially_taxed',
+        startAge: ssAge,
+      });
+    }
+    
+    // Add spouse Social Security if available
+    if (profile?.socialSecurity?.spouseBenefitAtFRA) {
+      sources.push({
+        id: 'spouse-ss',
+        name: 'Spouse Social Security',
+        type: 'social_security',
+        amount: profile.socialSecurity.spouseBenefitAtFRA,
+        frequency: 'monthly',
+        taxTreatment: 'partially_taxed',
+        startAge: 67,
+      });
+    }
+    
+    return sources;
+  }, [financials, profile]);
 
   const calculateAnnualIncome = (sources: IncomeSource[], retired: boolean) => {
     return sources.reduce((total, source) => {

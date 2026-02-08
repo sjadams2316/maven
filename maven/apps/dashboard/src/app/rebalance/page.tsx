@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/app/components/Header';
 import DemoBanner from '@/app/components/DemoBanner';
 import { ThesisInsight } from '@/app/components/ThesisInsight';
+import { useUserProfile } from '@/providers/UserProvider';
+import { aggregateHoldingsByTicker, classifyTicker } from '@/lib/portfolio-utils';
 
-interface Holding {
+interface RebalanceHolding {
   symbol: string;
   name: string;
   currentValue: number;
@@ -19,17 +21,6 @@ interface Holding {
   taxImpact?: number;
 }
 
-const holdings: Holding[] = [
-  { symbol: 'VTI', name: 'Vanguard Total Stock', currentValue: 125000, currentWeight: 31.25, targetWeight: 35, drift: -3.75, action: 'buy', shares: 0, tradeAmount: 15000, taxImpact: 0 },
-  { symbol: 'VXUS', name: 'Vanguard Intl Stock', currentValue: 48000, currentWeight: 12, targetWeight: 15, drift: -3, action: 'buy', shares: 0, tradeAmount: 12000, taxImpact: 0 },
-  { symbol: 'BND', name: 'Vanguard Total Bond', currentValue: 52000, currentWeight: 13, targetWeight: 15, drift: -2, action: 'buy', shares: 0, tradeAmount: 8000, taxImpact: 0 },
-  { symbol: 'NVDA', name: 'NVIDIA Corp', currentValue: 58000, currentWeight: 14.5, targetWeight: 8, drift: 6.5, action: 'sell', shares: 0, tradeAmount: -26000, taxImpact: 4200 },
-  { symbol: 'AAPL', name: 'Apple Inc', currentValue: 42000, currentWeight: 10.5, targetWeight: 8, drift: 2.5, action: 'sell', shares: 0, tradeAmount: -10000, taxImpact: 1800 },
-  { symbol: 'MSFT', name: 'Microsoft Corp', currentValue: 38000, currentWeight: 9.5, targetWeight: 8, drift: 1.5, action: 'sell', shares: 0, tradeAmount: -6000, taxImpact: 950 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc', currentValue: 22000, currentWeight: 5.5, targetWeight: 6, drift: -0.5, action: 'hold', shares: 0, tradeAmount: 2000, taxImpact: 0 },
-  { symbol: 'TAO', name: 'Bittensor', currentValue: 15000, currentWeight: 3.75, targetWeight: 5, drift: -1.25, action: 'buy', shares: 0, tradeAmount: 5000, taxImpact: 0 },
-];
-
 const modelPortfolios = [
   { name: 'Current Target', description: 'Your existing allocation targets' },
   { name: 'Growth 80/20', description: '80% stocks, 20% bonds' },
@@ -38,11 +29,75 @@ const modelPortfolios = [
   { name: 'All-Weather', description: 'Ray Dalio inspired allocation' },
 ];
 
+// Default target weights by category
+const DEFAULT_TARGETS: Record<string, number> = {
+  // ETFs get higher target weights
+  'VTI': 20, 'VOO': 15, 'SPY': 15,
+  'VXUS': 10, 'VEA': 5, 'VWO': 5,
+  'BND': 10, 'AGG': 10,
+  'VNQ': 5,
+  'SCHD': 5,
+  // Individual stocks get smaller targets
+  'DEFAULT_STOCK': 3,
+  'DEFAULT_CRYPTO': 2,
+};
+
+function getDefaultTargetWeight(ticker: string): number {
+  if (DEFAULT_TARGETS[ticker]) return DEFAULT_TARGETS[ticker];
+  const assetClass = classifyTicker(ticker);
+  if (assetClass === 'crypto') return DEFAULT_TARGETS['DEFAULT_CRYPTO'];
+  return DEFAULT_TARGETS['DEFAULT_STOCK'];
+}
+
 export default function RebalancePage() {
+  const { financials, isDemoMode } = useUserProfile();
   const [selectedModel, setSelectedModel] = useState('Current Target');
   const [driftThreshold, setDriftThreshold] = useState(5);
   const [taxAware, setTaxAware] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [customTargets, setCustomTargets] = useState<Record<string, number>>({});
+
+  // Derive holdings from user's actual portfolio
+  const holdings = useMemo((): RebalanceHolding[] => {
+    if (!financials || financials.allHoldings.length === 0) {
+      return [];
+    }
+    
+    // Aggregate holdings across all accounts
+    const aggregated = aggregateHoldingsByTicker(financials.allHoldings);
+    const totalValue = Array.from(aggregated.values()).reduce((sum, h) => sum + h.totalValue, 0);
+    
+    if (totalValue === 0) return [];
+    
+    // Convert to rebalance format with weights and drift
+    const result: RebalanceHolding[] = [];
+    
+    aggregated.forEach((holding) => {
+      const currentWeight = (holding.totalValue / totalValue) * 100;
+      const targetWeight = customTargets[holding.ticker] ?? getDefaultTargetWeight(holding.ticker);
+      const drift = currentWeight - targetWeight;
+      const tradeAmount = (targetWeight - currentWeight) / 100 * totalValue;
+      
+      // Estimate tax impact for sells (rough: 20% of gains, assuming 50% is gains)
+      const taxImpact = tradeAmount < 0 ? Math.abs(tradeAmount) * 0.5 * 0.20 : 0;
+      
+      result.push({
+        symbol: holding.ticker,
+        name: holding.name,
+        currentValue: holding.totalValue,
+        currentWeight,
+        targetWeight,
+        drift,
+        action: drift > 2 ? 'sell' : drift < -2 ? 'buy' : 'hold',
+        shares: holding.totalShares,
+        tradeAmount,
+        taxImpact: Math.round(taxImpact),
+      });
+    });
+    
+    // Sort by absolute drift (biggest imbalances first)
+    return result.sort((a, b) => Math.abs(b.drift) - Math.abs(a.drift));
+  }, [financials, customTargets]);
 
   const totalPortfolio = holdings.reduce((sum, h) => sum + h.currentValue, 0);
   const totalDrift = holdings.reduce((sum, h) => sum + Math.abs(h.drift), 0) / 2;
@@ -76,7 +131,39 @@ export default function RebalancePage() {
           </div>
         </div>
 
+        {/* Data Source Indicator */}
+        <div className="mb-4 p-3 bg-slate-800/30 rounded-lg text-sm text-slate-400 flex items-center justify-between">
+          <span>
+            {isDemoMode ? (
+              <>📊 Showing Demo Portfolio holdings (~$732k across accounts)</>
+            ) : holdings.length > 0 ? (
+              <>📊 Showing your actual portfolio holdings</>
+            ) : (
+              <>📊 Add accounts with holdings to see rebalancing recommendations</>
+            )}
+          </span>
+          {holdings.length > 0 && (
+            <span className="text-xs">{holdings.length} holdings across accounts</span>
+          )}
+        </div>
+
+        {/* Empty State */}
+        {holdings.length === 0 && (
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-12 text-center mb-8">
+            <div className="text-6xl mb-4">📊</div>
+            <h2 className="text-2xl font-semibold mb-2">No Holdings to Rebalance</h2>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              Add investment accounts with holdings to see rebalancing recommendations.
+              Or try demo mode to explore with sample data.
+            </p>
+            <Link href="/settings" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg inline-block">
+              Add Accounts →
+            </Link>
+          </div>
+        )}
+
         {/* Summary Cards */}
+        {holdings.length > 0 && (
         <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
             <div className="text-slate-400 text-sm mb-1">Portfolio Value</div>
@@ -97,19 +184,30 @@ export default function RebalancePage() {
             <div className="text-2xl font-bold text-red-400">${taxableGains.toLocaleString()}</div>
           </div>
         </div>
+        )}
 
-        {/* Investment Thesis Check */}
-        <ThesisInsight 
-          allocation={{
-            usEquity: 65.5, // VTI + individual stocks
-            intlEquity: 12,  // VXUS
-            bonds: 13,       // BND
-            crypto: 3.75,    // TAO
-            cash: 5.75,      // remainder
-          }}
-          compact={true}
-          className="mb-6"
-        />
+        {/* Investment Thesis Check - Derived from actual holdings */}
+        {holdings.length > 0 && (
+          <ThesisInsight 
+            allocation={(() => {
+              // Calculate actual allocation by asset class
+              const byClass: Record<string, number> = {};
+              holdings.forEach(h => {
+                const cls = classifyTicker(h.symbol);
+                byClass[cls] = (byClass[cls] || 0) + h.currentWeight;
+              });
+              return {
+                usEquity: byClass['usEquity'] || 0,
+                intlEquity: byClass['intlEquity'] || 0,
+                bonds: byClass['bonds'] || 0,
+                crypto: byClass['crypto'] || 0,
+                cash: byClass['cash'] || 0,
+              };
+            })()}
+            compact={true}
+            className="mb-6"
+          />
+        )}
 
         {/* Controls */}
         <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6 mb-6">
@@ -253,9 +351,15 @@ export default function RebalancePage() {
                   <td className="text-right p-4">
                     <input
                       type="number"
-                      value={holding.targetWeight}
+                      value={holding.targetWeight.toFixed(1)}
+                      onChange={(e) => {
+                        const newVal = parseFloat(e.target.value) || 0;
+                        setCustomTargets(prev => ({
+                          ...prev,
+                          [holding.symbol]: Math.max(0, Math.min(100, newVal)),
+                        }));
+                      }}
                       className="w-16 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-right"
-                      readOnly
                     />
                   </td>
                   <td className={`text-right p-4 font-medium ${

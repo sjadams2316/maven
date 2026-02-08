@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   STRESS_SCENARIOS, 
@@ -10,6 +10,11 @@ import {
 } from '@/lib/stress-test-scenarios';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { 
+  calculateAllocationFromFinancials, 
+  DEFAULT_ALLOCATION as FALLBACK_ALLOCATION,
+  PortfolioAllocation 
+} from '@/lib/portfolio-utils';
 
 interface Allocation {
   usEquity: number;
@@ -21,28 +26,40 @@ interface Allocation {
   crypto: number;
 }
 
-const DEFAULT_ALLOCATION: Allocation = {
-  usEquity: 0.50,
-  intlEquity: 0.15,
-  bonds: 0.25,
-  reits: 0.05,
-  gold: 0.00,
-  cash: 0.05,
-  crypto: 0.00,
-};
-
 export default function StressTestPage() {
-  const { financials } = useUserProfile();
-  const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION);
-  const [portfolioValue, setPortfolioValue] = useState(500000);
+  const { financials, isDemoMode } = useUserProfile();
   const [selectedScenario, setSelectedScenario] = useState<StressScenario | null>(null);
+  const [manualOverride, setManualOverride] = useState(false);
+  const [manualAllocation, setManualAllocation] = useState<Allocation | null>(null);
+  const [portfolioValue, setPortfolioValue] = useState(500000);
   
-  // Update portfolio value from user profile
-  useState(() => {
+  // Derive allocation from actual portfolio holdings
+  const derivedAllocation = useMemo((): Allocation => {
+    if (!financials || financials.netWorth <= 0) {
+      return FALLBACK_ALLOCATION as Allocation;
+    }
+    
+    const calc = calculateAllocationFromFinancials(financials);
+    return {
+      usEquity: calc.usEquity,
+      intlEquity: calc.intlEquity,
+      bonds: calc.bonds,
+      reits: calc.reits,
+      gold: calc.gold,
+      cash: calc.cash,
+      crypto: calc.crypto,
+    };
+  }, [financials]);
+  
+  // Use derived allocation unless user manually overrides
+  const allocation = manualOverride && manualAllocation ? manualAllocation : derivedAllocation;
+  
+  // Update portfolio value when financials load
+  useEffect(() => {
     if (financials && financials.netWorth > 0) {
       setPortfolioValue(financials.netWorth);
     }
-  });
+  }, [financials]);
   
   // Calculate impacts for all scenarios
   const scenarioImpacts = useMemo(() => {
@@ -92,7 +109,33 @@ export default function StressTestPage() {
           {/* Allocation Panel */}
           <div className="col-span-4 space-y-6">
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
-              <h2 className="text-lg font-semibold mb-4">📊 Your Allocation</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">📊 Your Allocation</h2>
+                {manualOverride && (
+                  <button
+                    onClick={() => {
+                      setManualOverride(false);
+                      setManualAllocation(null);
+                    }}
+                    className="text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded hover:bg-purple-600/50"
+                  >
+                    Reset to Portfolio
+                  </button>
+                )}
+              </div>
+              
+              {/* Source indicator */}
+              <div className="mb-4 p-2 bg-slate-700/30 rounded-lg text-xs text-slate-400">
+                {manualOverride ? (
+                  <span>⚙️ Custom allocation (adjust sliders below)</span>
+                ) : isDemoMode ? (
+                  <span>📊 Derived from Demo Portfolio (~$732k across accounts)</span>
+                ) : financials && financials.netWorth > 0 ? (
+                  <span>📊 Derived from your actual portfolio</span>
+                ) : (
+                  <span>📊 Using default allocation (add accounts to personalize)</span>
+                )}
+              </div>
               
               <div className="mb-4">
                 <label className="block text-sm text-slate-400 mb-1">Portfolio Value</label>
@@ -124,10 +167,14 @@ export default function StressTestPage() {
                       min="0"
                       max="100"
                       value={(allocation[key as keyof Allocation] || 0) * 100}
-                      onChange={(e) => setAllocation(prev => ({
-                        ...prev,
-                        [key]: Number(e.target.value) / 100,
-                      }))}
+                      onChange={(e) => {
+                        const newAlloc = manualOverride && manualAllocation 
+                          ? { ...manualAllocation }
+                          : { ...allocation };
+                        newAlloc[key as keyof Allocation] = Number(e.target.value) / 100;
+                        setManualAllocation(newAlloc);
+                        setManualOverride(true);
+                      }}
                       className="w-full"
                     />
                   </div>

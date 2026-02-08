@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
+import { calculateAllocationFromFinancials, calculateAge } from '@/lib/portfolio-utils';
 
 interface PortfolioAllocation {
   usEquity: number;
@@ -122,15 +123,8 @@ export default function MonteCarloPage() {
   useEffect(() => {
     if (!profile && !financials) return;
     
-    // Calculate age from DOB
-    let age = 35;
-    if (profile?.dateOfBirth) {
-      const birth = new Date(profile.dateOfBirth);
-      const today = new Date();
-      age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    }
+    // Calculate age from DOB using utility
+    const age = calculateAge(profile?.dateOfBirth);
     
     // Get Social Security info
     const ssMonthly = profile?.socialSecurity?.benefitAtFRA || 2500;
@@ -141,6 +135,18 @@ export default function MonteCarloPage() {
     const portfolioValue = financials?.netWorth ?? 500000;
     const spending = Math.max(Math.round(portfolioValue * 0.04), 50000);
     
+    // Derive allocation from actual holdings
+    const derivedAllocation = calculateAllocationFromFinancials(financials);
+    const allocation: PortfolioAllocation = {
+      usEquity: derivedAllocation.usEquity,
+      intlEquity: derivedAllocation.intlEquity,
+      bonds: derivedAllocation.bonds,
+      reits: derivedAllocation.reits,
+      gold: derivedAllocation.gold,
+      crypto: derivedAllocation.crypto,
+      cash: derivedAllocation.cash,
+    };
+    
     setParams(prev => ({
       ...prev,
       currentAge: age,
@@ -149,7 +155,11 @@ export default function MonteCarloPage() {
       annualSpendingRetirement: spending,
       socialSecurityMonthly: ssMonthly,
       socialSecurityAge: ssAge,
+      allocation, // Use derived allocation from holdings
     }));
+    
+    // Clear any preset selection since we're using portfolio data
+    setSelectedPreset(null);
   }, [profile, financials]);
   
   const totalAllocation = useMemo(() => {

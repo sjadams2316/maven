@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { runMonteCarloSimulation, MonteCarloParams } from '@/lib/monte-carlo-engine';
 import { getSWRPercentiles, analyzeSequenceRisk } from '@/lib/safe-withdrawal';
@@ -8,21 +8,57 @@ import { STRESS_SCENARIOS, calculateScenarioImpact, getWorstCaseScenario } from 
 import { SP500_ANNUAL_RETURNS } from '@/lib/historical-returns';
 import { estimateReturnFromCAPE } from '@/lib/valuation-indicators';
 import { useUserProfile } from '@/providers/UserProvider';
+import { calculateAge, calculateAllocationFromFinancials, getAllocationSummary } from '@/lib/portfolio-utils';
 
 export default function RetirementHubPage() {
-  const { financials, profile } = useUserProfile();
+  const { financials, profile, isDemoMode } = useUserProfile();
   
-  // User inputs
-  const [currentAge, setCurrentAge] = useState(32);
+  // User inputs - will be updated from profile
+  const [currentAge, setCurrentAge] = useState(35);
   const [retirementAge, setRetirementAge] = useState(60);
   const [lifeExpectancy, setLifeExpectancy] = useState(95);
-  const [portfolioValue, setPortfolioValue] = useState(financials?.netWorth || 500000);
+  const [portfolioValue, setPortfolioValue] = useState(500000);
   const [annualContribution, setAnnualContribution] = useState(50000);
   const [desiredIncome, setDesiredIncome] = useState(80000);
   const [socialSecurity, setSocialSecurity] = useState(30000);
   const [ssStartAge, setSsStartAge] = useState(67);
   const [stockAllocation, setStockAllocation] = useState(70);
   const [riskTolerance, setRiskTolerance] = useState<'conservative' | 'moderate' | 'aggressive'>('moderate');
+  
+  // Update from profile when it loads
+  useEffect(() => {
+    if (!profile && !financials) return;
+    
+    // Calculate age from DOB
+    const age = calculateAge(profile?.dateOfBirth);
+    setCurrentAge(age);
+    
+    // Get Social Security info
+    const ssMonthly = profile?.socialSecurity?.benefitAtFRA || 2500;
+    const ssAge = profile?.socialSecurity?.fullRetirementAge || 67;
+    const retireAge = profile?.socialSecurity?.retirementAge || 55;
+    
+    // Portfolio value
+    const netWorth = financials?.netWorth || 500000;
+    setPortfolioValue(netWorth);
+    
+    // Social Security
+    setSocialSecurity(ssMonthly * 12);
+    setSsStartAge(ssAge);
+    
+    // Retirement age (at least 5 years away)
+    setRetirementAge(Math.max(retireAge, age + 5));
+    
+    // Desired income (4% of portfolio or $50k minimum)
+    setDesiredIncome(Math.max(Math.round(netWorth * 0.04), 50000));
+    
+    // Calculate stock allocation from holdings
+    if (financials) {
+      const allocation = calculateAllocationFromFinancials(financials);
+      const summary = getAllocationSummary(allocation);
+      setStockAllocation(Math.round(summary.stocks * 100));
+    }
+  }, [profile, financials]);
   
   // Derived values
   const yearsToRetirement = retirementAge - currentAge;

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
+import { useUserProfile } from '@/providers/UserProvider';
+import { classifyTicker, AssetClass } from '@/lib/portfolio-utils';
 
-interface Holding {
+interface LocationHolding {
   symbol: string;
   name: string;
   type: 'stock' | 'bond' | 'reit' | 'intl' | 'crypto';
@@ -16,28 +18,172 @@ interface Holding {
   taxDrag: number;
 }
 
-const holdings: Holding[] = [
-  { symbol: 'VTI', name: 'Vanguard Total Stock', type: 'stock', taxEfficiency: 'high', currentLocation: 'Individual', optimalLocation: 'Individual', value: 125000, annualIncome: 1875, taxDrag: 0 },
-  { symbol: 'NVDA', name: 'NVIDIA Corp', type: 'stock', taxEfficiency: 'high', currentLocation: 'Individual', optimalLocation: 'Individual', value: 58000, annualIncome: 58, taxDrag: 0 },
-  { symbol: 'BND', name: 'Vanguard Total Bond', type: 'bond', taxEfficiency: 'low', currentLocation: 'Individual', optimalLocation: 'IRA', value: 52000, annualIncome: 2080, taxDrag: 728 },
-  { symbol: 'VXUS', name: 'Vanguard Intl Stock', type: 'intl', taxEfficiency: 'medium', currentLocation: 'IRA', optimalLocation: 'Individual', value: 48000, annualIncome: 1440, taxDrag: 216 },
-  { symbol: 'VNQ', name: 'Vanguard REIT', type: 'reit', taxEfficiency: 'low', currentLocation: 'Individual', optimalLocation: 'Roth IRA', value: 25000, annualIncome: 1000, taxDrag: 350 },
-  { symbol: 'SCHD', name: 'Schwab Dividend', type: 'stock', taxEfficiency: 'medium', currentLocation: '401(k)', optimalLocation: 'Individual', value: 35000, annualIncome: 1225, taxDrag: 122 },
-  { symbol: 'TAO', name: 'Bittensor', type: 'crypto', taxEfficiency: 'low', currentLocation: 'Individual', optimalLocation: 'Roth IRA', value: 15000, annualIncome: 0, taxDrag: 0 },
-];
+interface AccountSummary {
+  name: string;
+  type: 'Taxable' | 'Tax-Deferred' | 'Tax-Free';
+  balance: number;
+  optimal: number;
+}
 
-const accounts = [
-  { name: 'Individual', type: 'Taxable', balance: 275000, optimal: 231000 },
-  { name: 'Traditional IRA', type: 'Tax-Deferred', balance: 85000, optimal: 77000 },
-  { name: 'Roth IRA', type: 'Tax-Free', balance: 62000, optimal: 75000 },
-  { name: '401(k)', type: 'Tax-Deferred', balance: 83000, optimal: 72000 },
-];
+// Tax efficiency rules
+const TAX_EFFICIENCY: Record<AssetClass, { efficiency: 'high' | 'medium' | 'low'; optimalLocation: string }> = {
+  usEquity: { efficiency: 'high', optimalLocation: 'Taxable' },
+  intlEquity: { efficiency: 'medium', optimalLocation: 'Taxable' }, // Foreign tax credit
+  bonds: { efficiency: 'low', optimalLocation: 'Tax-Deferred' },
+  reits: { efficiency: 'low', optimalLocation: 'Tax-Deferred' },
+  gold: { efficiency: 'medium', optimalLocation: 'Tax-Deferred' },
+  crypto: { efficiency: 'low', optimalLocation: 'Roth IRA' }, // High growth potential
+  cash: { efficiency: 'high', optimalLocation: 'Taxable' },
+  alternatives: { efficiency: 'medium', optimalLocation: 'Tax-Deferred' },
+};
+
+// Estimated yields
+const YIELDS: Record<string, number> = {
+  'VTI': 0.015, 'VOO': 0.015, 'SPY': 0.015,
+  'SCHD': 0.035, 'VYM': 0.03,
+  'VXUS': 0.03, 'VEA': 0.03, 'VWO': 0.025,
+  'BND': 0.04, 'AGG': 0.035,
+  'VNQ': 0.04,
+};
 
 export default function AssetLocationPage() {
+  const { profile, financials, isDemoMode } = useUserProfile();
   const [showOptimized, setShowOptimized] = useState(false);
 
+  // Derive holdings from actual portfolio with tax location analysis
+  const { holdings, accounts } = useMemo(() => {
+    if (!financials || !profile) {
+      return { holdings: [], accounts: [] };
+    }
+    
+    const holdingsList: LocationHolding[] = [];
+    const accountBalances: Record<string, { balance: number; type: 'Taxable' | 'Tax-Deferred' | 'Tax-Free' }> = {};
+    
+    // Helper to determine account tax type
+    const getAccountType = (accType: string): 'Taxable' | 'Tax-Deferred' | 'Tax-Free' => {
+      if (['401(k)', 'Traditional IRA', '403(b)', '457', 'SEP IRA', 'SIMPLE IRA'].includes(accType)) {
+        return 'Tax-Deferred';
+      }
+      if (['Roth IRA', 'Roth 401(k)', 'HSA'].includes(accType)) {
+        return 'Tax-Free';
+      }
+      return 'Taxable';
+    };
+    
+    // Helper to map asset class to display type
+    const mapType = (assetClass: AssetClass): 'stock' | 'bond' | 'reit' | 'intl' | 'crypto' => {
+      switch (assetClass) {
+        case 'bonds': return 'bond';
+        case 'reits': return 'reit';
+        case 'intlEquity': return 'intl';
+        case 'crypto': return 'crypto';
+        default: return 'stock';
+      }
+    };
+    
+    // Process retirement accounts
+    profile.retirementAccounts?.forEach(account => {
+      const accTaxType = getAccountType(account.type || '');
+      const accName = account.type || account.name;
+      
+      if (!accountBalances[accName]) {
+        accountBalances[accName] = { balance: 0, type: accTaxType };
+      }
+      accountBalances[accName].balance += account.balance || 0;
+      
+      account.holdings?.forEach(h => {
+        const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+        if (value <= 0) return;
+        
+        const assetClass = classifyTicker(h.ticker);
+        const taxInfo = TAX_EFFICIENCY[assetClass];
+        const estYield = YIELDS[h.ticker] || 0.01;
+        const annualIncome = value * estYield;
+        
+        // Calculate tax drag: income in wrong account type
+        let taxDrag = 0;
+        const currentIsTaxable = accTaxType === 'Taxable';
+        const optimalIsTaxable = taxInfo.optimalLocation === 'Taxable';
+        
+        if (taxInfo.efficiency === 'low' && currentIsTaxable) {
+          // Low efficiency asset in taxable = tax drag
+          taxDrag = annualIncome * 0.35; // Assume 35% marginal rate
+        } else if (taxInfo.efficiency === 'medium' && currentIsTaxable && assetClass === 'intlEquity') {
+          // Actually beneficial due to foreign tax credit - no drag
+          taxDrag = 0;
+        }
+        
+        holdingsList.push({
+          symbol: h.ticker,
+          name: h.name || h.ticker,
+          type: mapType(assetClass),
+          taxEfficiency: taxInfo.efficiency,
+          currentLocation: accName,
+          optimalLocation: taxInfo.optimalLocation,
+          value,
+          annualIncome: Math.round(annualIncome),
+          taxDrag: Math.round(taxDrag),
+        });
+      });
+    });
+    
+    // Process investment accounts
+    profile.investmentAccounts?.forEach(account => {
+      const accName = account.type === 'Joint' ? 'Joint Brokerage' : account.name;
+      
+      if (!accountBalances[accName]) {
+        accountBalances[accName] = { balance: 0, type: 'Taxable' };
+      }
+      accountBalances[accName].balance += account.balance || 0;
+      
+      account.holdings?.forEach(h => {
+        const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+        if (value <= 0) return;
+        
+        const assetClass = classifyTicker(h.ticker);
+        const taxInfo = TAX_EFFICIENCY[assetClass];
+        const estYield = YIELDS[h.ticker] || (assetClass === 'crypto' ? 0 : 0.01);
+        const annualIncome = value * estYield;
+        
+        // Calculate tax drag
+        let taxDrag = 0;
+        if (taxInfo.efficiency === 'low') {
+          taxDrag = annualIncome * 0.35;
+        }
+        
+        holdingsList.push({
+          symbol: h.ticker,
+          name: h.name || h.ticker,
+          type: mapType(assetClass),
+          taxEfficiency: taxInfo.efficiency,
+          currentLocation: accName,
+          optimalLocation: taxInfo.optimalLocation,
+          value,
+          annualIncome: Math.round(annualIncome),
+          taxDrag: Math.round(taxDrag),
+        });
+      });
+    });
+    
+    // Build account summary with optimal allocations
+    const accountsList: AccountSummary[] = Object.entries(accountBalances).map(([name, info]) => {
+      // Simple optimal: calculate what should be in each account type
+      const totalValue = holdingsList.reduce((sum, h) => sum + h.value, 0);
+      const optimal = info.balance; // For now, keep same - real optimizer would be more complex
+      
+      return {
+        name,
+        type: info.type,
+        balance: info.balance,
+        optimal,
+      };
+    });
+    
+    return { holdings: holdingsList, accounts: accountsList };
+  }, [profile, financials]);
+
   const totalTaxDrag = holdings.reduce((sum, h) => sum + h.taxDrag, 0);
-  const potentialSavings = totalTaxDrag * 0.8; // Assume we can recover 80%
+  const potentialSavings = Math.round(totalTaxDrag * 0.8); // Assume we can recover 80%
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-8">
