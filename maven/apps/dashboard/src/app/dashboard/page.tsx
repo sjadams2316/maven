@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [marketLoading, setMarketLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAllAccounts, setShowAllAccounts] = useState(false);
+  const [showAdditionalTools, setShowAdditionalTools] = useState(false);
   
   // Fund profiles for real Morningstar classifications
   const { profiles: fundProfiles, fetchProfiles, loading: profilesLoading } = useFundProfiles();
@@ -659,22 +660,71 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Tools Grid */}
-        <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">🛠 Maven Tools</h3>
+        {/* ==================== PRIMARY TOOLS ==================== */}
+        <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">🎯 Primary Tools</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* Financial Snapshot (for onboarded) / Build Your Profile (for new users) */}
+          
+          {/* Maven Oracle - Featured */}
+          <a 
+            href="/oracle"
+            className="bg-gradient-to-br from-violet-900/50 to-purple-900/30 border border-violet-500/30 hover:border-violet-400/50 hover:shadow-lg hover:shadow-violet-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-violet-500/30">
+                  🔮
+                </div>
+                <span className="text-xs px-2 py-1 bg-violet-500/30 text-violet-300 rounded-full">AI</span>
+              </div>
+              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-violet-300 transition-colors">Maven Oracle</h4>
+              <p className="text-xs sm:text-sm text-gray-400">Ask anything about your money</p>
+            </div>
+          </a>
+          
+          {/* Portfolio Lab */}
+          <a 
+            href="/portfolio-lab"
+            className="bg-[#12121a] border border-white/10 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-600/30 border border-blue-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                🧪
+              </div>
+              <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">Analysis</span>
+            </div>
+            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-blue-300 transition-colors">Portfolio Lab</h4>
+            <p className="text-xs sm:text-sm text-gray-500">Optimize & stress test</p>
+          </a>
+          
+          {/* Tax-Loss Harvester */}
+          <a 
+            href="/tax-harvesting"
+            className="bg-[#12121a] border border-white/10 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                🌾
+              </div>
+              <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full">Tax</span>
+            </div>
+            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-amber-300 transition-colors">Tax-Loss Harvester</h4>
+            <p className="text-xs sm:text-sm text-gray-500">Turn losses into savings</p>
+          </a>
+          
+          {/* Financial Snapshot / Build Profile */}
           {isOnboarded ? (
             <a 
               href="/financial-snapshot"
-              className="bg-[#12121a] border border-white/10 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              className="bg-[#12121a] border border-white/10 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
             >
               <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-blue-600/30 border border-indigo-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-600/30 border border-emerald-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
                   📸
                 </div>
-                <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">Interactive</span>
+                <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">Plan</span>
               </div>
-              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-indigo-300 transition-colors">Financial Snapshot</h4>
+              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Financial Snapshot</h4>
               <p className="text-xs sm:text-sm text-gray-500">Your road to retirement</p>
             </a>
           ) : (
@@ -688,156 +738,177 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">Start Here</span>
+                <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">Start</span>
               </div>
               <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-indigo-300 transition-colors">Build Your Profile</h4>
-              <p className="text-xs sm:text-sm text-gray-500">Tell Maven about your finances</p>
+              <p className="text-xs sm:text-sm text-gray-500">Tell Maven about you</p>
             </a>
           )}
-          
-          {/* Portfolio Lab */}
-          <a 
-            href="/portfolio-lab"
-            className="bg-[#12121a] border border-white/10 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-600/30 border border-blue-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                🧪
-              </div>
-              <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">New</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-blue-300 transition-colors">Portfolio Lab</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Optimize & stress test</p>
-          </a>
-          
-          {/* Social Security Optimizer */}
-          <a 
-            href="/social-security"
-            className="bg-[#12121a] border border-white/10 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-teal-500/30 to-emerald-600/30 border border-teal-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-teal-500/20 text-teal-400 rounded-full">New</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-teal-300 transition-colors">Social Security</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Optimize when to claim</p>
-          </a>
-          
-          {/* Link Accounts (Plaid) */}
-          <a 
-            href="/accounts"
-            className="bg-[#12121a] border border-white/10 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-600/30 border border-emerald-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">Beta</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Link Accounts</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Connect banks via Plaid</p>
-          </a>
         </div>
         
-        {/* Second row of tools */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* Tax-Loss Harvester */}
-          <a 
-            href="/oracle"
-            onClick={(e) => {
-              e.preventDefault();
-              localStorage.setItem('maven_chat_prompt', 'Scan my portfolio for tax-loss harvesting opportunities');
-              localStorage.setItem('maven_chat_autosubmit', 'true');
-              router.push('/oracle');
-            }}
-            className="bg-[#12121a] border border-white/10 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+        {/* ==================== ADDITIONAL TOOLS (Collapsible) ==================== */}
+        <div className="mb-6 sm:mb-8">
+          <button
+            onClick={() => setShowAdditionalTools(!showAdditionalTools)}
+            className="w-full flex items-center justify-between bg-[#12121a] border border-white/10 hover:border-white/20 rounded-xl px-4 py-3 transition mb-3"
           >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full">AI</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-amber-300 transition-colors">Tax-Loss Harvester</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Find tax savings</p>
-          </a>
+            <span className="text-sm font-medium text-white flex items-center gap-2">
+              <span>🛠</span>
+              Additional Tools
+              <span className="text-xs text-gray-500">(8 more)</span>
+            </span>
+            <svg 
+              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showAdditionalTools ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
           
-          {/* Roth Conversion Analyzer */}
-          <a 
-            href="/oracle"
-            onClick={(e) => {
-              e.preventDefault();
-              localStorage.setItem('maven_chat_prompt', 'Should I do a Roth conversion this year? Analyze my situation.');
-              localStorage.setItem('maven_chat_autosubmit', 'true');
-              router.push('/oracle');
-            }}
-            className="bg-[#12121a] border border-white/10 hover:border-pink-500/50 hover:shadow-lg hover:shadow-pink-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-pink-500/20 text-pink-400 rounded-full">AI</span>
+          {showAdditionalTools && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-in slide-in-from-top-2 duration-200">
+              
+              {/* Market Fragility Index */}
+              <a 
+                href="/fragility"
+                className="bg-[#12121a] border border-white/10 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500/30 to-red-600/30 border border-orange-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    📊
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full">Market</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-orange-300 transition-colors">Fragility Index™</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Market risk conditions</p>
+              </a>
+              
+              {/* Social Security */}
+              <a 
+                href="/social-security"
+                className="bg-[#12121a] border border-white/10 hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-teal-500/30 to-emerald-600/30 border border-teal-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🛡️
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-teal-500/20 text-teal-400 rounded-full">Plan</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-teal-300 transition-colors">Social Security</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Optimize when to claim</p>
+              </a>
+              
+              {/* Retirement Optimizer */}
+              <a 
+                href="/retirement-optimizer"
+                className="bg-[#12121a] border border-white/10 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🏦
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-full">401k</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-cyan-300 transition-colors">Retirement Optimizer</h4>
+                <p className="text-xs sm:text-sm text-gray-500">401k fees & match</p>
+              </a>
+              
+              {/* What-If Scenarios */}
+              <a 
+                href="/scenarios"
+                className="bg-[#12121a] border border-white/10 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-600/30 border border-indigo-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🔮
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">Plan</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-indigo-300 transition-colors">What-If Scenarios</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Model life changes</p>
+              </a>
+              
+              {/* Roth Converter */}
+              <a 
+                href="/oracle"
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem('maven_chat_prompt', 'Should I do a Roth conversion this year? Analyze my situation.');
+                  localStorage.setItem('maven_chat_autosubmit', 'true');
+                  router.push('/oracle');
+                }}
+                className="bg-[#12121a] border border-white/10 hover:border-pink-500/50 hover:shadow-lg hover:shadow-pink-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-pink-500/30 to-rose-600/30 border border-pink-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🔄
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-pink-500/20 text-pink-400 rounded-full">AI</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-pink-300 transition-colors">Roth Converter</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Optimize conversions</p>
+              </a>
+              
+              {/* Rebalancing */}
+              <a 
+                href="/oracle"
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem('maven_chat_prompt', 'Analyze my current allocation and suggest rebalancing trades');
+                  localStorage.setItem('maven_chat_autosubmit', 'true');
+                  router.push('/oracle');
+                }}
+                className="bg-[#12121a] border border-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    ⚖️
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full">AI</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-purple-300 transition-colors">Rebalancing</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Get back on target</p>
+              </a>
+              
+              {/* Risk Analysis */}
+              <a 
+                href="/oracle"
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem('maven_chat_prompt', 'What are my biggest portfolio risks right now?');
+                  localStorage.setItem('maven_chat_autosubmit', 'true');
+                  router.push('/oracle');
+                }}
+                className="bg-[#12121a] border border-white/10 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-600/30 border border-red-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    ⚠️
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-full">AI</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-red-300 transition-colors">Risk Analysis</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Spot vulnerabilities</p>
+              </a>
+              
+              {/* Link Accounts */}
+              <a 
+                href="/accounts"
+                className="bg-[#12121a] border border-white/10 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-green-600/30 border border-emerald-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🔗
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">Beta</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Link Accounts</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Connect via Plaid</p>
+              </a>
             </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-pink-300 transition-colors">Roth Converter</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Optimize conversions</p>
-          </a>
-          
-          {/* Rebalancing Analyzer */}
-          <a 
-            href="/oracle"
-            onClick={(e) => {
-              e.preventDefault();
-              localStorage.setItem('maven_chat_prompt', 'Analyze my current allocation and suggest rebalancing trades');
-              localStorage.setItem('maven_chat_autosubmit', 'true');
-              router.push('/oracle');
-            }}
-            className="bg-[#12121a] border border-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full">AI</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-purple-300 transition-colors">Rebalancing</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Get back on target</p>
-          </a>
-          
-          {/* Risk Analysis */}
-          <a 
-            href="/oracle"
-            onClick={(e) => {
-              e.preventDefault();
-              localStorage.setItem('maven_chat_prompt', 'What are my biggest portfolio risks right now? Concentration, correlation, sector exposure?');
-              localStorage.setItem('maven_chat_autosubmit', 'true');
-              router.push('/oracle');
-            }}
-            className="bg-[#12121a] border border-white/10 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-600/30 border border-red-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-full">AI</span>
-            </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-red-300 transition-colors">Risk Analysis</h4>
-            <p className="text-xs sm:text-sm text-gray-500">Spot vulnerabilities</p>
-          </a>
+          )}
         </div>
 
         {/* NOT ONBOARDED: Get Started CTA */}

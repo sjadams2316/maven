@@ -331,26 +331,42 @@ What's on your mind?`;
   if (mode === 'floating') {
     return (
       <>
-        {/* Floating Chat Button */}
+        {/* Floating Chat Button - Maven Oracle */}
         <button
           data-chat-toggle
           onClick={() => setIsOpen(!isOpen)}
           className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg transition-all z-50 flex items-center justify-center ${
             isOpen 
               ? 'bg-gray-700 hover:bg-gray-600' 
-              : 'bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500'
+              : 'bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600 hover:from-violet-400 hover:to-indigo-500'
           }`}
+          style={!isOpen ? {
+            animation: 'maven-breathe 3s ease-in-out infinite',
+            boxShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.1)'
+          } : undefined}
         >
           {isOpen ? (
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
+            <span className="text-2xl">🔮</span>
           )}
         </button>
+        
+        {/* Maven breathing animation */}
+        <style jsx>{`
+          @keyframes maven-breathe {
+            0%, 100% {
+              transform: scale(1);
+              box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.1);
+            }
+            50% {
+              transform: scale(1.05);
+              box-shadow: 0 0 30px rgba(139, 92, 246, 0.7), 0 0 50px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2);
+            }
+          }
+        `}</style>
 
         {/* Floating Chat Window */}
         {isOpen && (
