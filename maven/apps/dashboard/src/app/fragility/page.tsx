@@ -578,8 +578,8 @@ function OptimizationPanel({ fragilityData }: { fragilityData: FragilityData | n
               ],
               actionItems: strategy.actions.slice(0, 4).map((action, i) => ({
                 priority: i === 0 ? 'high' as const : i === 1 ? 'medium' as const : 'low' as const,
-                action: action.action,
-                impact: action.details
+                action: action.label,
+                impact: `Impact: ${action.impact}`
               }))
             }}
             onAnalyze={async () => {
