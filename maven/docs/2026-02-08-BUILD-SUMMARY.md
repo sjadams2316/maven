@@ -257,12 +257,50 @@ Maven Partners grows
 
 ---
 
-## What's Next
+## Go-To-Market: The Smart Sequence
 
-1. **Plaid Integration** — Real account data
-2. **First Client Demo** — Show Jon's prospects
-3. **Compliance Layer** — Suitability, agreements
-4. **Launch** — Q2 2026
+**We're not launching everything at once. We're being strategic.**
+
+### Phase 1: Captive Launch (Q2 2026)
+- Jon registers as independent RIA, custodies with Schwab
+- **Maven Partners only** — no public launch
+- Jon's existing relationships become first clients
+- Advisor-curated dashboard, controlled experience
+- Real feedback, real iteration, real case studies
+
+### Phase 2: Word of Mouth (Q3-Q4 2026)
+- Let clients talk → "my advisor has this incredible tool"
+- Other advisors start asking "what are you using?"
+- Soft launch Maven Basic (waitlist, lead capture)
+- Build demand before supply
+
+### Phase 3: Public Launch (Early 2027)
+- Maven Basic + Pro go live
+- E*Trade flywheel kicks in:
+  - Basic (free) → Pro ($29-49) → life event → Partners (AUM)
+- Pro users become prospecting pool (just like E*Trade → Morgan Stanley)
+
+### Phase 4: RIA SaaS (2027+)
+- Other RIAs have been asking since Phase 2
+- We have case studies, compliance battle-tested
+- White-label Maven for other advisors
+- **This is the scale play**
+
+### Why This Sequence
+1. **De-risked** — Jon IS an advisor, his clients ARE real
+2. **Word of mouth > ads** — Clients telling friends is priceless
+3. **Prove the flywheel** — Before we scale it
+4. **Capital efficient** — Bootstrap with existing business
+
+---
+
+## What's Next (Immediate)
+
+1. **Schwab Advisor Services** — Jon's RIA setup
+2. **Plaid Integration** — Account aggregation
+3. **First 5-10 Clients** — Maven Partners pilot
+4. **Compliance Workflows** — Suitability, agreements
+5. **Iterate** — Weekly improvements based on feedback
 
 ---
 
