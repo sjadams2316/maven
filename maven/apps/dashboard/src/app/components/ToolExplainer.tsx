@@ -482,6 +482,51 @@ Variables we test:
       'Doesn\'t account for healthcare costs (Medicare, ACA)',
       'Longevity risk if you outlive projections'
     ]
+  },
+
+  'fund-xray': {
+    title: 'Fund X-Ray Analyzer',
+    summary: 'Fund X-Ray looks through your mutual funds and ETFs to reveal what you actually own underneath. See the true holdings, sector exposure, overlap between funds, and risk characteristics.',
+    methodology: `The X-Ray provides:
+
+**Holdings Analysis**
+- See top holdings within each fund
+- Aggregate to portfolio level for true exposure
+- Identify hidden concentration (e.g., Apple across 5 funds)
+
+**Sector Breakdown**
+- Technology, Healthcare, Financials, etc.
+- Compare to benchmark allocation
+- Spot over/underweight positions
+
+**Style Box (Morningstar)**
+- Size: Large / Mid / Small cap
+- Style: Value / Blend / Growth
+- See where your funds fall on the 9-box grid
+
+**Fund Overlap**
+- How much do your funds duplicate each other?
+- Identify redundant holdings
+- Optimize for diversification
+
+**Risk Metrics**
+- Standard deviation (volatility)
+- Sharpe ratio (risk-adjusted return)
+- Beta (market sensitivity)
+- Alpha (manager skill vs benchmark)`,
+    dataSources: [
+      'Fund prospectus holdings (quarterly)',
+      'Morningstar fund data (when available)',
+      'ETF daily holdings (for transparent ETFs)',
+      'Style classification databases'
+    ],
+    limitations: [
+      'Mutual fund holdings are reported quarterly with delay',
+      'Active funds may have changed positions since last report',
+      'Full holdings data requires Morningstar subscription',
+      'International fund holdings may have less detail',
+      'Demo mode shows sample data—connect accounts for your actual funds'
+    ]
   }
 };
 

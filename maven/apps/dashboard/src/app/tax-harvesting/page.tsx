@@ -403,7 +403,7 @@ export default function TaxHarvestingPage() {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    message: `Walk me through my tax-loss harvesting opportunities like I'm new to this. I have ${summary.totalOpportunities} positions with total harvestable losses of ${formatCurrency(summary.totalUnrealizedLoss)}. Estimated tax savings: ${formatCurrency(summary.estimatedTaxSavings)} at my ${taxBracket}% federal + ${stateTaxRate}% state rate. Top opportunities: ${topOpps.map(o => `${o.symbol} with ${formatCurrency(o.unrealizedLoss)} loss`).join(', ')}. Explain: 1) What is tax-loss harvesting and why it matters 2) How much I could actually save 3) What I need to watch out for (wash sales) 4) Step-by-step what to do. Keep it simple and actionable.`
+                    message: `Walk me through my tax-loss harvesting opportunities like I'm new to this. I have ${summary.totalOpportunities} positions with total harvestable losses of ${formatCurrency(summary.totalUnrealizedLoss)}. Estimated tax savings: ${formatCurrency(summary.estimatedTaxSavings)} at my ${taxBracket}% federal + ${stateTaxRate}% state rate. Top opportunities: ${topOpps.map(o => `${o.ticker} with ${formatCurrency(o.unrealizedLoss)} loss`).join(', ')}. Explain: 1) What is tax-loss harvesting and why it matters 2) How much I could actually save 3) What I need to watch out for (wash sales) 4) Step-by-step what to do. Keep it simple and actionable.`
                   })
                 });
                 const data = await response.json();
