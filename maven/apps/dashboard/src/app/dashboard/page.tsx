@@ -662,7 +662,7 @@ export default function Dashboard() {
 
         {/* ==================== PRIMARY TOOLS ==================== */}
         <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">🎯 Primary Tools</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           
           {/* Maven Oracle - Featured */}
           <a 
@@ -678,7 +678,7 @@ export default function Dashboard() {
                 <span className="text-xs px-2 py-1 bg-violet-500/30 text-violet-300 rounded-full">AI</span>
               </div>
               <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-violet-300 transition-colors">Maven Oracle</h4>
-              <p className="text-xs sm:text-sm text-gray-400">Ask anything about your money</p>
+              <p className="text-xs sm:text-sm text-gray-400">Ask anything</p>
             </div>
           </a>
           
@@ -695,6 +695,24 @@ export default function Dashboard() {
             </div>
             <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-blue-300 transition-colors">Portfolio Lab</h4>
             <p className="text-xs sm:text-sm text-gray-500">Optimize & stress test</p>
+          </a>
+          
+          {/* Market Fragility Index - Featured */}
+          <a 
+            href="/fragility"
+            className="bg-gradient-to-br from-orange-900/40 to-red-900/30 border border-orange-500/30 hover:border-orange-400/50 hover:shadow-lg hover:shadow-orange-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-orange-500/30">
+                  📊
+                </div>
+                <span className="text-xs px-2 py-1 bg-orange-500/30 text-orange-300 rounded-full">Live</span>
+              </div>
+              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-orange-300 transition-colors">Fragility Index™</h4>
+              <p className="text-xs sm:text-sm text-gray-400">Market risk conditions</p>
+            </div>
           </a>
           
           {/* Tax-Loss Harvester */}
@@ -725,7 +743,7 @@ export default function Dashboard() {
                 <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">Plan</span>
               </div>
               <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-emerald-300 transition-colors">Financial Snapshot</h4>
-              <p className="text-xs sm:text-sm text-gray-500">Your road to retirement</p>
+              <p className="text-xs sm:text-sm text-gray-500">Road to retirement</p>
             </a>
           ) : (
             <a 
@@ -755,7 +773,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium text-white flex items-center gap-2">
               <span>🛠</span>
               Additional Tools
-              <span className="text-xs text-gray-500">(8 more)</span>
+              <span className="text-xs text-gray-500">(7 more)</span>
             </span>
             <svg 
               className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showAdditionalTools ? 'rotate-180' : ''}`} 
@@ -769,21 +787,6 @@ export default function Dashboard() {
           
           {showAdditionalTools && (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-in slide-in-from-top-2 duration-200">
-              
-              {/* Market Fragility Index */}
-              <a 
-                href="/fragility"
-                className="bg-[#12121a] border border-white/10 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
-              >
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500/30 to-red-600/30 border border-orange-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
-                    📊
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full">Market</span>
-                </div>
-                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-orange-300 transition-colors">Fragility Index™</h4>
-                <p className="text-xs sm:text-sm text-gray-500">Market risk conditions</p>
-              </a>
               
               {/* Social Security */}
               <a 
