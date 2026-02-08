@@ -152,7 +152,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/5 border border-white/10 rounded-full mb-6 sm:mb-8">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs sm:text-sm text-gray-300">Private Beta</span>
+              <span className="text-xs sm:text-sm text-gray-300">Private Beta ✨</span>
             </div>
             
             {/* THE SINGLE PROMISE */}
