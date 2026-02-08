@@ -78,6 +78,7 @@ export default function RetirementHubPage() {
       numSimulations: 1000,
       simulationMethod: 'historical_bootstrap',
       includeFatTails: true,
+      inflationModel: 'historical',
     };
     
     return runMonteCarloSimulation(params);
