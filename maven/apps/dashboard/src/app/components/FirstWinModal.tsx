@@ -28,74 +28,125 @@ export default function FirstWinModal({ isOpen, onContinue }: FirstWinModalProps
           transition={{ type: 'spring', duration: 0.5 }}
           className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-white/10 max-w-lg w-full overflow-hidden shadow-2xl"
         >
-          {/* Header with alert styling */}
-          <div className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-b border-orange-500/20 px-6 py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <span className="text-xl">⚠️</span>
-              </div>
+          {/* Header - MONEY FOUND, not warning */}
+          <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border-b border-emerald-500/20 px-6 py-5">
+            <div className="flex items-center gap-4">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center border border-emerald-500/30"
+              >
+                <span className="text-3xl">💰</span>
+              </motion.div>
               <div>
-                <h2 className="text-lg font-bold text-white">Maven Found Something</h2>
-                <p className="text-orange-400 text-sm">In this demo portfolio</p>
+                <motion.h2 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-2xl font-bold text-white"
+                >
+                  We found <span className="text-emerald-400">$4,185</span>
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-emerald-400/80 text-sm"
+                >
+                  Hidden in this sample portfolio
+                </motion.p>
               </div>
             </div>
           </div>
           
-          {/* The insight */}
+          {/* The breakdown */}
           <div className="p-6">
-            <div className="bg-orange-950/30 border border-orange-500/20 rounded-xl p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">📊</div>
+            {/* Money breakdown - the hook */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-black/30 rounded-xl p-4 mb-6"
+            >
+              <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <h3 className="text-white font-semibold mb-1">
-                    42% Tech Concentration Detected
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    This portfolio has <span className="text-orange-400 font-medium">42% exposure to technology stocks</span> — 
-                    higher than 90% of diversified portfolios. If tech corrects 30%, 
-                    this portfolio could drop <span className="text-red-400 font-medium">12.6%</span> from that sector alone.
-                  </p>
+                  <div className="text-2xl font-bold text-emerald-400">$3,700</div>
+                  <div className="text-xs text-gray-500 mt-1">Tax Savings</div>
+                  <div className="text-[10px] text-gray-600">from loss harvesting</div>
+                </div>
+                <div className="border-x border-white/10">
+                  <div className="text-2xl font-bold text-blue-400">$485</div>
+                  <div className="text-xs text-gray-500 mt-1">Fee Reduction</div>
+                  <div className="text-[10px] text-gray-600">per year</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-400">3</div>
+                  <div className="text-xs text-gray-500 mt-1">Insights</div>
+                  <div className="text-[10px] text-gray-600">need attention</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
             
-            {/* What this means */}
-            <div className="space-y-3 mb-6">
+            {/* How we found it */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-3 mb-6"
+            >
               <div className="flex items-start gap-3">
-                <span className="text-emerald-400 mt-1">✓</span>
+                <span className="text-emerald-400 mt-0.5">💰</span>
                 <p className="text-gray-300 text-sm">
-                  <strong>Good news:</strong> The portfolio has strong growth potential
+                  <strong className="text-emerald-400">ARKK is down 63%</strong> — perfect for tax-loss harvesting. 
+                  Swap to similar fund, keep exposure, pocket the tax savings.
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-orange-400 mt-1">!</span>
+                <span className="text-blue-400 mt-0.5">💵</span>
                 <p className="text-gray-300 text-sm">
-                  <strong>Consider:</strong> More diversification could reduce volatility without sacrificing returns
+                  <strong className="text-blue-400">QQQ → QQQM</strong> — same holdings, 0.05% lower fees. 
+                  Small change, $485/year saved.
                 </p>
               </div>
-            </div>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-400 mt-0.5">🔮</span>
+                <p className="text-gray-300 text-sm">
+                  <strong className="text-purple-400">X-Ray vision</strong> — you own Apple in 4 different funds 
+                  (7.2% total exposure). Maven sees what you can't.
+                </p>
+              </div>
+            </motion.div>
             
             {/* Maven difference */}
-            <div className="bg-white/5 rounded-xl p-4 mb-6">
-              <p className="text-gray-400 text-xs leading-relaxed">
-                <span className="text-indigo-400 font-medium">This is what Maven does.</span> We analyze your actual holdings 
-                across all accounts and surface insights you didn't know you needed. No guesswork. No generic advice.
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="bg-gradient-to-r from-indigo-950/50 to-purple-950/50 border border-indigo-500/20 rounded-xl p-4 mb-6"
+            >
+              <p className="text-gray-300 text-sm leading-relaxed">
+                <span className="text-indigo-400 font-semibold">This is what Maven does.</span> We scan your 
+                actual holdings across all accounts and find money you didn't know you were leaving on the table.
               </p>
-            </div>
+            </motion.div>
             
             {/* CTA */}
-            <button
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
               onClick={onContinue}
-              className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-semibold rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
             >
-              Explore the Full Dashboard
+              Show Me Everything
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </button>
+            </motion.button>
             
             <p className="text-center text-gray-500 text-xs mt-3">
-              Sample portfolio • Your data will show your own insights
+              Demo portfolio • Connect your accounts to see your own opportunities
             </p>
           </div>
         </motion.div>
