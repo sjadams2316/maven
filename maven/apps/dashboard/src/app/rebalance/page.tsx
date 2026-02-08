@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Header from '@/app/components/Header';
+import DemoBanner from '@/app/components/DemoBanner';
+import { ThesisInsight } from '@/app/components/ThesisInsight';
 
 interface Holding {
   symbol: string;
@@ -94,6 +97,19 @@ export default function RebalancePage() {
             <div className="text-2xl font-bold text-red-400">${taxableGains.toLocaleString()}</div>
           </div>
         </div>
+
+        {/* Investment Thesis Check */}
+        <ThesisInsight 
+          allocation={{
+            usEquity: 65.5, // VTI + individual stocks
+            intlEquity: 12,  // VXUS
+            bonds: 13,       // BND
+            crypto: 3.75,    // TAO
+            cash: 5.75,      // remainder
+          }}
+          compact={true}
+          className="mb-6"
+        />
 
         {/* Controls */}
         <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6 mb-6">

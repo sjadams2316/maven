@@ -10,6 +10,7 @@ import TaxAlphaCounter from '../components/TaxAlphaCounter';
 import { useFundProfiles, categorizeWithProfiles } from '@/lib/useFundProfiles';
 import { useUserProfile } from '@/providers/UserProvider';
 import { Term } from '../components/InfoTooltip';
+import { ThesisInsight } from '../components/ThesisInsight';
 
 interface MarketData {
   timestamp: string;
@@ -780,7 +781,7 @@ export default function Dashboard() {
             <span className="text-sm font-medium text-white flex items-center gap-2">
               <span>🛠</span>
               Additional Tools
-              <span className="text-xs text-gray-500">(16 more)</span>
+              <span className="text-xs text-gray-500">(18 more)</span>
             </span>
             <svg 
               className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showAdditionalTools ? 'rotate-180' : ''}`} 
@@ -880,6 +881,36 @@ export default function Dashboard() {
                 </div>
                 <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-purple-300 transition-colors">Rebalancing</h4>
                 <p className="text-xs sm:text-sm text-gray-500">Get back on target</p>
+              </a>
+              
+              {/* Investment Thesis */}
+              <a 
+                href="/investment-thesis"
+                className="bg-[#12121a] border border-white/10 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    📊
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full">New</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-amber-300 transition-colors">Investment Thesis</h4>
+                <p className="text-xs sm:text-sm text-gray-500">Why we recommend what we recommend</p>
+              </a>
+              
+              {/* Fund X-Ray */}
+              <a 
+                href="/fund-xray"
+                className="bg-[#12121a] border border-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
+                    🔬
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full">New</span>
+                </div>
+                <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-purple-300 transition-colors">Fund X-Ray</h4>
+                <p className="text-xs sm:text-sm text-gray-500">See through your funds</p>
               </a>
               
               {/* Risk Analysis */}
@@ -1271,6 +1302,7 @@ export default function Dashboard() {
 
             {/* Portfolio Allocation (if holdings exist) */}
             {totalInvested > 0 && (
+              <>
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Allocation Chart */}
                 <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
@@ -1380,7 +1412,21 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-            )}
+
+            {/* Thesis Insight - Quick Check */}
+            <ThesisInsight 
+              allocation={{
+                usEquity: (portfolioCategories.usEquity / totalInvested) * 100,
+                intlEquity: (portfolioCategories.intlEquity / totalInvested) * 100,
+                bonds: (portfolioCategories.fixedIncome / totalInvested) * 100,
+                crypto: (portfolioCategories.crypto / totalInvested) * 100,
+                cash: (portfolioCategories.cash / totalInvested) * 100,
+              }}
+              compact={true}
+              className="mb-8"
+            />
+            </>
+          )}
 
           </>
         )}

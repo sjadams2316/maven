@@ -7,6 +7,7 @@ import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
+import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsight';
 
 // Types
 interface Holding {
@@ -736,6 +737,17 @@ export default function PortfolioLab() {
                 </div>
               </div>
             </div>
+
+            {/* Investment Thesis Check */}
+            <ThesisInsight 
+              allocation={{
+                usEquity: currentAllocation.usEquity,
+                intlEquity: currentAllocation.intlEquity,
+                bonds: currentAllocation.bonds,
+                crypto: currentAllocation.crypto,
+                cash: currentAllocation.cash,
+              }}
+            />
 
             {/* Suggested Trades */}
             <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
