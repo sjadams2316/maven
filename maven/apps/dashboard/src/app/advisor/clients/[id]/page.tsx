@@ -187,17 +187,65 @@ export default function ClientDetailPage() {
   const [editingInsight, setEditingInsight] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [clientTone, setClientTone] = useState<'conservative' | 'moderate' | 'engaged'>('moderate');
+  const [viewAsClient, setViewAsClient] = useState(false);
   
   const client = MOCK_CLIENTS[clientId];
   const activity = MOCK_ACTIVITY[clientId] || [];
   
+  // Load saved curation data from localStorage
   useEffect(() => {
     if (client) {
-      setInsights(MOCK_INSIGHTS[clientId] || []);
-      setNotes(client.notes || '');
-      setClientTone(client.tone || 'moderate');
+      // Load insights with saved curation overrides
+      const savedCuration = localStorage.getItem(`maven_curation_${clientId}`);
+      const baseInsights = MOCK_INSIGHTS[clientId] || [];
+      
+      if (savedCuration) {
+        const curationMap = JSON.parse(savedCuration);
+        const mergedInsights = baseInsights.map((insight: any) => ({
+          ...insight,
+          visibility: curationMap[insight.id]?.visibility || insight.visibility,
+          advisorNote: curationMap[insight.id]?.advisorNote ?? insight.advisorNote,
+        }));
+        setInsights(mergedInsights);
+      } else {
+        setInsights(baseInsights);
+      }
+      
+      // Load saved notes
+      const savedNotes = localStorage.getItem(`maven_notes_${clientId}`);
+      setNotes(savedNotes || client.notes || '');
+      
+      // Load saved tone
+      const savedTone = localStorage.getItem(`maven_tone_${clientId}`);
+      setClientTone((savedTone as any) || client.tone || 'moderate');
     }
   }, [clientId, client]);
+  
+  // Save curation changes to localStorage
+  useEffect(() => {
+    if (insights.length > 0) {
+      const curationMap: Record<string, any> = {};
+      insights.forEach(insight => {
+        curationMap[insight.id] = {
+          visibility: insight.visibility,
+          advisorNote: insight.advisorNote,
+        };
+      });
+      localStorage.setItem(`maven_curation_${clientId}`, JSON.stringify(curationMap));
+    }
+  }, [insights, clientId]);
+  
+  // Save notes to localStorage
+  useEffect(() => {
+    if (notes !== undefined) {
+      localStorage.setItem(`maven_notes_${clientId}`, notes);
+    }
+  }, [notes, clientId]);
+  
+  // Save tone to localStorage
+  useEffect(() => {
+    localStorage.setItem(`maven_tone_${clientId}`, clientTone);
+  }, [clientTone, clientId]);
   
   if (!client) {
     return (
@@ -261,6 +309,17 @@ export default function ClientDetailPage() {
           </div>
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setViewAsClient(!viewAsClient)}
+              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 ${
+                viewAsClient 
+                  ? 'bg-amber-600 hover:bg-amber-500 text-white' 
+                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+              }`}
+            >
+              <span>👁</span>
+              <span>{viewAsClient ? 'Exit Client View' : 'View as Client'}</span>
+            </button>
             <Link
               href={`/advisor/clients/${clientId}/prep`}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
@@ -270,6 +329,17 @@ export default function ClientDetailPage() {
             </Link>
           </div>
         </div>
+        
+        {/* Client View Mode Banner */}
+        {viewAsClient && (
+          <div className="bg-amber-500/20 border border-amber-500/50 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <span className="text-2xl">👁</span>
+            <div>
+              <p className="font-medium text-amber-300">Client View Mode</p>
+              <p className="text-sm text-amber-400/80">You're seeing what {client.firstName} sees. Hidden insights are excluded.</p>
+            </div>
+          </div>
+        )}
         
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -430,20 +500,35 @@ export default function ClientDetailPage() {
           {activeTab === 'insights' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Maven Insights</h3>
-                <p className="text-sm text-gray-400">
-                  Control what {client.firstName} sees
-                </p>
+                <h3 className="text-lg font-semibold text-white">
+                  {viewAsClient ? 'Portfolio Insights' : 'Maven Insights'}
+                </h3>
+                {!viewAsClient && (
+                  <p className="text-sm text-gray-400">
+                    Control what {client.firstName} sees
+                  </p>
+                )}
               </div>
               
-              {insights.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No insights detected for this client</p>
-              ) : (
-                insights.map(insight => (
+              {(() => {
+                // Filter insights based on view mode
+                const visibleInsights = viewAsClient 
+                  ? insights.filter(i => i.visibility !== 'advisor_only')
+                  : insights;
+                
+                if (visibleInsights.length === 0) {
+                  return (
+                    <p className="text-gray-500 text-center py-8">
+                      {viewAsClient ? 'No insights at this time' : 'No insights detected for this client'}
+                    </p>
+                  );
+                }
+                
+                return visibleInsights.map(insight => (
                   <div 
                     key={insight.id}
                     className={`p-4 rounded-xl border ${
-                      insight.visibility === 'advisor_only' 
+                      !viewAsClient && insight.visibility === 'advisor_only' 
                         ? 'bg-gray-900/50 border-gray-700' 
                         : 'bg-white/5 border-white/10'
                     }`}
@@ -459,6 +544,18 @@ export default function ClientDetailPage() {
                           <div>
                             <h4 className="font-medium text-white">{insight.title}</h4>
                             <p className="text-sm text-gray-400 mt-1">{insight.description}</p>
+                            
+                            {/* Client View: Show context badges */}
+                            {viewAsClient && insight.visibility === 'show_with_context' && (
+                              <p className="text-xs text-blue-400 mt-2 flex items-center gap-1">
+                                <span>✓</span> Your advisor is aware of this
+                              </p>
+                            )}
+                            {viewAsClient && insight.visibility === 'discussion' && (
+                              <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                                <span>💬</span> Discussion topic for your next review
+                              </p>
+                            )}
                           </div>
                           
                           {insight.potentialSavings && (
@@ -468,40 +565,43 @@ export default function ClientDetailPage() {
                           )}
                         </div>
                         
-                        {/* Visibility Control */}
-                        <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-white/10">
-                          <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Client Visibility</label>
-                            <select
-                              value={insight.visibility}
-                              onChange={(e) => updateInsightVisibility(insight.id, e.target.value as VisibilityType)}
-                              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
-                            >
-                              <option value="show">Show to client</option>
-                              <option value="show_with_context">Show with "Advisor aware" badge</option>
-                              <option value="advisor_only">Advisor only (hidden)</option>
-                              <option value="discussion">Show as discussion topic</option>
-                            </select>
+                        {/* Visibility Control - Only show for advisor view */}
+                        {!viewAsClient && (
+                          <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-white/10">
+                            <div className="flex-1">
+                              <label className="text-xs text-gray-500 mb-1 block">Client Visibility</label>
+                              <select
+                                value={insight.visibility}
+                                onChange={(e) => updateInsightVisibility(insight.id, e.target.value as VisibilityType)}
+                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="show">Show to client</option>
+                                <option value="show_with_context">Show with "Advisor aware" badge</option>
+                                <option value="advisor_only">Advisor only (hidden)</option>
+                                <option value="discussion">Show as discussion topic</option>
+                              </select>
+                            </div>
+                            
+                            <div className="flex-1">
+                              <label className="text-xs text-gray-500 mb-1 block">Advisor Note</label>
+                              <input
+                                type="text"
+                                value={insight.advisorNote}
+                                onChange={(e) => updateInsightNote(insight.id, e.target.value)}
+                                placeholder="Add internal note..."
+                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
                           </div>
-                          
-                          <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Advisor Note</label>
-                            <input
-                              type="text"
-                              value={insight.advisorNote}
-                              onChange={(e) => updateInsightNote(insight.id, e.target.value)}
-                              placeholder="Add internal note..."
-                              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"
-                            />
-                          </div>
-                        </div>
+                        )}
                         
-                        {/* Visibility Badge */}
-                        <div className="mt-3">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            insight.visibility === 'show' ? 'bg-emerald-500/20 text-emerald-400' :
-                            insight.visibility === 'show_with_context' ? 'bg-blue-500/20 text-blue-400' :
-                            insight.visibility === 'advisor_only' ? 'bg-gray-500/20 text-gray-400' :
+                        {/* Visibility Badge - Only show for advisor view */}
+                        {!viewAsClient && (
+                          <div className="mt-3">
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              insight.visibility === 'show' ? 'bg-emerald-500/20 text-emerald-400' :
+                              insight.visibility === 'show_with_context' ? 'bg-blue-500/20 text-blue-400' :
+                              insight.visibility === 'advisor_only' ? 'bg-gray-500/20 text-gray-400' :
                             'bg-amber-500/20 text-amber-400'
                           }`}>
                             {insight.visibility === 'show' ? '👁 Visible to client' :
@@ -510,11 +610,12 @@ export default function ClientDetailPage() {
                              '💬 Discussion topic'}
                           </span>
                         </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
           )}
           
