@@ -22,13 +22,13 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
   const netWorth = profile?.netWorth || 0;
   const totalInvestments = profile?.totalInvestments || 0;
 
-  const navLinks = [
+  const navLinks: { href: string; label: string; highlight?: boolean }[] = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/portfolio-lab', label: 'Portfolio Lab' },
-    { href: '/scenarios', label: 'What-If' },
     { href: '/tax-harvesting', label: 'Tax Harvest' },
     { href: '/fragility', label: 'Fragility' },
     { href: '/oracle', label: 'Oracle' },
+    { href: '/advisor', label: 'Advisor', highlight: true },
   ];
 
   return (
@@ -73,12 +73,19 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
                 key={link.href}
                 href={link.href}
                 className={`text-sm transition ${
-                  pathname === link.href
+                  pathname === link.href || pathname?.startsWith(link.href + '/')
                     ? 'text-indigo-400 font-medium'
+                    : link.highlight
+                    ? 'text-amber-400 hover:text-amber-300'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
                 {link.label}
+                {link.highlight && (
+                  <span className="ml-1 text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
+                    Pro
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
