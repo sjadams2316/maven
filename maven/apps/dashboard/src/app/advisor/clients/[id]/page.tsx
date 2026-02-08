@@ -407,7 +407,7 @@ export default function ClientDetailPage() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-white mb-4">Asset Allocation</h3>
                   <div className="space-y-3">
-                    {Object.entries(client.allocation).map(([key, value]) => {
+                    {Object.entries(client.allocation).map(([key, value]: [string, number]) => {
                       const labels: Record<string, string> = {
                         usEquity: 'US Equity',
                         intlEquity: "Int'l Equity",
