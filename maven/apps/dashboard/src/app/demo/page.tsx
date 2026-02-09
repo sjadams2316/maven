@@ -31,19 +31,30 @@ interface DemoInsight {
   learnMoreText?: string;
 }
 
+interface DemoHolding {
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+  shares: string;
+  sharesNum: number; // Numeric shares for price calculation
+  unrealizedLoss?: number;
+  dividendYield?: number;
+}
+
 // ============================================================================
 // GROWTH PORTFOLIO DATA (existing - crypto-heavy, aggressive)
 // ============================================================================
-const GROWTH_HOLDINGS = [
-  { symbol: 'TAO', name: 'Bittensor', value: 684000, change: 4.78, shares: '215 tokens' },
-  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 185000, change: 1.2, shares: '620 shares' },
-  { symbol: 'CIFR', name: 'Cipher Mining', value: 78000, change: -2.3, shares: '12,000 shares' },
-  { symbol: 'IREN', name: 'Iris Energy', value: 52000, change: 3.1, shares: '4,200 shares' },
-  { symbol: 'BND', name: 'Vanguard Total Bond', value: 48000, change: 0.3, shares: '580 shares' },
-  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares' },
-  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares' },
-  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', unrealizedLoss: -4200 },
-  { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares' },
+const GROWTH_HOLDINGS: DemoHolding[] = [
+  { symbol: 'TAO', name: 'Bittensor', value: 684000, change: 4.78, shares: '215 tokens', sharesNum: 215 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 185000, change: 1.2, shares: '620 shares', sharesNum: 620 },
+  { symbol: 'CIFR', name: 'Cipher Mining', value: 78000, change: -2.3, shares: '12,000 shares', sharesNum: 12000 },
+  { symbol: 'IREN', name: 'Iris Energy', value: 52000, change: 3.1, shares: '4,200 shares', sharesNum: 4200 },
+  { symbol: 'BND', name: 'Vanguard Total Bond', value: 48000, change: 0.3, shares: '580 shares', sharesNum: 580 },
+  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares', sharesNum: 95 },
+  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares', sharesNum: 540 },
+  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', sharesNum: 380, unrealizedLoss: -4200 },
+  { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares', sharesNum: 195 },
 ];
 
 const GROWTH_TARGET_ALLOCATION = {
@@ -91,13 +102,13 @@ const GROWTH_GOALS = [
 // ============================================================================
 // RETIREE PORTFOLIO DATA (new - conservative, income-focused)
 // ============================================================================
-const RETIREE_HOLDINGS = [
-  { symbol: 'BND', name: 'Vanguard Total Bond', value: 427160, change: 0.3, shares: '5,900 shares', dividendYield: 3.8 },
-  { symbol: 'VTIP', name: 'Vanguard Inflation-Protected', value: 149865, change: 0.1, shares: '3,090 shares', dividendYield: 5.2 },
-  { symbol: 'VYM', name: 'Vanguard High Dividend', value: 150495, change: 0.9, shares: '1,270 shares', dividendYield: 2.9 },
-  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 221513, change: 1.2, shares: '825 shares', dividendYield: 1.4 },
-  { symbol: 'SCHD', name: 'Schwab Dividend Equity', value: 142379, change: 0.7, shares: '1,730 shares', dividendYield: 3.4 },
-  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 108644, change: 0.8, shares: '1,730 shares', dividendYield: 3.1 },
+const RETIREE_HOLDINGS: DemoHolding[] = [
+  { symbol: 'BND', name: 'Vanguard Total Bond', value: 427160, change: 0.3, shares: '5,900 shares', sharesNum: 5900, dividendYield: 3.8 },
+  { symbol: 'VTIP', name: 'Vanguard Inflation-Protected', value: 149865, change: 0.1, shares: '3,090 shares', sharesNum: 3090, dividendYield: 5.2 },
+  { symbol: 'VYM', name: 'Vanguard High Dividend', value: 150495, change: 0.9, shares: '1,270 shares', sharesNum: 1270, dividendYield: 2.9 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 221513, change: 1.2, shares: '825 shares', sharesNum: 825, dividendYield: 1.4 },
+  { symbol: 'SCHD', name: 'Schwab Dividend Equity', value: 142379, change: 0.7, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.4 },
+  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 108644, change: 0.8, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.1 },
 ];
 
 const RETIREE_TARGET_ALLOCATION = {
@@ -167,6 +178,9 @@ export default function DemoPage() {
   const [variant, setVariant] = useState<DemoVariant>('growth');
   const [dismissedInsights, setDismissedInsights] = useState<number[]>([]);
   const [showTargetAllocation, setShowTargetAllocation] = useState(false);
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [pricesLoading, setPricesLoading] = useState(false);
   
   // Load saved variant preference
   useEffect(() => {
@@ -184,13 +198,91 @@ export default function DemoPage() {
   
   // Select data based on variant
   const isRetiree = variant === 'retiree';
-  const DEMO_HOLDINGS = isRetiree ? RETIREE_HOLDINGS : GROWTH_HOLDINGS;
+  const BASE_HOLDINGS = isRetiree ? RETIREE_HOLDINGS : GROWTH_HOLDINGS;
+  
+  // Fetch live prices for all holdings
+  useEffect(() => {
+    const fetchLivePrices = async () => {
+      setPricesLoading(true);
+      
+      try {
+        // Get all unique tickers from both portfolios
+        const allTickers = [...new Set([
+          ...GROWTH_HOLDINGS.map(h => h.symbol.toUpperCase()),
+          ...RETIREE_HOLDINGS.map(h => h.symbol.toUpperCase())
+        ])];
+        
+        const response = await fetch('/api/stock-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbols: allTickers }),
+        });
+        
+        if (response.ok) {
+          const { quotes, timestamp } = await response.json();
+          const newPrices: Record<string, number> = {};
+          
+          for (const [symbol, quoteData] of Object.entries(quotes)) {
+            const q = quoteData as { price: number };
+            if (q.price > 0) {
+              newPrices[symbol.toUpperCase()] = q.price;
+            }
+          }
+          
+          setLivePrices(newPrices);
+          setLastUpdated(timestamp ? new Date(timestamp) : new Date());
+        } else {
+          console.error('Failed to fetch prices:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching live prices:', error);
+      } finally {
+        setPricesLoading(false);
+      }
+    };
+    
+    // Fetch immediately
+    fetchLivePrices();
+    
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchLivePrices, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Merge live prices into holdings
+  const DEMO_HOLDINGS = useMemo(() => {
+    return BASE_HOLDINGS.map(h => {
+      const ticker = h.symbol.toUpperCase();
+      const livePrice = livePrices[ticker];
+      if (livePrice && h.sharesNum) {
+        const liveValue = h.sharesNum * livePrice;
+        const originalPrice = h.value / h.sharesNum;
+        const priceChange = ((livePrice - originalPrice) / originalPrice) * 100;
+        return {
+          ...h,
+          value: liveValue,
+          change: priceChange,
+        };
+      }
+      return h;
+    }).sort((a, b) => b.value - a.value);
+  }, [BASE_HOLDINGS, livePrices]);
   const TARGET_ALLOCATION = isRetiree ? RETIREE_TARGET_ALLOCATION : GROWTH_TARGET_ALLOCATION;
   const DEMO_INSIGHTS = isRetiree ? RETIREE_INSIGHTS : GROWTH_INSIGHTS;
   const DEMO_GOALS = isRetiree ? RETIREE_GOALS : GROWTH_GOALS;
-  const netWorth = isRetiree ? RETIREE_NET_WORTH : DEMO_NET_WORTH;
-  const netWorthChange = isRetiree ? 3200 : 8500;
-  const netWorthChangePercent = isRetiree ? 0.27 : 1.08;
+  
+  // Calculate live net worth from holdings
+  const liveNetWorth = useMemo(() => {
+    const holdingsTotal = DEMO_HOLDINGS.reduce((sum, h) => sum + h.value, 0);
+    // Add approximate cash/other assets based on variant
+    const cashAndOther = isRetiree ? 120000 : 80000; // Cash reserves
+    return holdingsTotal + cashAndOther;
+  }, [DEMO_HOLDINGS, isRetiree]);
+  
+  const baseNetWorth = isRetiree ? RETIREE_NET_WORTH : DEMO_NET_WORTH;
+  const netWorth = Object.keys(livePrices).length > 0 ? liveNetWorth : baseNetWorth;
+  const netWorthChange = netWorth - baseNetWorth;
+  const netWorthChangePercent = baseNetWorth > 0 ? (netWorthChange / baseNetWorth) * 100 : 0;
   
   // Track insights with their original indices
   const indexedInsights = DEMO_INSIGHTS.map((insight, originalIdx) => ({ ...insight, originalIdx }));
@@ -271,9 +363,17 @@ export default function DemoPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
                 Welcome to Maven 👋
               </h1>
-              <p className="text-lg text-gray-300">
-                Your AI-powered wealth partner — see your complete financial picture in one place.
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-lg text-gray-300">
+                  Your AI-powered wealth partner — see your complete financial picture in one place.
+                </p>
+                {lastUpdated && (
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500 whitespace-nowrap">
+                    <span className={`w-2 h-2 rounded-full ${pricesLoading ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`} />
+                    {pricesLoading ? 'Updating...' : `Live prices`}
+                  </span>
+                )}
+              </div>
             </div>
             
             {/* Demo Variant Selector */}
@@ -340,6 +440,8 @@ export default function DemoPage() {
               netWorth={netWorth}
               change={netWorthChange}
               changePercent={netWorthChangePercent}
+              asOfTime={lastUpdated}
+              isRefreshing={pricesLoading}
             />
             
             {/* Income Summary (Retiree only) */}
