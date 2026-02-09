@@ -73,6 +73,24 @@ To prevent work loss from API credit exhaustion:
 2. Release file locks
 3. Spawn QA agent if code was committed
 
+### Automated Data Validation (Cron)
+
+**Scheduled sweep every 4 hours** — validates Maven data is loading correctly:
+
+| Check | What it validates |
+|-------|-------------------|
+| Markets widget | SPY, QQQ, BTC, TAO showing prices (not "—") |
+| Net Worth | "As of" timestamp present and recent |
+| Holdings | Prices loading for all positions |
+| Portfolio Lab | Page loads without errors |
+| Console | No JavaScript errors |
+
+**Cron ID:** `d5f755a4-6618-4c9e-99a6-46c562fc9758`
+**Frequency:** Every 4 hours
+**Output:** `DATA_VALIDATION_PASS` or detailed failure report
+
+This catches data issues before users report them.
+
 ### QA Agent Protocol
 
 After any agent commits code changes, spawn a lightweight QA agent:

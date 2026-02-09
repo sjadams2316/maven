@@ -6,7 +6,7 @@
 
 | Agent | Task | Files Touching | Started | Status |
 |-------|------|----------------|---------|--------|
-| pantheon-whatif-gamification | Gamification for What-If Simulator | WhatIfSimulator.tsx | 10:02 | 🔄 Running |
+| pantheon-realtime-market-data | Fix real-time prices + "as of" timestamp | dashboard, watchlist, hooks | 10:07 | 🔄 Running |
 
 ## Recently Completed (Last 24h)
 
