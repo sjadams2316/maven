@@ -470,6 +470,97 @@ red_team:
 
 ---
 
+## Test Personas (Validation Layer)
+
+Every change must be validated against multiple user types:
+
+```yaml
+test_personas:
+  new_user:
+    description: Empty state, first-time experience
+    focus: Onboarding flow, empty states, first impressions
+    net_worth: $0 (no data yet)
+    
+  basic_user:
+    description: Simple portfolio, getting started
+    focus: Core features, simple flows
+    net_worth: $50K
+    holdings: 5-10 positions
+    
+  power_user:
+    description: Engaged user, complex portfolio
+    focus: Advanced features, edge cases
+    net_worth: $800K
+    holdings: 45+ positions across 8 accounts
+    
+  hnw_user:
+    description: High net worth, concentrated positions
+    focus: Concentration tools, tax optimization
+    net_worth: $2M+
+    holdings: Includes single stock >25%
+    
+  retiree:
+    description: Income-focused, decumulation phase
+    focus: SS optimization, RMDs, income planning
+    net_worth: $1.5M
+    age: 68
+    
+  tech_exec:
+    description: RSUs, ISOs, QSBS, IPO planning
+    focus: Equity comp tools, concentration
+    net_worth: $3M (60% in company stock)
+    
+  advisor_view:
+    description: Multi-client dashboard
+    focus: Client list, insights across clients
+    clients: 10 test clients with varied profiles
+```
+
+**Validation Rule:** No feature ships without testing against at least 3 personas.
+
+---
+
+## UX Agent Responsibilities
+
+Every team has a dedicated UX Agent. Their mandate:
+
+```yaml
+ux_agent_focus:
+  user_flows:
+    - Map the journey for each persona
+    - Identify friction points
+    - Ensure logical progression
+    
+  visual_design:
+    - Consistency with design system
+    - Proper use of color, typography, spacing
+    - Dark mode compatibility
+    
+  mobile_first:
+    - Test on small screens BEFORE desktop
+    - Touch-friendly targets
+    - Responsive layouts
+    
+  accessibility:
+    - Screen reader compatibility
+    - Keyboard navigation
+    - Color contrast ratios
+    
+  clarity_test:
+    - "Would a nervous 60-year-old understand this?"
+    - "Would a busy executive use this in 30 seconds?"
+    - "Does this create anxiety or confidence?"
+    
+  emotional_design:
+    - Lead with value, not warnings
+    - Celebrate milestones
+    - Make complexity feel simple
+```
+
+**UX Quality Bar:** If you have to explain it, redesign it.
+
+---
+
 ## Memory Structure
 
 ```
