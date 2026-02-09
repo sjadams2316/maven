@@ -2022,6 +2022,507 @@ export function generateTradeListCSV(preview: RebalancingPreview): string {
   return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 }
 
+// ===========================================
+// WASH SALE DETECTION & TRACKING
+// ===========================================
+
+/**
+ * Substantially identical securities - same index, different wrapper
+ * These groups represent securities that the IRS may consider "substantially identical"
+ * for wash sale purposes. Trading within the same group triggers wash sale risk.
+ */
+export const SUBSTANTIALLY_IDENTICAL_GROUPS: Record<string, { name: string; tickers: string[]; category: string }> = {
+  'sp500': {
+    name: 'S&P 500 Index',
+    tickers: ['VOO', 'SPY', 'IVV', 'SPLG', 'FXAIX', 'VFIAX', 'SWPPX'],
+    category: 'US Large Cap',
+  },
+  'total-us': {
+    name: 'Total US Market',
+    tickers: ['VTI', 'ITOT', 'SCHB', 'SPTM', 'FZROX', 'FSKAX', 'VTSAX', 'SWTSX'],
+    category: 'US Total Market',
+  },
+  'nasdaq100': {
+    name: 'Nasdaq 100',
+    tickers: ['QQQ', 'QQQM', 'ONEQ'],
+    category: 'US Growth/Tech',
+  },
+  'intl-developed': {
+    name: 'International Developed',
+    tickers: ['VEA', 'IEFA', 'EFA', 'SCHF', 'SPDW'],
+    category: 'International Developed',
+  },
+  'intl-total': {
+    name: 'Total International',
+    tickers: ['VXUS', 'IXUS', 'FZILX', 'VTIAX'],
+    category: 'International Total',
+  },
+  'emerging': {
+    name: 'Emerging Markets',
+    tickers: ['VWO', 'IEMG', 'EEM', 'SCHE', 'SPEM'],
+    category: 'Emerging Markets',
+  },
+  'total-bond': {
+    name: 'Total Bond Market',
+    tickers: ['BND', 'AGG', 'SCHZ', 'FBND', 'VBTLX', 'FXNAX'],
+    category: 'Bonds',
+  },
+  'us-growth': {
+    name: 'US Large Cap Growth',
+    tickers: ['VUG', 'IWF', 'SCHG', 'SPYG', 'IVW', 'VOOG'],
+    category: 'US Growth',
+  },
+  'us-value': {
+    name: 'US Large Cap Value',
+    tickers: ['VTV', 'IWD', 'SCHV', 'SPYV', 'IVE', 'VOOV'],
+    category: 'US Value',
+  },
+  'small-cap': {
+    name: 'US Small Cap',
+    tickers: ['VB', 'IJR', 'IWM', 'SCHA', 'VTWO', 'SLYV'],
+    category: 'US Small Cap',
+  },
+  'reits': {
+    name: 'Real Estate (REITs)',
+    tickers: ['VNQ', 'IYR', 'SCHH', 'XLRE', 'USRT'],
+    category: 'Real Estate',
+  },
+  'gold': {
+    name: 'Gold',
+    tickers: ['GLD', 'IAU', 'SGOL', 'GLDM'],
+    category: 'Commodities',
+  },
+  'bitcoin-etf': {
+    name: 'Bitcoin ETFs',
+    tickers: ['IBIT', 'FBTC', 'GBTC', 'BITO', 'BITB', 'ARKB'],
+    category: 'Crypto',
+  },
+  'dividend': {
+    name: 'High Dividend',
+    tickers: ['VYM', 'SCHD', 'HDV', 'SPYD', 'DVY'],
+    category: 'Dividend',
+  },
+  'semiconductors': {
+    name: 'Semiconductors',
+    tickers: ['SMH', 'SOXX', 'XSD', 'PSI'],
+    category: 'Sector - Tech',
+  },
+  'crypto-miners': {
+    name: 'Crypto Miners',
+    tickers: ['CIFR', 'IREN', 'MARA', 'RIOT', 'CLSK', 'HUT', 'BITF'],
+    category: 'Crypto-Adjacent',
+  },
+};
+
+/**
+ * Transaction record for wash sale tracking
+ */
+export interface WashSaleTransaction {
+  ticker: string;
+  type: 'buy' | 'sell';
+  date: Date;
+  shares: number;
+  pricePerShare: number;
+  totalAmount: number;
+  accountName?: string;
+  accountType?: string;
+  // For sells
+  costBasis?: number;
+  realizedGainLoss?: number;
+  isLoss?: boolean;
+}
+
+/**
+ * Wash sale window - the 61-day period around a sale
+ */
+export interface WashSaleWindow {
+  sellTransaction: WashSaleTransaction;
+  windowStart: Date;  // 30 days before sell
+  windowEnd: Date;    // 30 days after sell
+  ticker: string;
+  lossAmount: number;
+  // Substantially identical tickers that also trigger wash sale
+  identicalTickers: string[];
+  groupName?: string;
+  // Violations found
+  violations: WashSaleViolation[];
+  status: 'clean' | 'at-risk' | 'violated';
+}
+
+/**
+ * A wash sale violation - buying within the 61-day window
+ */
+export interface WashSaleViolation {
+  buyTransaction: WashSaleTransaction;
+  disallowedLoss: number;  // Loss that cannot be deducted
+  daysFromSale: number;    // Negative = before, positive = after
+  violationType: 'same-security' | 'substantially-identical';
+  identicalGroupName?: string;
+}
+
+/**
+ * Safe swap suggestion - alternatives that avoid wash sales
+ */
+export interface SafeSwapSuggestion {
+  ticker: string;
+  name: string;
+  expenseRatio: number;
+  reason: string;
+  category: string;
+  // True if this swap would NOT trigger wash sale
+  isSafe: boolean;
+  // If not safe, which group it conflicts with
+  conflictGroup?: string;
+}
+
+/**
+ * Portfolio-wide wash sale analysis result
+ */
+export interface WashSaleAnalysis {
+  activeWindows: WashSaleWindow[];
+  totalAtRisk: number;  // Total loss at risk of being disallowed
+  totalDisallowed: number;  // Already disallowed
+  totalClean: number;  // Clean loss harvesting opportunities
+  upcomingWindowEnds: { date: Date; ticker: string; lossAmount: number }[];
+  recommendations: string[];
+}
+
+/**
+ * Find which substantially identical group a ticker belongs to
+ */
+export function findSubstantiallyIdenticalGroup(ticker: string): { groupId: string; group: typeof SUBSTANTIALLY_IDENTICAL_GROUPS[string] } | null {
+  const upper = ticker.toUpperCase();
+  for (const [groupId, group] of Object.entries(SUBSTANTIALLY_IDENTICAL_GROUPS)) {
+    if (group.tickers.includes(upper)) {
+      return { groupId, group };
+    }
+  }
+  return null;
+}
+
+/**
+ * Get all substantially identical tickers for a given ticker
+ */
+export function getSubstantiallyIdenticalTickers(ticker: string): string[] {
+  const found = findSubstantiallyIdenticalGroup(ticker);
+  if (!found) return [ticker.toUpperCase()];
+  return found.group.tickers.filter(t => t !== ticker.toUpperCase());
+}
+
+/**
+ * Check if two tickers are substantially identical
+ */
+export function areSubstantiallyIdentical(ticker1: string, ticker2: string): { identical: boolean; groupName?: string } {
+  const upper1 = ticker1.toUpperCase();
+  const upper2 = ticker2.toUpperCase();
+  
+  // Same ticker = obviously identical
+  if (upper1 === upper2) {
+    return { identical: true, groupName: 'Same Security' };
+  }
+  
+  // Check if in same group
+  const group1 = findSubstantiallyIdenticalGroup(upper1);
+  const group2 = findSubstantiallyIdenticalGroup(upper2);
+  
+  if (group1 && group2 && group1.groupId === group2.groupId) {
+    return { identical: true, groupName: group1.group.name };
+  }
+  
+  return { identical: false };
+}
+
+/**
+ * Calculate wash sale window dates
+ */
+export function calculateWashSaleWindow(sellDate: Date): { start: Date; end: Date } {
+  const start = new Date(sellDate);
+  start.setDate(start.getDate() - 30);
+  
+  const end = new Date(sellDate);
+  end.setDate(end.getDate() + 30);
+  
+  return { start, end };
+}
+
+/**
+ * Check if a date falls within a wash sale window
+ */
+export function isWithinWashSaleWindow(
+  checkDate: Date, 
+  windowStart: Date, 
+  windowEnd: Date
+): boolean {
+  return checkDate >= windowStart && checkDate <= windowEnd;
+}
+
+/**
+ * Calculate days between two dates (negative if date1 is before date2)
+ */
+function daysBetween(date1: Date, date2: Date): number {
+  const diffTime = date1.getTime() - date2.getTime();
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Analyze transactions for wash sale violations
+ */
+export function analyzeWashSales(
+  transactions: WashSaleTransaction[]
+): WashSaleAnalysis {
+  const activeWindows: WashSaleWindow[] = [];
+  const now = new Date();
+  
+  // Find all sell transactions that are losses
+  const lossSells = transactions.filter(t => 
+    t.type === 'sell' && 
+    t.isLoss === true &&
+    t.realizedGainLoss !== undefined &&
+    t.realizedGainLoss < 0
+  );
+  
+  for (const sell of lossSells) {
+    const { start: windowStart, end: windowEnd } = calculateWashSaleWindow(sell.date);
+    const lossAmount = Math.abs(sell.realizedGainLoss || 0);
+    
+    // Get substantially identical tickers
+    const identicalTickers = getSubstantiallyIdenticalTickers(sell.ticker);
+    const groupInfo = findSubstantiallyIdenticalGroup(sell.ticker);
+    
+    // Find all buy transactions within the window
+    const violations: WashSaleViolation[] = [];
+    
+    for (const buy of transactions) {
+      if (buy.type !== 'buy') continue;
+      
+      // Check if within window
+      if (!isWithinWashSaleWindow(buy.date, windowStart, windowEnd)) continue;
+      
+      // Check if same or substantially identical
+      const { identical, groupName } = areSubstantiallyIdentical(sell.ticker, buy.ticker);
+      
+      if (identical) {
+        const daysFromSale = daysBetween(buy.date, sell.date);
+        
+        // Calculate disallowed loss (proportional to shares repurchased)
+        // Simplified: if you repurchase >= shares sold, entire loss disallowed
+        const shareRatio = Math.min(1, buy.shares / sell.shares);
+        const disallowedLoss = lossAmount * shareRatio;
+        
+        violations.push({
+          buyTransaction: buy,
+          disallowedLoss,
+          daysFromSale,
+          violationType: sell.ticker.toUpperCase() === buy.ticker.toUpperCase() 
+            ? 'same-security' 
+            : 'substantially-identical',
+          identicalGroupName: groupName,
+        });
+      }
+    }
+    
+    // Determine status
+    let status: WashSaleWindow['status'] = 'clean';
+    if (violations.length > 0) {
+      status = 'violated';
+    } else if (windowEnd > now) {
+      // Window is still open
+      status = 'at-risk';
+    }
+    
+    activeWindows.push({
+      sellTransaction: sell,
+      windowStart,
+      windowEnd,
+      ticker: sell.ticker,
+      lossAmount,
+      identicalTickers,
+      groupName: groupInfo?.group.name,
+      violations,
+      status,
+    });
+  }
+  
+  // Calculate totals
+  const totalDisallowed = activeWindows.reduce((sum, w) => 
+    sum + w.violations.reduce((vSum, v) => vSum + v.disallowedLoss, 0), 0
+  );
+  
+  const totalAtRisk = activeWindows
+    .filter(w => w.status === 'at-risk')
+    .reduce((sum, w) => sum + w.lossAmount, 0);
+  
+  const totalClean = activeWindows
+    .filter(w => w.status === 'clean')
+    .reduce((sum, w) => sum + w.lossAmount, 0);
+  
+  // Find upcoming window ends (for planning)
+  const upcomingWindowEnds = activeWindows
+    .filter(w => w.windowEnd > now && w.status === 'at-risk')
+    .map(w => ({ date: w.windowEnd, ticker: w.ticker, lossAmount: w.lossAmount }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  if (totalAtRisk > 0) {
+    recommendations.push(
+      `$${totalAtRisk.toLocaleString()} in losses are at risk. Avoid buying substantially identical securities until windows close.`
+    );
+  }
+  
+  if (totalDisallowed > 0) {
+    recommendations.push(
+      `$${totalDisallowed.toLocaleString()} in losses have been disallowed due to wash sales. The disallowed loss is added to your cost basis in the replacement shares.`
+    );
+  }
+  
+  if (upcomingWindowEnds.length > 0) {
+    const nextEnd = upcomingWindowEnds[0];
+    const daysUntil = daysBetween(nextEnd.date, now);
+    recommendations.push(
+      `Next window closes in ${daysUntil} days (${nextEnd.ticker}). After ${nextEnd.date.toLocaleDateString()}, you can safely repurchase.`
+    );
+  }
+  
+  return {
+    activeWindows,
+    totalAtRisk,
+    totalDisallowed,
+    totalClean,
+    upcomingWindowEnds,
+    recommendations,
+  };
+}
+
+/**
+ * Get safe swap alternatives for a ticker (avoiding wash sale)
+ * Returns alternatives that are NOT substantially identical
+ */
+export function getSafeSwapAlternatives(
+  ticker: string,
+  options: { maxResults?: number } = {}
+): SafeSwapSuggestion[] {
+  const { maxResults = 5 } = options;
+  const upper = ticker.toUpperCase();
+  const tickerGroup = findSubstantiallyIdenticalGroup(upper);
+  const assetClass = classifyTicker(upper);
+  
+  // Define safe alternatives by asset class
+  // These are NOT substantially identical but provide similar exposure
+  const safeAlternativesByClass: Record<AssetClass, SafeSwapSuggestion[]> = {
+    usEquity: [
+      { ticker: 'SCHD', name: 'Schwab US Dividend', expenseRatio: 0.06, reason: 'Dividend-focused, different index', category: 'Dividend', isSafe: true },
+      { ticker: 'DGRO', name: 'iShares Dividend Growth', expenseRatio: 0.08, reason: 'Dividend growth strategy', category: 'Dividend', isSafe: true },
+      { ticker: 'QUAL', name: 'iShares MSCI USA Quality', expenseRatio: 0.15, reason: 'Quality factor ETF', category: 'Factor', isSafe: true },
+      { ticker: 'MTUM', name: 'iShares MSCI USA Momentum', expenseRatio: 0.15, reason: 'Momentum factor ETF', category: 'Factor', isSafe: true },
+      { ticker: 'USMV', name: 'iShares MSCI USA Min Vol', expenseRatio: 0.15, reason: 'Low volatility factor', category: 'Factor', isSafe: true },
+      { ticker: 'RSP', name: 'Invesco S&P 500 Equal Weight', expenseRatio: 0.20, reason: 'Equal weight, different methodology', category: 'US Equity', isSafe: true },
+    ],
+    intlEquity: [
+      { ticker: 'VYMI', name: 'Vanguard Intl High Dividend', expenseRatio: 0.22, reason: 'Dividend-focused international', category: 'Dividend', isSafe: true },
+      { ticker: 'IDLV', name: 'Invesco S&P Intl Low Vol', expenseRatio: 0.25, reason: 'Low volatility international', category: 'Factor', isSafe: true },
+      { ticker: 'IQLT', name: 'iShares Intl Quality', expenseRatio: 0.30, reason: 'Quality factor international', category: 'Factor', isSafe: true },
+    ],
+    bonds: [
+      { ticker: 'VCIT', name: 'Vanguard Interm Corp Bond', expenseRatio: 0.04, reason: 'Corporate bonds vs total market', category: 'Corporate Bonds', isSafe: true },
+      { ticker: 'MUB', name: 'iShares National Muni Bond', expenseRatio: 0.07, reason: 'Tax-free municipal bonds', category: 'Muni Bonds', isSafe: true },
+      { ticker: 'TIP', name: 'iShares TIPS Bond', expenseRatio: 0.19, reason: 'Inflation-protected', category: 'TIPS', isSafe: true },
+      { ticker: 'VTEB', name: 'Vanguard Tax-Exempt Bond', expenseRatio: 0.05, reason: 'Tax-exempt munis', category: 'Muni Bonds', isSafe: true },
+    ],
+    crypto: [
+      { ticker: 'COIN', name: 'Coinbase Global', expenseRatio: 0, reason: 'Crypto exchange stock', category: 'Crypto-Adjacent', isSafe: true },
+      { ticker: 'MSTR', name: 'MicroStrategy', expenseRatio: 0, reason: 'Bitcoin proxy via stock', category: 'Crypto-Adjacent', isSafe: true },
+    ],
+    reits: [
+      { ticker: 'O', name: 'Realty Income', expenseRatio: 0, reason: 'Individual REIT stock', category: 'REIT Stock', isSafe: true },
+      { ticker: 'AMT', name: 'American Tower', expenseRatio: 0, reason: 'Infrastructure REIT', category: 'REIT Stock', isSafe: true },
+      { ticker: 'PLD', name: 'Prologis', expenseRatio: 0, reason: 'Industrial REIT', category: 'REIT Stock', isSafe: true },
+    ],
+    gold: [
+      { ticker: 'GDX', name: 'VanEck Gold Miners', expenseRatio: 0.51, reason: 'Gold miners vs physical', category: 'Mining', isSafe: true },
+      { ticker: 'SLV', name: 'iShares Silver Trust', expenseRatio: 0.50, reason: 'Silver vs gold', category: 'Commodities', isSafe: true },
+    ],
+    cash: [
+      { ticker: 'BIL', name: 'SPDR 1-3 Month T-Bill', expenseRatio: 0.14, reason: 'Short-term treasuries', category: 'Cash-Like', isSafe: true },
+    ],
+    alternatives: [
+      { ticker: 'DBMF', name: 'iM DBi Managed Futures', expenseRatio: 0.85, reason: 'Managed futures strategy', category: 'Alternatives', isSafe: true },
+    ],
+  };
+  
+  let alternatives = safeAlternativesByClass[assetClass] || safeAlternativesByClass.usEquity;
+  
+  // Filter out any that are in the same substantially identical group
+  if (tickerGroup) {
+    alternatives = alternatives.map(alt => {
+      const altGroup = findSubstantiallyIdenticalGroup(alt.ticker);
+      if (altGroup && altGroup.groupId === tickerGroup.groupId) {
+        return { ...alt, isSafe: false, conflictGroup: altGroup.group.name };
+      }
+      return alt;
+    });
+  }
+  
+  // Filter out the original ticker
+  alternatives = alternatives.filter(alt => alt.ticker !== upper);
+  
+  // Sort: safe first, then by expense ratio
+  alternatives.sort((a, b) => {
+    if (a.isSafe !== b.isSafe) return a.isSafe ? -1 : 1;
+    return a.expenseRatio - b.expenseRatio;
+  });
+  
+  return alternatives.slice(0, maxResults);
+}
+
+/**
+ * Create a wash sale timeline for visualization
+ * Returns data points for a 90-day window centered on today
+ */
+export function createWashSaleTimeline(
+  windows: WashSaleWindow[]
+): {
+  days: { date: Date; dayOffset: number }[];
+  windowRanges: {
+    ticker: string;
+    startOffset: number;
+    endOffset: number;
+    sellOffset: number;
+    lossAmount: number;
+    status: WashSaleWindow['status'];
+  }[];
+} {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  // Create 90 days: -45 to +45 from today
+  const days: { date: Date; dayOffset: number }[] = [];
+  for (let i = -45; i <= 45; i++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + i);
+    days.push({ date, dayOffset: i });
+  }
+  
+  // Map windows to timeline offsets
+  const windowRanges = windows.map(w => {
+    const sellOffset = daysBetween(w.sellTransaction.date, now);
+    const startOffset = daysBetween(w.windowStart, now);
+    const endOffset = daysBetween(w.windowEnd, now);
+    
+    return {
+      ticker: w.ticker,
+      startOffset,
+      endOffset,
+      sellOffset,
+      lossAmount: w.lossAmount,
+      status: w.status,
+    };
+  }).filter(w => w.endOffset >= -45 && w.startOffset <= 45); // Only visible windows
+  
+  return { days, windowRanges };
+}
+
 /**
  * Generate summary text for trade list
  */

@@ -6,6 +6,7 @@ import Header from "@/app/components/Header";
 import DemoBanner from "@/app/components/DemoBanner";
 import { ToolExplainer } from "@/app/components/ToolExplainer";
 import { OracleShowcase } from "@/app/components/OracleShowcase";
+import { WashSaleTracker } from "@/app/components/WashSaleTracker";
 
 // Tax-efficient swap suggestions (similar ETFs that avoid wash sale)
 const SWAP_SUGGESTIONS: Record<string, { ticker: string; name: string; reason: string }[]> = {
@@ -496,6 +497,30 @@ export default function TaxHarvestingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Wash Sale Tracker Section */}
+        {userProfile && (
+          <div className="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 p-6 mb-6">
+            <WashSaleTracker
+              holdings={[
+                ...(userProfile.retirementAccounts?.flatMap(account =>
+                  (account.holdings || []).map(h => ({
+                    ...h,
+                    accountName: account.name,
+                    accountType: account.type,
+                  }))
+                ) || []),
+                ...(userProfile.investmentAccounts?.flatMap(account =>
+                  (account.holdings || []).map(h => ({
+                    ...h,
+                    accountName: account.name,
+                    accountType: account.type,
+                  }))
+                ) || []),
+              ]}
+            />
           </div>
         )}
 

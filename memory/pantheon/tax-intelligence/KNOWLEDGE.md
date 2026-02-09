@@ -16,11 +16,14 @@ Find every dollar of tax savings possible. Make tax optimization accessible to e
 ### Features Built
 - **Tax-Loss Harvesting Scanner** — Identifies holdings with losses, suggests swaps
 - **Wash Sale Detection** — Flags potential wash sale violations
+- **Wash Sale Tracker** — Visual timeline of 61-day windows, substantially identical detection, safe swap alternatives
 - **Tax Alpha Counter** — Shows potential savings on dashboard
 - **Fee Analyzer** — Shows expense ratios, annual fees, 30-year drag, and cheaper alternatives
 
 ### Code Location
 - Tax harvesting page: `apps/dashboard/src/app/tax-harvesting/page.tsx`
+- Wash Sale Tracker component: `apps/dashboard/src/app/components/WashSaleTracker.tsx`
+- Wash sale detection logic: `apps/dashboard/src/lib/portfolio-utils.ts` (search for "WASH SALE DETECTION")
 - Tax alpha API: `apps/dashboard/src/app/api/tax-alpha/`
 - Fee Analyzer component: `apps/dashboard/src/app/components/FeeAnalyzer.tsx`
 - Expense ratio utilities: `apps/dashboard/src/lib/portfolio-utils.ts` (bottom of file)
@@ -33,6 +36,47 @@ Find every dollar of tax savings possible. Make tax optimization accessible to e
 ---
 
 ## Domain Expertise
+
+### Wash Sale Tracker Implementation (2026-02-09)
+
+**Problem:** Users often accidentally trigger wash sales by:
+- Buying substantially identical securities within the 61-day window
+- Not realizing that VOO/SPY/IVV are all "substantially identical" (same S&P 500 index)
+- Having automatic dividend reinvestment in one account while selling in another
+
+**Solution Built:**
+- `SUBSTANTIALLY_IDENTICAL_GROUPS` data structure defining which tickers are interchangeable
+- `analyzeWashSales()` function that scans transactions for violations
+- `getSafeSwapAlternatives()` returns alternatives that DON'T trigger wash sale
+- `WashSaleTracker` component with:
+  - Visual timeline showing 61-day windows
+  - Substantially identical warnings per holding
+  - Safe swap suggestions (factor ETFs, dividend funds, etc. that provide exposure without being identical)
+  - Step-by-step safe harvest instructions
+
+**Key Design Decisions:**
+1. Substantially identical groups based on index tracking, not sector (VOO=SPY=IVV, but QQQ≠VOO)
+2. Safe alternatives include factor ETFs (SCHD, QUAL, MTUM) that provide market exposure differently
+3. Timeline visualization shows active windows relative to today
+4. Warnings are per-holding, not just per-ticker (can have same ticker in multiple accounts)
+
+**Substantially Identical Groups Defined:**
+- S&P 500: VOO, SPY, IVV, SPLG, FXAIX, VFIAX, SWPPX
+- Total US: VTI, ITOT, SCHB, SPTM, FZROX, FSKAX, VTSAX, SWTSX
+- Nasdaq 100: QQQ, QQQM, ONEQ
+- International Developed: VEA, IEFA, EFA, SCHF, SPDW
+- International Total: VXUS, IXUS, FZILX, VTIAX
+- Emerging: VWO, IEMG, EEM, SCHE, SPEM
+- Total Bond: BND, AGG, SCHZ, FBND, VBTLX, FXNAX
+- Bitcoin ETFs: IBIT, FBTC, GBTC, BITO, BITB, ARKB
+- And more...
+
+**Safe Swap Examples:**
+- Selling VTI at a loss? Swap to SCHD (dividend-focused, different methodology)
+- Selling VOO at a loss? Swap to RSP (equal-weight S&P 500, different enough)
+- Selling QQQ at a loss? Swap to MTUM (momentum factor, tech-heavy but different index)
+
+---
 
 ### Tax-Loss Harvesting Fundamentals
 
