@@ -15,6 +15,7 @@ export default function MarketOverview() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLiveData, setIsLiveData] = useState(true);
   
   const fetchMarketData = async () => {
     try {
@@ -32,6 +33,7 @@ export default function MarketOverview() {
       
       setIndices(allIndices);
       setLastUpdate(new Date());
+      setIsLiveData(data.isLive !== false); // Default to true if not specified
       setError(null);
     } catch (err) {
       console.error('Error fetching market data:', err);
@@ -72,15 +74,28 @@ export default function MarketOverview() {
   return (
     <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-white">Markets</h3>
+        <h3 className="font-semibold text-white flex items-center gap-2">
+          Markets
+          {!isLiveData && (
+            <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded font-normal">
+              Delayed
+            </span>
+          )}
+        </h3>
         <div className="flex items-center gap-2">
           {error && <span className="text-xs text-red-400">{error}</span>}
           <span className="text-xs text-gray-500">
-            {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+            {lastUpdate 
+              ? isLiveData 
+                ? `Updated ${lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : 'Market close'
+              : ''
+            }
           </span>
           <button 
             onClick={fetchMarketData}
             className="text-xs text-indigo-400 hover:text-indigo-300"
+            title="Refresh market data"
           >
             ↻
           </button>

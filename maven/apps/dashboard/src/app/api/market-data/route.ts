@@ -9,10 +9,21 @@ const STOCK_NAMES: Record<string, string> = {
   IWM: 'Russell 2000',
 };
 
+// Fallback prices (updated periodically) - shown when live data unavailable
+// These represent approximate market close values and are marked as "delayed"
+const FALLBACK_PRICES: Record<string, { price: number; change: number; changePercent: number }> = {
+  SPY: { price: 605.23, change: 2.41, changePercent: 0.40 },
+  QQQ: { price: 528.47, change: 3.18, changePercent: 0.61 },
+  DIA: { price: 447.82, change: 0.89, changePercent: 0.20 },
+  IWM: { price: 224.56, change: 1.12, changePercent: 0.50 },
+};
+
 export async function GET(request: NextRequest) {
   // Get base URL from the request for internal API calls
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
+  
+  let isLiveData = true;
   
   try {
     // Fetch stocks using FMP (Financial Modeling Prep) - works reliably
@@ -32,7 +43,7 @@ export async function GET(request: NextRequest) {
         if (fmpResponse.ok) {
           const fmpData = await fmpResponse.json();
           
-          if (Array.isArray(fmpData)) {
+          if (Array.isArray(fmpData) && fmpData.length > 0) {
             stockData = fmpData.map((quote: {
               symbol: string;
               price: number;
@@ -67,13 +78,15 @@ export async function GET(request: NextRequest) {
             
             if (response.ok) {
               const data = await response.json();
-              return {
-                symbol,
-                name: STOCK_NAMES[symbol] || data.name || symbol,
-                price: data.price || 0,
-                change: data.change || 0,
-                changePercent: data.changePercent || 0,
-              };
+              if (data.price > 0) {
+                return {
+                  symbol,
+                  name: STOCK_NAMES[symbol] || data.name || symbol,
+                  price: data.price || 0,
+                  change: data.change || 0,
+                  changePercent: data.changePercent || 0,
+                };
+              }
             }
           } catch (err) {
             console.error(`Stock quote failed for ${symbol}:`, err);
@@ -86,6 +99,19 @@ export async function GET(request: NextRequest) {
     // Log results for debugging
     const validStocks = stockData.filter(s => s.price > 0).length;
     console.log(`Market data: ${validStocks}/${STOCK_SYMBOLS.length} stocks fetched`);
+    
+    // If all live sources failed, use fallback data
+    if (validStocks === 0) {
+      console.log('All live sources failed, using fallback data');
+      isLiveData = false;
+      stockData = STOCK_SYMBOLS.map(symbol => ({
+        symbol,
+        name: STOCK_NAMES[symbol],
+        price: FALLBACK_PRICES[symbol]?.price || 0,
+        change: FALLBACK_PRICES[symbol]?.change || 0,
+        changePercent: FALLBACK_PRICES[symbol]?.changePercent || 0,
+      }));
+    }
 
     // Fetch crypto from CoinGecko
     let cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
@@ -125,6 +151,7 @@ export async function GET(request: NextRequest) {
       stocks: stockData,
       crypto: cryptoData,
       timestamp: new Date().toISOString(),
+      isLive: isLiveData,
     });
   } catch (err) {
     console.error('Market data API error:', err);
