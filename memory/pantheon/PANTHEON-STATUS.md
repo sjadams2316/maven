@@ -6,9 +6,7 @@
 
 | Agent | Task | Files Touching | Started | Status |
 |-------|------|----------------|---------|--------|
-| pantheon-fix-demo-variant | Fix demo variant visibility | demo/page.tsx | 09:52 | 🔄 Running |
-| pantheon-fix-overlap-ui | Fix overlap detection visibility | portfolio-lab/page.tsx | 09:52 | 🔄 Running |
-| pantheon-whatif-simulator | What-If Trade Simulator | portfolio-lab/, portfolio-utils | 09:56 | 🔄 Running |
+| — | — | — | — | — |
 
 ## Recently Completed (Last 24h)
 
