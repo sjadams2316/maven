@@ -1456,7 +1456,7 @@ export default function Dashboard() {
                   </div>
                   {allHoldings.length > 5 && (
                     <button 
-                      onClick={() => router.push('/onboarding')}
+                      onClick={() => router.push('/portfolio-lab')}
                       className="w-full mt-4 py-2 text-sm text-indigo-400 hover:text-indigo-300 transition"
                     >
                       View all {allHoldings.length} holdings →
