@@ -28,7 +28,7 @@ interface Child {
 
 interface CashAccount {
   id: string;
-  type: 'checking' | 'savings' | 'money_market';
+  type: 'checking' | 'savings' | 'money_market' | 'cash';
   name: string;
   institution: string;
   balance: number;
@@ -598,24 +598,17 @@ function HoldingsEntry({
                   <span className="font-mono text-indigo-400 font-medium">{holding.ticker}</span>
                   <span className="text-gray-500 text-sm truncate">{holding.name}</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  ${holding.currentPrice?.toFixed(2)} per share
-                </div>
+                {holding.ticker !== 'CASH' && (
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    ${holding.currentPrice?.toFixed(2)} per share
+                  </div>
+                )}
               </div>
               
               {mode === 'value' ? (
-                <div className="flex items-center gap-1">
-                  <div className="w-24">
-                    <input
-                      type="number"
-                      value={holding.shares || ''}
-                      onChange={(e) => updateHolding(i, { shares: parseFloat(e.target.value) || 0 })}
-                      placeholder="Shares"
-                      className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
-                    />
-                  </div>
-                  <span className="text-gray-500 text-xs">or</span>
-                  <div className="w-28">
+                holding.ticker === 'CASH' ? (
+                  // Cash holdings - just enter dollar amount
+                  <div className="w-32">
                     <div className="relative">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
                       <input
@@ -623,15 +616,44 @@ function HoldingsEntry({
                         value={holding.currentValue ? Math.round(holding.currentValue) : ''}
                         onChange={(e) => {
                           const value = parseFloat(e.target.value) || 0;
-                          const shares = holding.currentPrice ? value / holding.currentPrice : 0;
-                          updateHolding(i, { shares, currentValue: value });
+                          updateHolding(i, { shares: value, currentValue: value });
                         }}
-                        placeholder="Value"
+                        placeholder="Amount"
                         className="w-full pl-5 pr-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
                       />
                     </div>
                   </div>
-                </div>
+                ) : (
+                  // Regular holdings - shares or value
+                  <div className="flex items-center gap-1">
+                    <div className="w-24">
+                      <input
+                        type="number"
+                        value={holding.shares || ''}
+                        onChange={(e) => updateHolding(i, { shares: parseFloat(e.target.value) || 0 })}
+                        placeholder="Shares"
+                        className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
+                      />
+                    </div>
+                    <span className="text-gray-500 text-xs">or</span>
+                    <div className="w-28">
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                        <input
+                          type="number"
+                          value={holding.currentValue ? Math.round(holding.currentValue) : ''}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 0;
+                            const shares = holding.currentPrice ? value / holding.currentPrice : 0;
+                            updateHolding(i, { shares, currentValue: value });
+                          }}
+                          placeholder="Value"
+                          className="w-full pl-5 pr-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="w-24">
                   <div className="relative">
@@ -719,6 +741,24 @@ function HoldingsEntry({
             ) : (
               <>+ Add</>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const cashHolding: Holding = {
+                ticker: 'CASH',
+                name: 'Cash',
+                shares: 1,
+                costBasis: 0,
+                currentPrice: 1,
+                currentValue: 0,
+                allocationPercent: 0,
+              };
+              onChange([...holdings, cashHolding]);
+            }}
+            className="px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl transition flex items-center gap-2"
+          >
+            💵 Cash
           </button>
         </div>
         
@@ -1764,7 +1804,8 @@ export default function ProfileSetupPage() {
                       {account.type === 'checking' && '💳'}
                       {account.type === 'savings' && '🏦'}
                       {account.type === 'money_market' && '💵'}
-                      {account.type === 'checking' ? 'Checking' : account.type === 'savings' ? 'Savings' : 'Money Market'}
+                      {account.type === 'cash' && '💰'}
+                      {account.type === 'checking' ? 'Checking' : account.type === 'savings' ? 'Savings' : account.type === 'money_market' ? 'Money Market' : 'Cash'}
                     </p>
                     <button
                       type="button"
@@ -1823,7 +1864,7 @@ export default function ProfileSetupPage() {
               ))}
               
               {/* Add Account Buttons */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -1877,6 +1918,24 @@ export default function ProfileSetupPage() {
                 >
                   <span className="text-lg">💵</span>
                   <span className="text-xs">+ Money Market</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update({ 
+                      cashAccounts: [...data.cashAccounts, {
+                        id: crypto.randomUUID(),
+                        type: 'cash',
+                        name: '',
+                        institution: '',
+                        balance: 0,
+                      }]
+                    });
+                  }}
+                  className="p-3 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">💰</span>
+                  <span className="text-xs">+ Cash</span>
                 </button>
               </div>
               
