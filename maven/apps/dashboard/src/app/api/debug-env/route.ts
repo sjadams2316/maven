@@ -3,6 +3,19 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Security: Only allow in development mode
+  // This endpoint exposes configuration details that shouldn't be public
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { 
+        error: 'Not available',
+        message: 'Debug endpoints are disabled in production.',
+        code: 'DEBUG_DISABLED'
+      },
+      { status: 403 }
+    );
+  }
+  
   const fredKey = process.env.FRED_API_KEY;
   const hasKey = !!fredKey && fredKey.length > 10;
   

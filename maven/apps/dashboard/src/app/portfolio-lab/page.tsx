@@ -1967,7 +1967,7 @@ export default function PortfolioLab() {
                       }`}
                       style={{ width: `${researchData.mavenScore}%` }}
                     />
-                    <div className="absolute inset-0 flex justify-between items-center px-2 text-[10px] text-gray-500">
+                    <div className="absolute inset-0 flex justify-between items-center px-2 text-xs text-gray-500">
                       <span>0</span>
                       <span>25</span>
                       <span>50</span>
@@ -2353,7 +2353,7 @@ export default function PortfolioLab() {
                           }`}>
                             {grade}
                           </div>
-                          <p className="text-[10px] text-gray-500">{desc}</p>
+                          <p className="text-xs text-gray-500">{desc}</p>
                         </div>
                       ))}
                     </div>
