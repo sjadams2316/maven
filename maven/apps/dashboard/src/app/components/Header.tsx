@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import { openOracle } from '@/lib/open-oracle';
+import ProfileCompletionIndicator from './ProfileCompletionIndicator';
 
 interface HeaderProps {
   profile?: {
@@ -71,13 +72,16 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
           <nav className="hidden sm:flex items-center gap-6">
             {navLinks.map((link) => (
               link.href === '/oracle' ? (
-                <button
-                  key={link.href}
-                  onClick={() => openOracle()}
-                  className="text-sm transition text-purple-400 hover:text-purple-300"
-                >
-                  🔮 {link.label}
-                </button>
+                <div key={link.href} className="flex items-center gap-3">
+                  {/* Profile Completion Indicator - shown next to Oracle */}
+                  <ProfileCompletionIndicator />
+                  <button
+                    onClick={() => openOracle()}
+                    className="text-sm transition text-purple-400 hover:text-purple-300"
+                  >
+                    🔮 {link.label}
+                  </button>
+                </div>
               ) : (
                 <Link
                   key={link.href}
@@ -109,7 +113,7 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
                   <>
                     {/* Settings link when signed in */}
                     <Link
-                      href="/onboarding"
+                      href="/settings"
                       className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-400 hover:text-white transition"
                     >
                       Settings
