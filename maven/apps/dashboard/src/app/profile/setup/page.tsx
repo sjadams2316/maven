@@ -26,6 +26,14 @@ interface Child {
   dateOfBirth: string;
 }
 
+interface OtherAssetItem {
+  id: string;
+  name: string;
+  description: string;
+  value: number;
+  category: 'vehicle' | 'collectible' | 'jewelry' | 'business_interest' | 'inheritance' | 'other';
+}
+
 interface CashAccount {
   id: string;
   type: 'checking' | 'savings' | 'money_market' | 'cash';
@@ -198,7 +206,8 @@ interface ProfileData {
   realEstateEquity: number;
   cryptoValue: number;
   businessEquity: number;
-  otherAssets: number;
+  otherAssets: number; // Legacy field for backwards compatibility
+  otherAssetItems: OtherAssetItem[]; // New detailed array
   
   // Liabilities
   mortgageBalance: number;
@@ -962,6 +971,7 @@ export default function ProfileSetupPage() {
     cryptoValue: 0,
     businessEquity: 0,
     otherAssets: 0,
+    otherAssetItems: [],
     mortgageBalance: 0,
     mortgageRate: 0,
     mortgagePayment: 0,
@@ -1631,6 +1641,7 @@ export default function ProfileSetupPage() {
         cryptoValue: data.cryptoValue,
         businessEquity: data.businessEquity,
         otherAssets: data.otherAssets,
+        otherAssetItems: data.otherAssetItems,
         liabilities,
         onboardingComplete: true,
         lastUpdated: new Date().toISOString(),
@@ -2709,9 +2720,136 @@ export default function ProfileSetupPage() {
                     <CurrencyInput value={data.businessEquity} onChange={(v) => update({ businessEquity: v })} placeholder="0" />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">📦 Other Assets</label>
-                    <CurrencyInput value={data.otherAssets} onChange={(v) => update({ otherAssets: v })} placeholder="Vehicles, collectibles, etc." />
+                  {/* Other Assets - Detailed */}
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="font-medium text-white">📦 Other Assets</p>
+                        <p className="text-sm text-gray-500">Vehicles, collectibles, jewelry, etc.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItem: OtherAssetItem = {
+                            id: crypto.randomUUID(),
+                            name: '',
+                            description: '',
+                            value: 0,
+                            category: 'other',
+                          };
+                          update({ otherAssetItems: [...data.otherAssetItems, newItem] });
+                        }}
+                        className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                      >
+                        + Add Asset
+                      </button>
+                    </div>
+                    
+                    {data.otherAssetItems.length > 0 ? (
+                      <div className="space-y-3">
+                        {data.otherAssetItems.map((item, index) => (
+                          <div key={item.id} className="p-3 bg-white/5 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-indigo-400">Asset {index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  update({ 
+                                    otherAssetItems: data.otherAssetItems.filter(a => a.id !== item.id),
+                                    otherAssets: data.otherAssetItems.filter(a => a.id !== item.id).reduce((sum, a) => sum + a.value, 0)
+                                  });
+                                }}
+                                className="text-xs text-red-400 hover:text-red-300"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1">Asset Name</label>
+                                <input
+                                  type="text"
+                                  value={item.name}
+                                  onChange={(e) => {
+                                    const updated = data.otherAssetItems.map(a => 
+                                      a.id === item.id ? { ...a, name: e.target.value } : a
+                                    );
+                                    update({ otherAssetItems: updated });
+                                  }}
+                                  placeholder="e.g., 2022 Tesla Model Y"
+                                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:border-indigo-500 outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1">Category</label>
+                                <select
+                                  value={item.category}
+                                  onChange={(e) => {
+                                    const updated = data.otherAssetItems.map(a => 
+                                      a.id === item.id ? { ...a, category: e.target.value as OtherAssetItem['category'] } : a
+                                    );
+                                    update({ otherAssetItems: updated });
+                                  }}
+                                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-indigo-500 outline-none"
+                                >
+                                  <option value="vehicle">🚗 Vehicle</option>
+                                  <option value="collectible">🎨 Collectible/Art</option>
+                                  <option value="jewelry">💎 Jewelry/Watch</option>
+                                  <option value="business_interest">🤝 Business Interest</option>
+                                  <option value="inheritance">📜 Expected Inheritance</option>
+                                  <option value="other">📦 Other</option>
+                                </select>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1">Estimated Value</label>
+                                <CurrencyInput 
+                                  value={item.value} 
+                                  onChange={(v) => {
+                                    const updated = data.otherAssetItems.map(a => 
+                                      a.id === item.id ? { ...a, value: v } : a
+                                    );
+                                    // Also update the legacy total
+                                    const total = updated.reduce((sum, a) => sum + a.value, 0);
+                                    update({ otherAssetItems: updated, otherAssets: total });
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
+                                <input
+                                  type="text"
+                                  value={item.description}
+                                  onChange={(e) => {
+                                    const updated = data.otherAssetItems.map(a => 
+                                      a.id === item.id ? { ...a, description: e.target.value } : a
+                                    );
+                                    update({ otherAssetItems: updated });
+                                  }}
+                                  placeholder="Any relevant details"
+                                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:border-indigo-500 outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Total */}
+                        <div className="flex items-center justify-between px-3 py-2 bg-indigo-500/10 rounded-lg">
+                          <span className="text-sm text-indigo-300">Total Other Assets</span>
+                          <span className="text-indigo-300 font-medium">
+                            ${data.otherAssetItems.reduce((sum, a) => sum + a.value, 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic text-center py-4">
+                        No other assets added yet. Click "+ Add Asset" to add vehicles, collectibles, or other valuables.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
