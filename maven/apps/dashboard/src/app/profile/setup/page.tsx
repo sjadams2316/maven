@@ -235,6 +235,16 @@ const FILING_STATUSES = [
 ];
 
 // ============================================
+// HELPER: Calculate holdings total
+// When holdings exist, balance = sum of holdings values
+// This prevents double-counting (manual balance + holdings)
+// ============================================
+function calculateHoldingsTotal(holdings: Holding[]): number {
+  if (!holdings || holdings.length === 0) return 0;
+  return holdings.reduce((sum, h) => sum + (h.currentValue || 0), 0);
+}
+
+// ============================================
 // TICKER LOOKUP HOOK
 // ============================================
 
@@ -1112,7 +1122,18 @@ export default function ProfileSetupPage() {
   
   const updateTraditionalIRA = (id: string, updates: Partial<TraditionalIRAAccount>) => {
     update({
-      traditionalIRAs: data.traditionalIRAs.map(a => a.id === id ? { ...a, ...updates } : a),
+      traditionalIRAs: data.traditionalIRAs.map(a => {
+        if (a.id !== id) return a;
+        const merged = { ...a, ...updates };
+        // Auto-sync balance from holdings if holdings were updated and have values
+        if (updates.holdings) {
+          const holdingsTotal = calculateHoldingsTotal(updates.holdings);
+          if (holdingsTotal > 0) {
+            merged.balance = holdingsTotal;
+          }
+        }
+        return merged;
+      }),
     });
   };
   
@@ -1134,7 +1155,18 @@ export default function ProfileSetupPage() {
   
   const updateRothIRA = (id: string, updates: Partial<RothIRAAccount>) => {
     update({
-      rothIRAs: data.rothIRAs.map(a => a.id === id ? { ...a, ...updates } : a),
+      rothIRAs: data.rothIRAs.map(a => {
+        if (a.id !== id) return a;
+        const merged = { ...a, ...updates };
+        // Auto-sync balance from holdings if holdings were updated and have values
+        if (updates.holdings) {
+          const holdingsTotal = calculateHoldingsTotal(updates.holdings);
+          if (holdingsTotal > 0) {
+            merged.balance = holdingsTotal;
+          }
+        }
+        return merged;
+      }),
     });
   };
   
@@ -1163,7 +1195,18 @@ export default function ProfileSetupPage() {
   
   const update401k = (id: string, updates: Partial<Account401k>) => {
     update({
-      accounts401k: data.accounts401k.map(a => a.id === id ? { ...a, ...updates } : a),
+      accounts401k: data.accounts401k.map(a => {
+        if (a.id !== id) return a;
+        const merged = { ...a, ...updates };
+        // Auto-sync balance from holdings if holdings were updated and have values
+        if (updates.holdings) {
+          const holdingsTotal = calculateHoldingsTotal(updates.holdings);
+          if (holdingsTotal > 0) {
+            merged.balance = holdingsTotal;
+          }
+        }
+        return merged;
+      }),
     });
   };
   
@@ -1185,7 +1228,18 @@ export default function ProfileSetupPage() {
   
   const updateHSA = (id: string, updates: Partial<HSAAccount>) => {
     update({
-      hsaAccounts: data.hsaAccounts.map(a => a.id === id ? { ...a, ...updates } : a),
+      hsaAccounts: data.hsaAccounts.map(a => {
+        if (a.id !== id) return a;
+        const merged = { ...a, ...updates };
+        // Auto-sync balance from holdings if holdings were updated and have values
+        if (updates.holdings) {
+          const holdingsTotal = calculateHoldingsTotal(updates.holdings);
+          if (holdingsTotal > 0) {
+            merged.balance = holdingsTotal;
+          }
+        }
+        return merged;
+      }),
     });
   };
   
@@ -1208,7 +1262,18 @@ export default function ProfileSetupPage() {
   
   const updateBrokerage = (id: string, updates: Partial<BrokerageAccount>) => {
     update({
-      brokerageAccounts: data.brokerageAccounts.map(a => a.id === id ? { ...a, ...updates } : a),
+      brokerageAccounts: data.brokerageAccounts.map(a => {
+        if (a.id !== id) return a;
+        const merged = { ...a, ...updates };
+        // Auto-sync balance from holdings if holdings were updated and have values
+        if (updates.holdings) {
+          const holdingsTotal = calculateHoldingsTotal(updates.holdings);
+          if (holdingsTotal > 0) {
+            merged.balance = holdingsTotal;
+          }
+        }
+        return merged;
+      }),
     });
   };
   
@@ -2037,8 +2102,21 @@ export default function ProfileSetupPage() {
               {data.has401k && (
                 <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                    <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="block text-sm text-gray-400">Current Balance</label>
+                      {data.account401kHoldings.length > 0 && calculateHoldingsTotal(data.account401kHoldings) > 0 && (
+                        <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                          ✓ Calculated from holdings
+                        </span>
+                      )}
+                    </div>
+                    {data.account401kHoldings.length > 0 && calculateHoldingsTotal(data.account401kHoldings) > 0 ? (
+                      <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                        ${data.account401kBalance.toLocaleString()}
+                      </div>
+                    ) : (
+                      <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                    )}
                   </div>
                   
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -2131,10 +2209,17 @@ export default function ProfileSetupPage() {
                   
                   {/* Holdings */}
                   <div className="pt-3 border-t border-white/10">
-                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <label className="block text-sm text-gray-400 mb-3">Holdings (optional — or just enter balance above)</label>
                     <HoldingsEntry
                       holdings={data.account401kHoldings}
-                      onChange={(h) => update({ account401kHoldings: h })}
+                      onChange={(h) => {
+                        const holdingsTotal = calculateHoldingsTotal(h);
+                        if (holdingsTotal > 0) {
+                          update({ account401kHoldings: h, account401kBalance: holdingsTotal });
+                        } else {
+                          update({ account401kHoldings: h });
+                        }
+                      }}
                       mode={data.account401kHoldingsMode}
                       onModeChange={(m) => update({ account401kHoldingsMode: m })}
                       accountBalance={data.account401kBalance}
@@ -2197,11 +2282,24 @@ export default function ProfileSetupPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                      <CurrencyInput value={ira.balance} onChange={(v) => updateTraditionalIRA(ira.id, { balance: v })} />
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className="block text-sm text-gray-400">Current Balance</label>
+                        {ira.holdings.length > 0 && calculateHoldingsTotal(ira.holdings) > 0 && (
+                          <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                            ✓ Calculated from holdings
+                          </span>
+                        )}
+                      </div>
+                      {ira.holdings.length > 0 && calculateHoldingsTotal(ira.holdings) > 0 ? (
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          ${ira.balance.toLocaleString()}
+                        </div>
+                      ) : (
+                        <CurrencyInput value={ira.balance} onChange={(v) => updateTraditionalIRA(ira.id, { balance: v })} />
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings (optional — or just enter balance above)</label>
                       <HoldingsEntry
                         holdings={ira.holdings}
                         onChange={(h) => updateTraditionalIRA(ira.id, { holdings: h })}
@@ -2272,11 +2370,24 @@ export default function ProfileSetupPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                      <CurrencyInput value={ira.balance} onChange={(v) => updateRothIRA(ira.id, { balance: v })} />
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className="block text-sm text-gray-400">Current Balance</label>
+                        {ira.holdings.length > 0 && calculateHoldingsTotal(ira.holdings) > 0 && (
+                          <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                            ✓ Calculated from holdings
+                          </span>
+                        )}
+                      </div>
+                      {ira.holdings.length > 0 && calculateHoldingsTotal(ira.holdings) > 0 ? (
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          ${ira.balance.toLocaleString()}
+                        </div>
+                      ) : (
+                        <CurrencyInput value={ira.balance} onChange={(v) => updateRothIRA(ira.id, { balance: v })} />
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings (optional — or just enter balance above)</label>
                       <HoldingsEntry
                         holdings={ira.holdings}
                         onChange={(h) => updateRothIRA(ira.id, { holdings: h })}
@@ -2347,11 +2458,24 @@ export default function ProfileSetupPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                      <CurrencyInput value={hsa.balance} onChange={(v) => updateHSA(hsa.id, { balance: v })} />
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className="block text-sm text-gray-400">Current Balance</label>
+                        {hsa.holdings.length > 0 && calculateHoldingsTotal(hsa.holdings) > 0 && (
+                          <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                            ✓ Calculated from holdings
+                          </span>
+                        )}
+                      </div>
+                      {hsa.holdings.length > 0 && calculateHoldingsTotal(hsa.holdings) > 0 ? (
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          ${hsa.balance.toLocaleString()}
+                        </div>
+                      ) : (
+                        <CurrencyInput value={hsa.balance} onChange={(v) => updateHSA(hsa.id, { balance: v })} />
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings (optional — or just enter balance above)</label>
                       <HoldingsEntry
                         holdings={hsa.holdings}
                         onChange={(h) => updateHSA(hsa.id, { holdings: h })}
@@ -2453,11 +2577,24 @@ export default function ProfileSetupPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Total Value</label>
-                      <CurrencyInput value={account.balance} onChange={(v) => updateBrokerage(account.id, { balance: v })} />
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className="block text-sm text-gray-400">Total Value</label>
+                        {account.holdings.length > 0 && calculateHoldingsTotal(account.holdings) > 0 && (
+                          <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                            ✓ Calculated from holdings
+                          </span>
+                        )}
+                      </div>
+                      {account.holdings.length > 0 && calculateHoldingsTotal(account.holdings) > 0 ? (
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          ${account.balance.toLocaleString()}
+                        </div>
+                      ) : (
+                        <CurrencyInput value={account.balance} onChange={(v) => updateBrokerage(account.id, { balance: v })} />
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings (optional — or just enter balance above)</label>
                       <HoldingsEntry
                         holdings={account.holdings}
                         onChange={(h) => updateBrokerage(account.id, { holdings: h })}
