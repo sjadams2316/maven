@@ -2,7 +2,7 @@
 
 *Live status of running agents and file locks. Check before spawning.*
 
-**Last Updated:** 2026-02-09 15:13 EST
+**Last Updated:** 2026-02-09 15:37 EST
 
 ---
 
@@ -10,10 +10,9 @@
 
 | Agent | Task | Files | Started | Status |
 |-------|------|-------|---------|--------|
-| pantheon-data-health | Fix FMP false positive | api/data-health/route.ts | 15:14 EST | 🔄 Running |
-| pantheon-dashboard-polish | Clean up data source message | components/DataHealth*.tsx | 15:14 EST | 🔄 Running |
-| pantheon-mobile | Mobile responsiveness fixes | Various components | 15:14 EST | 🔄 Running |
-| pantheon-ux-polish | Fix 3 open UX issues | Various | 15:14 EST | 🔄 Running |
+| pantheon-tooltip-polish | Add helpful tooltips | portfolio-lab/page.tsx | 15:39 EST | 🔄 Running |
+| pantheon-loading-states | Improve loading skeletons | Various components | 15:39 EST | 🔄 Running |
+| pantheon-error-messages | Improve API errors | api/*.ts | 15:39 EST | 🔄 Running |
 
 ---
 
@@ -31,21 +30,20 @@
 
 | Agent | Task | Result | Completed |
 |-------|------|--------|-----------|
-| eli-main | market-data fix | ✅ Deployed | 15:01 EST |
-| eli-main | pitch deck tweaks | ✅ Deployed | 14:57 EST |
+| pantheon-data-health | Fix FMP status check | ✅ ef71875 | 15:17 EST |
+| pantheon-dashboard-polish | Data source messaging | ✅ caecfbe | 15:17 EST |
+| pantheon-ux-polish | Markets fallback | ✅ 5958508 | 15:19 EST |
+| pantheon-mobile | Mobile responsiveness | ✅ ec7056f | 15:20 EST |
 
 ---
 
-## Sprint Queue
+## Sprint History
 
-*Next tasks to run (update as sprint progresses)*
-
-| Priority | Task | Target Files | Assigned |
-|----------|------|--------------|----------|
-| P0 | Fix data-health FMP indicator | api/data-health/route.ts | pending |
-| P1 | Dashboard data source message | dashboard/page.tsx or components | pending |
-| P1 | Mobile responsiveness fixes | Various components | pending |
-| P2 | UX polish (3 open items) | Various | pending |
+### 2026-02-09 Polish Sprint (15:14-15:22)
+- **Agents:** 4
+- **Success rate:** 100% (4/4)
+- **Commits:** 4
+- **Learning captured:** Yes (LEARNINGS.md)
 
 ---
 
@@ -55,6 +53,7 @@ When spawning an agent:
 1. Add row to "Active Agents" with files it will touch
 2. Add file locks
 3. On completion: move to "Recently Completed", remove locks
+4. **NEW:** Verify agent appended to LEARNINGS.md
 
 ---
 
@@ -64,3 +63,4 @@ When spawning an agent:
 2. **Check before spawn** — Always check this file first
 3. **Update on start** — Add your agent before spawning
 4. **Update on finish** — Clear locks immediately after completion
+5. **Capture learning** — Every agent must add to LEARNINGS.md

@@ -9,6 +9,10 @@
 ### 1. Review Context
 - [ ] Check `PANTHEON-STATUS.md` for running agents
 - [ ] Check `PATTERNS.md` for common fixes
+- [ ] Check `ANTI-PATTERNS.md` for what NOT to do
+- [ ] Check `LEARNINGS.md` for recent insights
+- [ ] Check `FEEDBACK.md` for user signals
+- [ ] Review `code-patterns/` for reusable snippets
 - [ ] Review relevant backlogs for prioritized tasks
 - [ ] Estimate credits (rule of thumb: ~$1-3 per agent)
 
@@ -55,11 +59,25 @@ On completion:
 ```
 IMPORTANT — Read before starting:
 1. Read memory/pantheon/PATTERNS.md for common fixes
-2. Check memory/pantheon/PANTHEON-STATUS.md for file locks
-3. After changes: run `npm run build` and fix any errors
-4. Commit message format: type(scope): description
-5. After push: verify deploy succeeded (may take 1-2 min)
+2. Read memory/pantheon/LEARNINGS.md for recent insights
+3. Check memory/pantheon/PANTHEON-STATUS.md for file locks
+4. After changes: run `npm run build` and fix any errors
+5. Commit message format: type(scope): description
+6. After push: verify deploy succeeded (may take 1-2 min)
+7. BEFORE FINISHING: Append your learning to memory/pantheon/LEARNINGS.md
 ```
+
+## Learning Requirement (MANDATORY)
+
+**Every agent must append ONE learning before completing:**
+
+```markdown
+### [agent-name]
+**Task:** [one-line description]
+**Insight:** [one actionable thing future agents should know]
+```
+
+This is how Pantheon compounds. Skip this = wasted knowledge.
 
 ---
 
@@ -125,6 +143,37 @@ Some files are high-risk. Extra care required:
 | `api/*.ts` | MEDIUM | Can break data flow |
 | `components/*.tsx` | LOW | Isolated, easy to test |
 | `lib/*.ts` | LOW | Utilities, usually safe |
+
+---
+
+---
+
+## Weekly Learning Review
+
+**Every Sunday (or when LEARNINGS.md gets long):**
+
+1. Read through all new learnings in LEARNINGS.md
+2. Identify patterns that appear 2+ times
+3. Promote repeated learnings to PATTERNS.md
+4. Archive promoted learnings to `memory/pantheon/archive/LEARNINGS-YYYY-MM.md`
+5. Keep LEARNINGS.md fresh (last 2 weeks max)
+
+**Promotion criteria:**
+- Same insight appears from 2+ different agents
+- Insight prevented a bug or significantly improved quality
+- Insight is generalizable (not task-specific)
+
+---
+
+## Knowledge Hierarchy
+
+```
+LEARNINGS.md (raw, recent)
+    ↓ promote after 2+ occurrences
+PATTERNS.md (proven, curated)
+    ↓ domain-specific extraction  
+domain/KNOWLEDGE.md (specialized)
+```
 
 ---
 

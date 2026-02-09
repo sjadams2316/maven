@@ -168,6 +168,21 @@ const GLOSSARY: Record<string, { title: string; explanation: string; example?: s
     explanation: 'Annual fee charged by funds, expressed as a percentage. Lower is better — fees compound against you over time.',
     example: '0.03% (VTI) vs 1.0% (active fund) = ~$970 savings per $100K over 10 years.'
   },
+  'market-cap': {
+    title: 'Market Capitalization',
+    explanation: 'The total value of a company\'s shares. Calculated as share price × total shares outstanding. Used to categorize companies by size.',
+    example: 'Large-cap: >$10B (Apple, Microsoft). Mid-cap: $2-10B. Small-cap: <$2B.'
+  },
+  'pe-ratio': {
+    title: 'P/E Ratio (Price-to-Earnings)',
+    explanation: 'How much investors pay for each dollar of earnings. Higher P/E = higher expectations for growth. Compare within same industry.',
+    example: 'P/E of 20 means you pay $20 for $1 of annual earnings. S&P 500 average: ~20-25.'
+  },
+  'dividend-yield': {
+    title: 'Dividend Yield',
+    explanation: 'Annual dividend income as a percentage of stock price. Higher yield = more income, but extremely high yields can signal trouble.',
+    example: '4% yield on $100 stock = $4/year in dividends. S&P 500 average: ~1.5%.'
+  },
   'tracking-error': {
     title: 'Tracking Error',
     explanation: 'How closely a fund follows its benchmark index. Lower tracking error = more predictable index-like returns.',

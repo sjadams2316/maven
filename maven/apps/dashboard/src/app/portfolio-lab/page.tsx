@@ -901,7 +901,7 @@ export default function PortfolioLab() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-500">Est. Volatility</p>
+                      <p className="text-gray-500">Est. <Term id="volatility">Volatility</Term></p>
                       <p className="text-white font-medium">
                         {(currentAllocation.usEquity * 0.18 + currentAllocation.intlEquity * 0.22 + 
                           currentAllocation.bonds * 0.06 + currentAllocation.crypto * 0.60 + 
@@ -1007,7 +1007,7 @@ export default function PortfolioLab() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-gray-500">Est. Volatility</p>
+                            <p className="text-gray-500">Est. <Term id="volatility">Volatility</Term></p>
                             <p className="text-white font-medium">{expVol.toFixed(1)}%</p>
                           </div>
                         </>
@@ -1076,7 +1076,7 @@ export default function PortfolioLab() {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-3 text-gray-400">Volatility (Risk)</td>
+                              <td className="py-3 text-gray-400"><Term id="volatility">Volatility</Term> (Risk)</td>
                               <td className="py-3 text-center text-white">{(currentVol * 100).toFixed(1)}%</td>
                               <td className="py-3 text-center text-indigo-300">{(optimizedVol * 100).toFixed(1)}%</td>
                               <td className={`py-3 text-right ${optimizedVol < currentVol ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -2365,7 +2365,7 @@ export default function PortfolioLab() {
                   <h3 className="text-lg font-semibold text-white mb-4">📋 Valuation Metrics</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white/5 rounded-xl p-3">
-                      <p className="text-xs text-gray-500">Market Cap</p>
+                      <p className="text-xs text-gray-500"><Term id="market-cap">Market Cap</Term></p>
                       <p className="text-lg font-semibold text-white">
                         ${researchData.marketCap >= 1e12 
                           ? (researchData.marketCap / 1e12).toFixed(2) + 'T'
@@ -2375,7 +2375,7 @@ export default function PortfolioLab() {
                       </p>
                     </div>
                     <div className="bg-white/5 rounded-xl p-3">
-                      <p className="text-xs text-gray-500">P/E Ratio</p>
+                      <p className="text-xs text-gray-500"><Term id="pe-ratio">P/E Ratio</Term></p>
                       <p className="text-lg font-semibold text-white">
                         {researchData.peRatio ? researchData.peRatio.toFixed(1) + 'x' : 'N/A'}
                       </p>
@@ -2405,7 +2405,7 @@ export default function PortfolioLab() {
                       </p>
                     </div>
                     <div className="bg-white/5 rounded-xl p-3">
-                      <p className="text-xs text-gray-500">Div Yield</p>
+                      <p className="text-xs text-gray-500"><Term id="dividend-yield">Div Yield</Term></p>
                       <p className="text-lg font-semibold text-white">
                         {researchData.dividendYield ? researchData.dividendYield.toFixed(2) + '%' : 'N/A'}
                       </p>

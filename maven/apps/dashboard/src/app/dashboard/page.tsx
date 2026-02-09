@@ -227,16 +227,153 @@ export default function Dashboard() {
   const visibleInsights = insights.filter((_, idx) => !dismissedInsights.includes(idx));
   const displayedHoldings = showAllHoldings ? allHoldings : allHoldings.slice(0, 5);
   
-  // Loading state
+  // Loading state - skeleton that matches actual dashboard layout
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0f]">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-white/10 rounded w-48" />
-            <div className="h-48 bg-white/10 rounded-2xl" />
-            <div className="h-32 bg-white/10 rounded-2xl" />
+          {/* Welcome skeleton */}
+          <div className="mb-8 animate-pulse">
+            <div className="h-8 bg-white/10 rounded w-64 mb-2" />
+            <div className="h-4 bg-white/10 rounded w-48" />
+          </div>
+          
+          {/* Main Grid skeleton */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Net Worth Card skeleton */}
+              <div className="bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-pink-900/20 border border-indigo-500/30 rounded-2xl p-6 animate-pulse">
+                <div className="h-4 bg-white/10 rounded w-24 mb-4" />
+                <div className="h-12 bg-white/10 rounded w-48 mb-4" />
+                <div className="h-6 bg-white/10 rounded w-32 mb-4" />
+                <div className="flex gap-1 mb-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="h-8 bg-white/10 rounded-lg w-12" />
+                  ))}
+                </div>
+                <div className="h-20 bg-white/10 rounded mt-4" />
+              </div>
+              
+              {/* Insights skeleton */}
+              <div className="space-y-3 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-6 bg-white/10 rounded w-32" />
+                  <div className="h-4 bg-white/10 rounded w-16" />
+                </div>
+                {[1, 2].map(i => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 flex gap-4">
+                    <div className="w-12 h-12 bg-white/10 rounded-xl flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-3 bg-white/10 rounded w-20 mb-2" />
+                      <div className="h-5 bg-white/10 rounded w-48 mb-2" />
+                      <div className="h-4 bg-white/10 rounded w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Portfolio Allocation skeleton */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 animate-pulse">
+                <div className="h-6 bg-white/10 rounded w-40 mb-6" />
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="text-center">
+                      <div className="w-3 h-3 bg-white/10 rounded-full mx-auto mb-2" />
+                      <div className="h-5 bg-white/10 rounded w-8 mx-auto mb-1" />
+                      <div className="h-3 bg-white/10 rounded w-16 mx-auto" />
+                    </div>
+                  ))}
+                </div>
+                <div className="h-4 bg-white/10 rounded-full" />
+              </div>
+              
+              {/* Top Holdings skeleton */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-6 bg-white/10 rounded w-28" />
+                  <div className="h-4 bg-white/10 rounded w-24" />
+                </div>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-xl" />
+                        <div>
+                          <div className="h-4 bg-white/10 rounded w-12 mb-1" />
+                          <div className="h-3 bg-white/10 rounded w-16" />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="h-4 bg-white/10 rounded w-20 mb-1" />
+                        <div className="h-3 bg-white/10 rounded w-12 ml-auto" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Quick Actions skeleton */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 animate-pulse">
+                <div className="h-5 bg-white/10 rounded w-28 mb-4" />
+                <div className="grid grid-cols-3 gap-3">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="flex flex-col items-center gap-2 p-3">
+                      <div className="w-12 h-12 bg-white/10 rounded-xl" />
+                      <div className="h-3 bg-white/10 rounded w-14" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Markets skeleton */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-5 bg-white/10 rounded w-16" />
+                  <div className="h-3 bg-white/10 rounded w-20" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="bg-white/5 rounded-xl p-3">
+                      <div className="h-3 bg-white/10 rounded w-10 mb-2" />
+                      <div className="h-5 bg-white/10 rounded w-16 mb-1" />
+                      <div className="h-3 bg-white/10 rounded w-14" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Goals skeleton */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-5 bg-white/10 rounded w-12" />
+                  <div className="h-3 bg-white/10 rounded w-16" />
+                </div>
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="h-4 bg-white/10 rounded w-24" />
+                        <div className="h-4 bg-white/10 rounded w-8" />
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Oracle CTA skeleton */}
+              <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-4 animate-pulse">
+                <div className="w-12 h-12 bg-white/10 rounded-full mx-auto mb-3" />
+                <div className="h-5 bg-white/10 rounded w-32 mx-auto mb-2" />
+                <div className="h-4 bg-white/10 rounded w-40 mx-auto mb-3" />
+                <div className="h-10 bg-white/10 rounded-xl" />
+              </div>
+            </div>
           </div>
         </main>
       </div>
