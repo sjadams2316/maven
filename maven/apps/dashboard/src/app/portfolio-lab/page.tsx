@@ -10,6 +10,7 @@ import { OracleShowcase } from '@/app/components/OracleShowcase';
 import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsight';
 import FactorExposureSection from '@/app/components/FactorExposureSection';
 import FeeAnalyzer from '@/app/components/FeeAnalyzer';
+import OverlapDetection from '@/app/components/OverlapDetection';
 
 // Types
 interface Holding {
@@ -734,6 +735,9 @@ export default function PortfolioLab() {
             
             {/* Fee Analysis */}
             <FeeAnalyzer holdings={allHoldings} />
+            
+            {/* Holdings Overlap Detection */}
+            <OverlapDetection holdings={allHoldings} />
           </div>
         )}
 

@@ -14,12 +14,13 @@ Make Portfolio Lab the best portfolio analysis tool in existence — institution
 ## Current State
 
 ### Features Built
-- **Analysis Tab:** Portfolio health score, sector concentration, key metrics, **factor exposure analysis**
+- **Analysis Tab:** Portfolio health score, sector concentration, key metrics, **factor exposure analysis**, **fee analyzer**, **holdings overlap detection**
 - **Optimize Tab:** AI-powered rebalancing recommendations with explanations
 - **Stress Test Tab:** 6 historical scenarios (2008, COVID, 2022, Dot-Com, Stagflation, Flash Crash)
 - **Projections Tab:** Monte Carlo-style wealth projections
 - **Actions Tab:** Prioritized action items
 - **Factor Exposure Analysis:** Shows Market Beta, Size, Value, Momentum, Quality factors with visual bars
+- **Holdings Overlap Detection:** Identifies redundant ETF positions with similar underlying holdings
 
 ### Code Location
 - Main page: `apps/dashboard/src/app/portfolio-lab/page.tsx`
@@ -181,6 +182,67 @@ export function detectConcentratedPositions(
 - International diversification provides some protection
 - Emerging markets: Higher risk, higher potential return
 
+### Holdings Overlap Detection (Implemented 2026-02-09)
+
+**Why It Matters:**
+Many investors unknowingly hold redundant positions. VTI + VOO = 82% overlap. SCHD + VYM = 52% overlap. This wastes diversification and can create tax inefficiency.
+
+**Location:** 
+- Component: `apps/dashboard/src/app/components/OverlapDetection.tsx`
+- Logic: `apps/dashboard/src/lib/portfolio-utils.ts` (end of file)
+- Integration: Portfolio Lab → Analysis tab (below Fee Analyzer)
+
+**Overlap Groups Detected:**
+
+| Group | Tickers | Overlap % |
+|-------|---------|-----------|
+| US Total Market / S&P 500 | VTI, VOO, SPY, IVV, ITOT, SCHB | 82-100% |
+| International Developed | VXUS, VEA, IEFA, EFA, SCHF | 72-98% |
+| Emerging Markets | VWO, IEMG, EEM, SCHE | 85-92% |
+| Total Bond Market | BND, AGG, SCHZ, IUSB | 90-98% |
+| Dividend/Value ETFs | VYM, SCHD, DVY, HDV, VIG | 35-65% |
+| Tech/Growth ETFs | QQQ, VGT, XLK, IYW | 60-88% |
+| Small Cap ETFs | VB, IJR, IWM, SCHA | 70-95% |
+| Growth ETFs | VUG, IWF, SCHG, SPYG | 85-95% |
+
+**Features:**
+1. **Overlap Groups** - Expandable cards showing which holdings overlap
+2. **Overlap Percentage Bars** - Visual indicator of redundancy severity
+3. **Redundant Value Calculation** - Shows dollar amount of duplicated exposure
+4. **Consolidation Recommendations** - "Keep VTI, Consider Selling VOO"
+5. **Tax-Loss Harvesting Opportunities** - Identifies losses that can be harvested via consolidation
+6. **Wash Sale Warnings** - Alerts when consolidation would trigger wash sale rules
+
+**Grading System:**
+- **A+** (0%): No overlap detected
+- **A** (≤5%): Minimal overlap
+- **B** (≤10%): Low overlap
+- **C** (≤20%): Moderate overlap
+- **D** (≤35%): High overlap
+- **F** (>35%): Very high overlap — significant redundancy
+
+**Implementation Details:**
+```typescript
+// Key functions in portfolio-utils.ts
+analyzePortfolioOverlap(holdings) → PortfolioOverlapAnalysis
+findOverlapGroup(ticker) → OverlapGroup | null
+getOverlapPercent(ticker1, ticker2) → number | null
+getOverlapGrade(redundancyPercent) → { grade, label, color }
+```
+
+**UX Decisions:**
+- Collapsible overlap groups (default collapsed to reduce clutter)
+- Keep/Sell recommendations based on lowest cost + broadest exposure
+- Tax-loss harvest opportunities shown only when meaningful (>$100 loss)
+- Wash sale warnings (31-day rule) included when consolidating overlapping funds
+- Educational footer explaining why overlap matters
+
+**Future Enhancements:**
+- Real ETF holdings data from Morningstar/iShares for precise overlap %
+- Custom overlap threshold setting
+- "What if I consolidate?" preview showing simplified portfolio
+- Tax impact calculator for consolidation trades
+
 ---
 
 ## User Research Insights
@@ -243,9 +305,9 @@ Users don't want more data — they want clarity and confidence.
 ## Backlog (Prioritized)
 
 ### High Priority
-1. **Factor exposure analysis** — Show beta, size, value, momentum exposures
-2. **Fee analyzer** — Total expense ratios, annual fee drag
-3. **Overlap detection** — "VTI and VOO are 99% overlapping"
+1. ~~**Factor exposure analysis**~~ ✅ — Show beta, size, value, momentum exposures
+2. ~~**Fee analyzer**~~ ✅ — Total expense ratios, annual fee drag
+3. ~~**Overlap detection**~~ ✅ — "VTI and VOO are 99% overlapping"
 4. **Tax efficiency score** — Rate tax efficiency of current allocation
 
 ### Medium Priority

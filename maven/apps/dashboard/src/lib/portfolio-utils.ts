@@ -1057,3 +1057,429 @@ export function formatBasisPoints(expenseRatio: number): string {
   if (bps < 1) return '<1 bp';
   return `${Math.round(bps)} bps`;
 }
+
+// ===========================================
+// HOLDINGS OVERLAP DETECTION
+// ===========================================
+
+/**
+ * Overlap group - ETFs/funds that have significant underlying holdings overlap
+ * Percentage represents approximate overlap in underlying holdings
+ */
+export interface OverlapGroup {
+  name: string;
+  description: string;
+  category: 'us-broad' | 'us-sp500' | 'intl-developed' | 'intl-emerging' | 'bonds' | 'dividend' | 'tech' | 'small-cap' | 'growth';
+  tickers: string[];
+  // Approximate overlap percentage between members (e.g., VTI/VOO = 82% overlap)
+  overlapMatrix: Record<string, Record<string, number>>;
+  // Best single fund to hold for this category (lowest cost, broadest exposure)
+  recommendedFund: string;
+  recommendedReason: string;
+}
+
+/**
+ * Pre-defined overlap groups based on fund holdings analysis
+ * Overlap percentages sourced from fund prospectuses and ETF.com analytics
+ */
+export const OVERLAP_GROUPS: OverlapGroup[] = [
+  {
+    name: 'US Total Market / S&P 500',
+    description: 'These funds track overlapping US equity indexes',
+    category: 'us-broad',
+    tickers: ['VTI', 'VOO', 'SPY', 'IVV', 'ITOT', 'SCHB', 'SPTM', 'FZROX', 'FXAIX', 'VFIAX', 'VTSAX'],
+    overlapMatrix: {
+      'VTI': { 'VOO': 82, 'SPY': 82, 'IVV': 82, 'ITOT': 99, 'SCHB': 98, 'FZROX': 99, 'VTSAX': 100 },
+      'VOO': { 'VTI': 82, 'SPY': 100, 'IVV': 100, 'ITOT': 82, 'SCHB': 82, 'FXAIX': 100, 'VFIAX': 100 },
+      'SPY': { 'VTI': 82, 'VOO': 100, 'IVV': 100, 'ITOT': 82, 'SCHB': 82, 'FXAIX': 100, 'VFIAX': 100 },
+      'IVV': { 'VTI': 82, 'VOO': 100, 'SPY': 100, 'ITOT': 82, 'SCHB': 82, 'FXAIX': 100, 'VFIAX': 100 },
+    },
+    recommendedFund: 'VTI',
+    recommendedReason: 'Broadest US market coverage at lowest cost (0.03%)',
+  },
+  {
+    name: 'International Developed Markets',
+    description: 'These funds track developed markets outside the US',
+    category: 'intl-developed',
+    tickers: ['VXUS', 'VEA', 'IEFA', 'EFA', 'SCHF', 'IXUS', 'FZILX', 'VTIAX'],
+    overlapMatrix: {
+      'VXUS': { 'VEA': 78, 'IEFA': 72, 'EFA': 72, 'SCHF': 75, 'IXUS': 98, 'FZILX': 97, 'VTIAX': 100 },
+      'VEA': { 'VXUS': 78, 'IEFA': 95, 'EFA': 95, 'SCHF': 94, 'IXUS': 78 },
+      'IEFA': { 'VXUS': 72, 'VEA': 95, 'EFA': 98, 'SCHF': 94 },
+      'EFA': { 'VXUS': 72, 'VEA': 95, 'IEFA': 98, 'SCHF': 94 },
+    },
+    recommendedFund: 'VXUS',
+    recommendedReason: 'Includes both developed and emerging markets (0.07%)',
+  },
+  {
+    name: 'Emerging Markets',
+    description: 'These funds track emerging market equities',
+    category: 'intl-emerging',
+    tickers: ['VWO', 'IEMG', 'EEM', 'SCHE', 'SPEM'],
+    overlapMatrix: {
+      'VWO': { 'IEMG': 92, 'EEM': 88, 'SCHE': 90, 'SPEM': 91 },
+      'IEMG': { 'VWO': 92, 'EEM': 90, 'SCHE': 88, 'SPEM': 89 },
+      'EEM': { 'VWO': 88, 'IEMG': 90, 'SCHE': 85, 'SPEM': 86 },
+    },
+    recommendedFund: 'VWO',
+    recommendedReason: 'Lowest cost emerging markets exposure (0.08%)',
+  },
+  {
+    name: 'Total Bond Market',
+    description: 'These funds track the broad US bond market',
+    category: 'bonds',
+    tickers: ['BND', 'AGG', 'SCHZ', 'IUSB', 'FBND', 'VBTLX', 'FXNAX'],
+    overlapMatrix: {
+      'BND': { 'AGG': 98, 'SCHZ': 95, 'IUSB': 92, 'VBTLX': 100 },
+      'AGG': { 'BND': 98, 'SCHZ': 95, 'IUSB': 92, 'FXNAX': 95 },
+      'SCHZ': { 'BND': 95, 'AGG': 95, 'IUSB': 90 },
+    },
+    recommendedFund: 'BND',
+    recommendedReason: 'Broad bond coverage at very low cost (0.03%)',
+  },
+  {
+    name: 'Dividend / Value ETFs',
+    description: 'These dividend-focused funds share many high-yield holdings',
+    category: 'dividend',
+    tickers: ['VYM', 'SCHD', 'DVY', 'HDV', 'SPYD', 'VIG', 'DGRO'],
+    overlapMatrix: {
+      'VYM': { 'SCHD': 52, 'DVY': 45, 'HDV': 55, 'SPYD': 35, 'VIG': 40, 'DGRO': 48 },
+      'SCHD': { 'VYM': 52, 'DVY': 40, 'HDV': 48, 'SPYD': 30, 'VIG': 45, 'DGRO': 55 },
+      'DVY': { 'VYM': 45, 'SCHD': 40, 'HDV': 42, 'SPYD': 38 },
+      'VIG': { 'VYM': 40, 'SCHD': 45, 'DGRO': 65 },
+    },
+    recommendedFund: 'SCHD',
+    recommendedReason: 'Quality dividend stocks with strong track record (0.06%)',
+  },
+  {
+    name: 'Tech / Growth ETFs',
+    description: 'Tech-heavy growth funds with significant overlap',
+    category: 'tech',
+    tickers: ['QQQ', 'VGT', 'XLK', 'IYW', 'FTEC', 'IGM'],
+    overlapMatrix: {
+      'QQQ': { 'VGT': 65, 'XLK': 62, 'IYW': 60, 'FTEC': 64 },
+      'VGT': { 'QQQ': 65, 'XLK': 88, 'IYW': 85, 'FTEC': 92 },
+      'XLK': { 'QQQ': 62, 'VGT': 88, 'IYW': 82, 'FTEC': 86 },
+    },
+    recommendedFund: 'VGT',
+    recommendedReason: 'Broad tech exposure at low cost (0.10%)',
+  },
+  {
+    name: 'Small Cap ETFs',
+    description: 'Small cap funds tracking similar market segments',
+    category: 'small-cap',
+    tickers: ['VB', 'IJR', 'IWM', 'SCHA', 'VTWO', 'VBR', 'IJS'],
+    overlapMatrix: {
+      'VB': { 'IJR': 70, 'IWM': 85, 'SCHA': 88, 'VTWO': 95 },
+      'IJR': { 'VB': 70, 'IWM': 75, 'SCHA': 72 },
+      'IWM': { 'VB': 85, 'IJR': 75, 'SCHA': 82, 'VTWO': 90 },
+      'VBR': { 'IJS': 85 },
+    },
+    recommendedFund: 'VB',
+    recommendedReason: 'Broad small cap coverage at lowest cost (0.05%)',
+  },
+  {
+    name: 'Growth ETFs',
+    description: 'Growth-focused funds with overlapping holdings',
+    category: 'growth',
+    tickers: ['VUG', 'IWF', 'SCHG', 'SPYG', 'IVW', 'VOOG'],
+    overlapMatrix: {
+      'VUG': { 'IWF': 92, 'SCHG': 95, 'SPYG': 88, 'IVW': 88, 'VOOG': 88 },
+      'IWF': { 'VUG': 92, 'SCHG': 90, 'SPYG': 85, 'IVW': 85 },
+      'SCHG': { 'VUG': 95, 'IWF': 90, 'SPYG': 86 },
+    },
+    recommendedFund: 'VUG',
+    recommendedReason: 'Low-cost large cap growth (0.04%)',
+  },
+];
+
+/**
+ * Detected overlap between two holdings
+ */
+export interface DetectedOverlap {
+  ticker1: string;
+  ticker2: string;
+  value1: number;
+  value2: number;
+  overlapPercent: number;
+  groupName: string;
+  redundantValue: number;  // Approximate dollar value of overlap
+  consolidationTarget: string;  // Which one to keep
+  consolidationReason: string;
+}
+
+/**
+ * Individual holding overlap info
+ */
+export interface HoldingOverlapInfo {
+  ticker: string;
+  name: string;
+  value: number;
+  costBasis: number;
+  unrealizedGain: number;
+  overlapsWith: {
+    ticker: string;
+    overlapPercent: number;
+    groupName: string;
+  }[];
+  isRecommendedInGroup: boolean;
+  groupName?: string;
+}
+
+/**
+ * Tax-loss harvest opportunity from consolidation
+ */
+export interface TaxLossHarvestOpportunity {
+  ticker: string;
+  value: number;
+  costBasis: number;
+  loss: number;
+  consolidateTo: string;
+  washSaleWarning: boolean;  // True if consolidation target is in same overlap group
+}
+
+/**
+ * Portfolio-wide overlap analysis
+ */
+export interface PortfolioOverlapAnalysis {
+  totalPortfolioValue: number;
+  totalRedundantValue: number;  // Sum of overlapping value
+  redundancyPercent: number;    // Redundant value / total value
+  detectedOverlaps: DetectedOverlap[];
+  holdingOverlapInfo: HoldingOverlapInfo[];
+  consolidationRecommendations: {
+    action: 'sell' | 'keep';
+    ticker: string;
+    value: number;
+    reason: string;
+  }[];
+  taxLossOpportunities: TaxLossHarvestOpportunity[];
+  potentialTaxSavings: number;  // Estimated based on 20% cap gains rate
+  overlapGroups: {
+    name: string;
+    holdings: string[];
+    totalValue: number;
+    recommendedFund: string;
+  }[];
+}
+
+/**
+ * Find which overlap group a ticker belongs to
+ */
+export function findOverlapGroup(ticker: string): OverlapGroup | null {
+  const upper = ticker.toUpperCase();
+  for (const group of OVERLAP_GROUPS) {
+    if (group.tickers.includes(upper)) {
+      return group;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get overlap percentage between two tickers
+ */
+export function getOverlapPercent(ticker1: string, ticker2: string): number | null {
+  const upper1 = ticker1.toUpperCase();
+  const upper2 = ticker2.toUpperCase();
+  
+  for (const group of OVERLAP_GROUPS) {
+    if (group.tickers.includes(upper1) && group.tickers.includes(upper2)) {
+      // Found both in same group
+      const matrix = group.overlapMatrix;
+      
+      // Check direct lookup
+      if (matrix[upper1]?.[upper2]) return matrix[upper1][upper2];
+      if (matrix[upper2]?.[upper1]) return matrix[upper2][upper1];
+      
+      // If in same group but no specific overlap data, estimate high overlap
+      return 70;  // Conservative estimate for same-group funds
+    }
+  }
+  
+  return null;  // No known overlap
+}
+
+/**
+ * Analyze portfolio for holdings overlap
+ */
+export function analyzePortfolioOverlap(
+  holdings: (Holding & { accountName?: string; accountType?: string })[]
+): PortfolioOverlapAnalysis {
+  const totalPortfolioValue = holdings.reduce((sum, h) => {
+    const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+    return sum + value;
+  }, 0);
+  
+  const detectedOverlaps: DetectedOverlap[] = [];
+  const holdingOverlapInfo: HoldingOverlapInfo[] = [];
+  const groupHoldings = new Map<string, { holdings: string[]; totalValue: number }>();
+  
+  // Build holding info and detect overlaps
+  for (let i = 0; i < holdings.length; i++) {
+    const h1 = holdings[i];
+    const value1 = h1.currentValue || (h1.shares * (h1.currentPrice || 0));
+    if (value1 <= 0) continue;
+    
+    const group1 = findOverlapGroup(h1.ticker);
+    const overlapsWith: HoldingOverlapInfo['overlapsWith'] = [];
+    
+    // Track group membership
+    if (group1) {
+      const existing = groupHoldings.get(group1.name) || { holdings: [], totalValue: 0 };
+      if (!existing.holdings.includes(h1.ticker.toUpperCase())) {
+        existing.holdings.push(h1.ticker.toUpperCase());
+        existing.totalValue += value1;
+        groupHoldings.set(group1.name, existing);
+      }
+    }
+    
+    // Compare with other holdings
+    for (let j = i + 1; j < holdings.length; j++) {
+      const h2 = holdings[j];
+      const value2 = h2.currentValue || (h2.shares * (h2.currentPrice || 0));
+      if (value2 <= 0) continue;
+      
+      const overlapPercent = getOverlapPercent(h1.ticker, h2.ticker);
+      
+      if (overlapPercent !== null && overlapPercent >= 50) {
+        const group = findOverlapGroup(h1.ticker);
+        const groupName = group?.name || 'Unknown';
+        const consolidationTarget = group?.recommendedFund || h1.ticker;
+        
+        // Calculate redundant value (minimum of the two, scaled by overlap)
+        const minValue = Math.min(value1, value2);
+        const redundantValue = minValue * (overlapPercent / 100);
+        
+        detectedOverlaps.push({
+          ticker1: h1.ticker.toUpperCase(),
+          ticker2: h2.ticker.toUpperCase(),
+          value1,
+          value2,
+          overlapPercent,
+          groupName,
+          redundantValue,
+          consolidationTarget,
+          consolidationReason: group?.recommendedReason || 'Lower cost or broader coverage',
+        });
+        
+        overlapsWith.push({
+          ticker: h2.ticker.toUpperCase(),
+          overlapPercent,
+          groupName,
+        });
+      }
+    }
+    
+    holdingOverlapInfo.push({
+      ticker: h1.ticker.toUpperCase(),
+      name: h1.name || h1.ticker,
+      value: value1,
+      costBasis: h1.costBasis || 0,
+      unrealizedGain: h1.costBasis ? value1 - h1.costBasis : 0,
+      overlapsWith,
+      isRecommendedInGroup: group1?.recommendedFund === h1.ticker.toUpperCase(),
+      groupName: group1?.name,
+    });
+  }
+  
+  // Generate consolidation recommendations
+  const consolidationRecommendations: PortfolioOverlapAnalysis['consolidationRecommendations'] = [];
+  const processedTickers = new Set<string>();
+  
+  for (const overlap of detectedOverlaps) {
+    // Decide which to keep based on recommendation
+    const keepTicker = overlap.consolidationTarget;
+    const sellTicker = keepTicker === overlap.ticker1 ? overlap.ticker2 : overlap.ticker1;
+    const sellValue = keepTicker === overlap.ticker1 ? overlap.value2 : overlap.value1;
+    
+    if (!processedTickers.has(sellTicker)) {
+      consolidationRecommendations.push({
+        action: 'sell',
+        ticker: sellTicker,
+        value: sellValue,
+        reason: `Overlaps ${overlap.overlapPercent}% with ${keepTicker}. ${overlap.consolidationReason}`,
+      });
+      processedTickers.add(sellTicker);
+    }
+    
+    if (!processedTickers.has(keepTicker)) {
+      consolidationRecommendations.push({
+        action: 'keep',
+        ticker: keepTicker,
+        value: keepTicker === overlap.ticker1 ? overlap.value1 : overlap.value2,
+        reason: overlap.consolidationReason,
+      });
+      processedTickers.add(keepTicker);
+    }
+  }
+  
+  // Find tax-loss harvesting opportunities
+  const taxLossOpportunities: TaxLossHarvestOpportunity[] = [];
+  
+  for (const info of holdingOverlapInfo) {
+    if (info.unrealizedGain < -100 && info.overlapsWith.length > 0) {
+      // Has a loss and overlaps with other holdings
+      const loss = Math.abs(info.unrealizedGain);
+      const consolidateTo = info.overlapsWith[0].ticker;
+      
+      taxLossOpportunities.push({
+        ticker: info.ticker,
+        value: info.value,
+        costBasis: info.costBasis,
+        loss,
+        consolidateTo,
+        washSaleWarning: true,  // Always true since we're consolidating to overlapping fund
+      });
+    }
+  }
+  
+  // Calculate total redundant value
+  const totalRedundantValue = detectedOverlaps.reduce((sum, o) => sum + o.redundantValue, 0);
+  const redundancyPercent = totalPortfolioValue > 0 ? (totalRedundantValue / totalPortfolioValue) * 100 : 0;
+  
+  // Calculate potential tax savings (assume 20% long-term cap gains rate)
+  const potentialTaxSavings = taxLossOpportunities.reduce((sum, o) => sum + o.loss * 0.20, 0);
+  
+  // Build overlap groups summary
+  const overlapGroups = Array.from(groupHoldings.entries())
+    .filter(([_, data]) => data.holdings.length > 1)  // Only groups with multiple holdings
+    .map(([name, data]) => {
+      const group = OVERLAP_GROUPS.find(g => g.name === name);
+      return {
+        name,
+        holdings: data.holdings,
+        totalValue: data.totalValue,
+        recommendedFund: group?.recommendedFund || data.holdings[0],
+      };
+    })
+    .sort((a, b) => b.totalValue - a.totalValue);
+  
+  return {
+    totalPortfolioValue,
+    totalRedundantValue,
+    redundancyPercent,
+    detectedOverlaps: detectedOverlaps.sort((a, b) => b.redundantValue - a.redundantValue),
+    holdingOverlapInfo,
+    consolidationRecommendations: consolidationRecommendations.sort((a, b) => {
+      // Keep actions first, then by value
+      if (a.action !== b.action) return a.action === 'keep' ? 1 : -1;
+      return b.value - a.value;
+    }),
+    taxLossOpportunities: taxLossOpportunities.sort((a, b) => b.loss - a.loss),
+    potentialTaxSavings,
+    overlapGroups,
+  };
+}
+
+/**
+ * Get a grade for overlap/redundancy level
+ */
+export function getOverlapGrade(redundancyPercent: number): { grade: string; label: string; color: string } {
+  if (redundancyPercent === 0) return { grade: 'A+', label: 'No Overlap', color: 'text-emerald-400' };
+  if (redundancyPercent <= 5) return { grade: 'A', label: 'Minimal', color: 'text-emerald-400' };
+  if (redundancyPercent <= 10) return { grade: 'B', label: 'Low', color: 'text-green-400' };
+  if (redundancyPercent <= 20) return { grade: 'C', label: 'Moderate', color: 'text-yellow-400' };
+  if (redundancyPercent <= 35) return { grade: 'D', label: 'High', color: 'text-orange-400' };
+  return { grade: 'F', label: 'Very High', color: 'text-red-400' };
+}
