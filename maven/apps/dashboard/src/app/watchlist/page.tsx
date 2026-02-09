@@ -28,12 +28,6 @@ const DEFAULT_WATCHLIST = [
   { symbol: 'SPY', name: 'S&P 500 ETF', type: 'etf' as const, notes: 'Market benchmark' },
 ];
 
-const COINGECKO_IDS: Record<string, string> = {
-  BTC: 'bitcoin',
-  TAO: 'bittensor',
-  ETH: 'ethereum',
-};
-
 export default function WatchlistPage() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,78 +36,40 @@ export default function WatchlistPage() {
   
   const fetchPrices = async () => {
     try {
-      const cryptoSymbols = DEFAULT_WATCHLIST.filter(w => w.type === 'crypto').map(w => w.symbol);
-      const stockSymbols = DEFAULT_WATCHLIST.filter(w => w.type !== 'crypto').map(w => w.symbol);
+      // Get all symbols from the watchlist
+      const allSymbols = DEFAULT_WATCHLIST.map(w => w.symbol);
       
-      const results: WatchlistItem[] = [];
+      // Use our API route which handles both crypto and stocks server-side (avoids CORS)
+      const response = await fetch('/api/stock-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbols: allSymbols }),
+      });
       
-      // Fetch crypto from CoinGecko
-      if (cryptoSymbols.length > 0) {
-        const ids = cryptoSymbols.map(s => COINGECKO_IDS[s]).filter(Boolean).join(',');
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          cryptoSymbols.forEach(symbol => {
-            const id = COINGECKO_IDS[symbol];
-            const coinData = data[id];
-            const original = DEFAULT_WATCHLIST.find(w => w.symbol === symbol);
-            
-            if (coinData && original) {
-              results.push({
-                ...original,
-                price: coinData.usd || 0,
-                change: (coinData.usd || 0) * (coinData.usd_24h_change || 0) / 100,
-                changePercent: coinData.usd_24h_change || 0,
-              });
-            }
-          });
-        }
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
       
-      // Fetch stocks from Yahoo
-      await Promise.all(
-        stockSymbols.map(async (symbol) => {
-          try {
-            const response = await fetch(
-              `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`
-            );
-            
-            if (response.ok) {
-              const data = await response.json();
-              const result = data.chart?.result?.[0];
-              const meta = result?.meta;
-              const original = DEFAULT_WATCHLIST.find(w => w.symbol === symbol);
-              
-              if (meta && original) {
-                const price = meta.regularMarketPrice || 0;
-                const previousClose = meta.previousClose || meta.chartPreviousClose || price;
-                const change = price - previousClose;
-                const changePercent = previousClose ? (change / previousClose) * 100 : 0;
-                
-                results.push({
-                  ...original,
-                  price,
-                  change,
-                  changePercent,
-                });
-              }
-            }
-          } catch (e) {
-            console.error(`Error fetching ${symbol}:`, e);
-          }
-        })
-      );
+      const { quotes, timestamp } = await response.json();
       
-      // Sort by original order
-      const sortedResults = DEFAULT_WATCHLIST.map(d => 
-        results.find(r => r.symbol === d.symbol) || { ...d, price: 0, change: 0, changePercent: 0 }
-      );
+      // Map API response back to watchlist items
+      const results: WatchlistItem[] = DEFAULT_WATCHLIST.map(item => {
+        const quoteData = quotes[item.symbol];
+        
+        if (quoteData) {
+          return {
+            ...item,
+            price: quoteData.price || 0,
+            change: quoteData.change || 0,
+            changePercent: quoteData.changePercent || 0,
+          };
+        }
+        
+        return { ...item, price: 0, change: 0, changePercent: 0 };
+      });
       
-      setWatchlist(sortedResults);
-      setLastUpdate(new Date());
+      setWatchlist(results);
+      setLastUpdate(timestamp ? new Date(timestamp) : new Date());
     } catch (error) {
       console.error('Error fetching watchlist:', error);
     } finally {

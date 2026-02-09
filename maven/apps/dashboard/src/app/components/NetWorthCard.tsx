@@ -7,6 +7,10 @@ interface NetWorthCardProps {
   change: number;
   changePercent: number;
   period?: '1D' | '1W' | '1M' | '3M' | 'YTD' | '1Y';
+  /** Timestamp when prices were last updated */
+  asOfTime?: Date | null;
+  /** Whether prices are currently being refreshed */
+  isRefreshing?: boolean;
 }
 
 // Generate realistic historical data based on current net worth and period
@@ -77,7 +81,9 @@ export default function NetWorthCard({
   netWorth = 797500, 
   change = 8500, 
   changePercent = 1.08,
-  period = '1M'
+  period = '1M',
+  asOfTime,
+  isRefreshing = false,
 }: NetWorthCardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -168,11 +174,26 @@ export default function NetWorthCard({
         </div>
         
         {/* Main Value */}
-        <div className="flex items-baseline gap-3 mb-4">
+        <div className="flex items-baseline gap-3 mb-1">
           <span className="text-4xl sm:text-5xl font-bold text-white">
             ${netWorth.toLocaleString()}
           </span>
         </div>
+        
+        {/* Live Price Indicator */}
+        {asOfTime && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <span className="text-xs text-gray-400">
+              {isRefreshing ? 'Updating prices...' : `as of ${asOfTime.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true,
+                timeZoneName: 'short',
+              })}`}
+            </span>
+          </div>
+        )}
         
         {/* Change */}
         <div className="flex items-center gap-2 mb-4">

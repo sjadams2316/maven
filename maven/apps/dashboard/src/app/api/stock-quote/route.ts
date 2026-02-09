@@ -205,7 +205,7 @@ async function tryQuoteSummary(symbol: string) {
   }
 }
 
-// Also support batch quotes
+// Also support batch quotes - handles both stocks AND crypto
 export async function POST(request: NextRequest) {
   try {
     const { symbols } = await request.json();
@@ -217,36 +217,83 @@ export async function POST(request: NextRequest) {
     // Limit to 50 symbols
     const limitedSymbols = symbols.slice(0, 50).map(s => s.toUpperCase().trim());
     
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(limitedSymbols.join(','))}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      },
-      next: { revalidate: 60 },
-    });
-    
-    if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch quotes' }, { status: 500 });
-    }
-    
-    const data = await response.json();
-    const quotes = data.quoteResponse?.result || [];
+    // Separate crypto and stock symbols
+    const cryptoSymbols = limitedSymbols.filter(s => CRYPTO_MAP[s]);
+    const stockSymbols = limitedSymbols.filter(s => !CRYPTO_MAP[s]);
     
     const results: Record<string, { name: string; price: number; change: number; changePercent: number }> = {};
     
-    for (const quote of quotes as YahooQuoteResult[]) {
-      if (quote.symbol && quote.regularMarketPrice) {
-        results[quote.symbol] = {
-          name: quote.shortName || quote.longName || quote.symbol,
-          price: quote.regularMarketPrice,
-          change: quote.regularMarketChange || 0,
-          changePercent: quote.regularMarketChangePercent || 0,
-        };
+    // Fetch crypto prices from CoinGecko
+    if (cryptoSymbols.length > 0) {
+      try {
+        const ids = cryptoSymbols.map(s => CRYPTO_MAP[s]?.id).filter(Boolean).join(',');
+        if (ids) {
+          const cryptoResponse = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+            { next: { revalidate: 60 } }
+          );
+          
+          if (cryptoResponse.ok) {
+            const cryptoData = await cryptoResponse.json();
+            
+            for (const symbol of cryptoSymbols) {
+              const crypto = CRYPTO_MAP[symbol];
+              if (crypto && cryptoData[crypto.id]) {
+                const coinData = cryptoData[crypto.id];
+                const price = coinData.usd || 0;
+                const changePercent = coinData.usd_24h_change || 0;
+                
+                results[symbol] = {
+                  name: crypto.name,
+                  price,
+                  change: (price * changePercent) / 100,
+                  changePercent,
+                };
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('CoinGecko batch error:', error);
       }
     }
     
-    return NextResponse.json({ quotes: results });
+    // Fetch stock prices from Yahoo Finance
+    if (stockSymbols.length > 0) {
+      try {
+        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(stockSymbols.join(','))}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          },
+          next: { revalidate: 60 },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const quotes = data.quoteResponse?.result || [];
+          
+          for (const quote of quotes as YahooQuoteResult[]) {
+            if (quote.symbol && quote.regularMarketPrice) {
+              results[quote.symbol] = {
+                name: quote.shortName || quote.longName || quote.symbol,
+                price: quote.regularMarketPrice,
+                change: quote.regularMarketChange || 0,
+                changePercent: quote.regularMarketChangePercent || 0,
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Yahoo batch error:', error);
+      }
+    }
+    
+    return NextResponse.json({ 
+      quotes: results,
+      timestamp: new Date().toISOString(),
+    });
     
   } catch (error) {
     console.error('Batch quote error:', error);

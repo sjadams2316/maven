@@ -54,72 +54,40 @@ export default function Dashboard() {
       .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
   }, [profile]);
   
-  // Fetch live prices for all holdings
+  // Fetch live prices for all holdings using our API route (avoids CORS issues)
   useEffect(() => {
     const fetchLivePrices = async () => {
       if (baseHoldings.length === 0) return;
       
       setPricesLoading(true);
-      const newPrices: Record<string, number> = {};
       
       try {
-        // Separate crypto and stock tickers
-        const cryptoTickers = baseHoldings
-          .map(h => h.ticker.toUpperCase())
-          .filter(t => CRYPTO_TICKERS.has(t));
-        const stockTickers = baseHoldings
-          .map(h => h.ticker.toUpperCase())
-          .filter(t => !CRYPTO_TICKERS.has(t));
+        // Get all unique tickers
+        const allTickers = [...new Set(baseHoldings.map(h => h.ticker.toUpperCase()))];
         
-        // Fetch crypto prices from CoinGecko
-        if (cryptoTickers.length > 0) {
-          const ids = cryptoTickers
-            .map(t => CRYPTO_TO_COINGECKO[t])
-            .filter(Boolean)
-            .join(',');
+        // Use our API route which handles both crypto and stocks server-side
+        const response = await fetch('/api/stock-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbols: allTickers }),
+        });
+        
+        if (response.ok) {
+          const { quotes, timestamp } = await response.json();
+          const newPrices: Record<string, number> = {};
           
-          if (ids) {
-            const cryptoRes = await fetch(
-              `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
-            );
-            if (cryptoRes.ok) {
-              const cryptoData = await cryptoRes.json();
-              cryptoTickers.forEach(ticker => {
-                const cgId = CRYPTO_TO_COINGECKO[ticker];
-                if (cgId && cryptoData[cgId]?.usd) {
-                  newPrices[ticker] = cryptoData[cgId].usd;
-                }
-              });
+          for (const [symbol, quoteData] of Object.entries(quotes)) {
+            const q = quoteData as { price: number };
+            if (q.price > 0) {
+              newPrices[symbol.toUpperCase()] = q.price;
             }
           }
+          
+          setLivePrices(newPrices);
+          setLastUpdated(timestamp ? new Date(timestamp) : new Date());
+        } else {
+          console.error('Failed to fetch prices:', response.status);
         }
-        
-        // Fetch stock prices from Yahoo Finance (batch)
-        if (stockTickers.length > 0) {
-          // Fetch in batches of 5 to avoid rate limits
-          for (let i = 0; i < stockTickers.length; i += 5) {
-            const batch = stockTickers.slice(i, i + 5);
-            await Promise.all(batch.map(async (ticker) => {
-              try {
-                const res = await fetch(
-                  `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`
-                );
-                if (res.ok) {
-                  const data = await res.json();
-                  const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
-                  if (price) {
-                    newPrices[ticker] = price;
-                  }
-                }
-              } catch (e) {
-                console.warn(`Failed to fetch price for ${ticker}:`, e);
-              }
-            }));
-          }
-        }
-        
-        setLivePrices(newPrices);
-        setLastUpdated(new Date());
       } catch (error) {
         console.error('Error fetching live prices:', error);
       } finally {
@@ -305,6 +273,8 @@ export default function Dashboard() {
               netWorth={netWorth}
               change={netWorth * 0.0108} // Placeholder - would come from historical data
               changePercent={1.08}
+              asOfTime={lastUpdated}
+              isRefreshing={pricesLoading}
             />
             
             {/* Critical Concentration Warning - Always appears first when triggered */}
