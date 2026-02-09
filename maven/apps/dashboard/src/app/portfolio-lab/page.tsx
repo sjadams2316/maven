@@ -11,6 +11,7 @@ import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsig
 import FactorExposureSection from '@/app/components/FactorExposureSection';
 import FeeAnalyzer from '@/app/components/FeeAnalyzer';
 import OverlapDetection from '@/app/components/OverlapDetection';
+import RebalancingPreview from '@/app/components/RebalancingPreview';
 
 // Types
 interface Holding {
@@ -794,6 +795,23 @@ export default function PortfolioLab() {
                 crypto: currentAllocation.crypto,
                 cash: currentAllocation.cash,
               }}
+            />
+
+            {/* Rebalancing Preview - Main Feature */}
+            <RebalancingPreview
+              holdings={allHoldings.map((h: Holding) => ({
+                ...h,
+                accountType: 'taxable' as const, // Default to taxable, would come from account data
+              }))}
+              targetAllocation={{
+                usEquity: targetAllocation.usEquity,
+                intlEquity: targetAllocation.intlEquity,
+                bonds: targetAllocation.bonds,
+                crypto: targetAllocation.crypto,
+                cash: targetAllocation.cash,
+              }}
+              totalValue={totalValue}
+              riskTolerance={profile.riskTolerance}
             />
 
             {/* Side-by-Side Portfolio Comparison */}

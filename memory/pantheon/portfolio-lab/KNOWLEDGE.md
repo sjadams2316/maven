@@ -243,6 +243,110 @@ getOverlapGrade(redundancyPercent) → { grade, label, color }
 - "What if I consolidate?" preview showing simplified portfolio
 - Tax impact calculator for consolidation trades
 
+### Rebalancing Preview (Implemented 2026-02-09)
+
+**Why It Matters:**
+Users often see "your portfolio is 65% stocks instead of 60%" but don't know what specific trades to make. The Rebalancing Preview turns allocation recommendations into actionable trade lists with full tax impact analysis.
+
+**Location:**
+- Component: `apps/dashboard/src/app/components/RebalancingPreview.tsx`
+- Logic: `apps/dashboard/src/lib/portfolio-utils.ts` (calculateRebalancingTrades)
+- Integration: Portfolio Lab → Optimize tab (primary feature)
+
+**Features:**
+
+1. **Asset Class Adjustments**
+   - Shows current vs target allocation with drift percentages
+   - Visual progress bars for each asset class
+   - Only suggests trades when drift exceeds threshold (default 5%)
+   - Configurable threshold: 3% (aggressive), 5% (recommended), 10% (relaxed)
+
+2. **Specific Trade List**
+   - Sell orders: Which specific holdings to sell, how many shares
+   - Buy orders: Recommended low-cost ETFs for each asset class
+   - Dollar amounts and share counts
+   - Account information (when available)
+
+3. **Tax Impact Analysis**
+   - Short-term vs long-term gain classification
+   - Estimated tax on each trade (22% short-term, 15% long-term)
+   - Tax-loss harvesting opportunities
+   - Net tax impact summary
+   - Tax savings from realizing losses
+
+4. **Wash Sale Risk Detection**
+   - Flags sells at loss when buying similar security
+   - Detects "substantially identical" securities via overlap groups
+   - Clear warnings with explanations
+   - 31-day wash sale window consideration
+
+5. **Tax-Aware Trade Ordering**
+   - Sells prioritized: losses first, then long-term gains, then short-term
+   - Tax-advantaged accounts (IRA/401k) preferred for selling
+   - Minimizes tax impact of rebalancing
+
+6. **Export Functionality**
+   - Copy to clipboard (text summary)
+   - CSV download (for spreadsheets/brokers)
+   - Full text report download
+
+**Key Calculations:**
+
+```typescript
+// Drift threshold - only trade if drift exceeds this
+if (Math.abs(currentPercent - targetPercent) < driftThreshold) {
+  // No trade needed
+}
+
+// Tax estimation
+const taxRate = gainType === 'short-term' ? 0.22 : 0.15;
+const estimatedTax = gain > 0 ? gain * taxRate : 0;
+
+// Wash sale detection
+const washSaleRisk = 
+  hasLoss && 
+  (buyingSameTicker || buyingOverlappingETF);
+
+// Tax-aware sell ordering
+holdings.sort((a, b) => {
+  // 1. Losses first (for harvesting)
+  // 2. Long-term gains second (lower tax)
+  // 3. Short-term gains last (highest tax)
+  // 4. Tax-advantaged accounts preferred
+});
+```
+
+**Recommended ETFs by Asset Class:**
+| Asset Class | Recommended ETF | Expense Ratio |
+|-------------|-----------------|---------------|
+| US Equity | VTI | 0.03% |
+| Int'l Equity | VXUS | 0.07% |
+| Bonds | BND | 0.03% |
+| Crypto | IBIT | 0.25% |
+| Cash | VMFXX | 0.11% |
+| REITs | VNQ | 0.12% |
+| Gold | IAU | 0.25% |
+
+**UX Design Decisions:**
+- Three-tab interface: Overview, Trade List, Tax Impact
+- Color-coded trades: Red for sells, green for buys
+- Priority badges: High/Medium/Low based on drift severity
+- Wash sale warnings prominently displayed in amber
+- Export buttons always visible in Trade List tab
+- Empty state shows congratulations when portfolio is balanced
+
+**Integration Notes:**
+- Holdings need `purchaseDate` for accurate ST/LT classification
+- Account type (`ira`/`roth`/`401k`/`taxable`) affects tax calculations
+- Component receives target allocation from risk profile selection
+
+**Future Enhancements:**
+- Integration with brokerage API for one-click execution
+- Specific lot selection for partial sales
+- Tax bracket-aware calculations (vs flat rates)
+- Year-end tax planning mode
+- Multi-account rebalancing optimization
+
 ---
 
 ## User Research Insights
@@ -308,7 +412,8 @@ Users don't want more data — they want clarity and confidence.
 1. ~~**Factor exposure analysis**~~ ✅ — Show beta, size, value, momentum exposures
 2. ~~**Fee analyzer**~~ ✅ — Total expense ratios, annual fee drag
 3. ~~**Overlap detection**~~ ✅ — "VTI and VOO are 99% overlapping"
-4. **Tax efficiency score** — Rate tax efficiency of current allocation
+4. ~~**Rebalancing preview**~~ ✅ — Specific trades with tax impact and wash sale warnings
+5. **Tax efficiency score** — Rate tax efficiency of current allocation
 
 ### Medium Priority
 5. **Benchmark comparison** — vs. 60/40, vs. age-based allocation

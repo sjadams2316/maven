@@ -1483,3 +1483,581 @@ export function getOverlapGrade(redundancyPercent: number): { grade: string; lab
   if (redundancyPercent <= 35) return { grade: 'D', label: 'High', color: 'text-orange-400' };
   return { grade: 'F', label: 'Very High', color: 'text-red-400' };
 }
+
+// ===========================================
+// REBALANCING PREVIEW & TRADE CALCULATION
+// ===========================================
+
+/**
+ * Target allocation by asset class (percentages as decimals)
+ */
+export interface TargetAllocation {
+  usEquity: number;
+  intlEquity: number;
+  bonds: number;
+  crypto: number;
+  cash: number;
+  alternatives?: number;
+  reits?: number;
+  gold?: number;
+}
+
+/**
+ * Holding with account information
+ */
+export interface HoldingWithAccount extends Holding {
+  accountName?: string;
+  accountType?: 'ira' | 'roth' | '401k' | 'taxable' | 'hsa' | 'other';
+  purchaseDate?: string;
+}
+
+/**
+ * Individual rebalancing trade
+ */
+export interface RebalancingTrade {
+  action: 'buy' | 'sell';
+  ticker: string;
+  name: string;
+  shares: number;
+  amount: number;
+  currentPrice: number;
+  assetClass: AssetClass;
+  accountName?: string;
+  accountType?: string;
+  // Tax-related fields (for sells)
+  costBasis?: number;
+  unrealizedGain?: number;
+  gainType?: 'short-term' | 'long-term' | 'unknown';
+  estimatedTax?: number;
+  washSaleRisk?: boolean;
+  washSaleReason?: string;
+  // Priority for execution
+  priority: 'high' | 'medium' | 'low';
+  reason: string;
+}
+
+/**
+ * Summary of rebalancing impact
+ */
+export interface RebalancingSummary {
+  totalSellAmount: number;
+  totalBuyAmount: number;
+  netCashFlow: number;
+  estimatedTaxes: number;
+  estimatedTaxSavings: number; // From loss harvesting
+  shortTermGains: number;
+  longTermGains: number;
+  realizedLosses: number;
+  washSaleRisks: number;
+  tradesNeeded: number;
+  tradesByAccount: Record<string, { buys: number; sells: number; amount: number }>;
+}
+
+/**
+ * Complete rebalancing preview result
+ */
+export interface RebalancingPreview {
+  trades: RebalancingTrade[];
+  summary: RebalancingSummary;
+  assetClassChanges: {
+    assetClass: AssetClass;
+    currentPercent: number;
+    targetPercent: number;
+    drift: number;
+    action: 'buy' | 'sell' | 'hold';
+    amount: number;
+  }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
+/**
+ * Calculate days since purchase for tax lot determination
+ */
+function calculateDaysSincePurchase(purchaseDate?: string): number {
+  if (!purchaseDate) return 365; // Assume long-term if unknown
+  const purchase = new Date(purchaseDate);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - purchase.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Determine if gain is short-term or long-term
+ */
+function getGainType(purchaseDate?: string): 'short-term' | 'long-term' | 'unknown' {
+  if (!purchaseDate) return 'unknown';
+  const days = calculateDaysSincePurchase(purchaseDate);
+  return days > 365 ? 'long-term' : 'short-term';
+}
+
+/**
+ * Estimate tax on a trade
+ * Uses simplified tax rates (22% short-term, 15% long-term federal)
+ */
+function estimateTax(
+  gain: number,
+  gainType: 'short-term' | 'long-term' | 'unknown',
+  accountType?: string
+): number {
+  // Tax-advantaged accounts have no immediate tax
+  if (accountType === 'ira' || accountType === 'roth' || accountType === '401k' || accountType === 'hsa') {
+    return 0;
+  }
+  
+  if (gain <= 0) return 0; // Losses don't create taxes
+  
+  // Simplified tax rates
+  const shortTermRate = 0.22; // Assume 22% marginal rate
+  const longTermRate = 0.15;  // 15% long-term cap gains
+  
+  switch (gainType) {
+    case 'short-term':
+      return gain * shortTermRate;
+    case 'long-term':
+      return gain * longTermRate;
+    case 'unknown':
+      return gain * longTermRate; // Assume long-term if unknown
+  }
+}
+
+/**
+ * Check for wash sale risk
+ * Wash sale occurs if you sell at a loss and buy substantially identical security within 30 days
+ */
+function checkWashSaleRisk(
+  ticker: string,
+  isLoss: boolean,
+  allTrades: RebalancingTrade[]
+): { risk: boolean; reason?: string } {
+  if (!isLoss) return { risk: false };
+  
+  // Check if we're buying the same ticker
+  const buyingSame = allTrades.some(t => t.action === 'buy' && t.ticker === ticker);
+  if (buyingSame) {
+    return { 
+      risk: true, 
+      reason: `Buying ${ticker} within 30 days of selling at a loss triggers wash sale` 
+    };
+  }
+  
+  // Check for substantially identical securities (same overlap group)
+  const sellGroup = findOverlapGroup(ticker);
+  if (sellGroup) {
+    const buyingOverlap = allTrades.find(t => 
+      t.action === 'buy' && 
+      sellGroup.tickers.includes(t.ticker.toUpperCase())
+    );
+    if (buyingOverlap) {
+      return {
+        risk: true,
+        reason: `Buying ${buyingOverlap.ticker} (${sellGroup.name}) may be substantially identical to ${ticker}`
+      };
+    }
+  }
+  
+  return { risk: false };
+}
+
+/**
+ * Get recommended ETF for an asset class (for buy trades)
+ */
+function getRecommendedETF(assetClass: AssetClass): { ticker: string; name: string; expenseRatio: number } {
+  const recommendations: Record<AssetClass, { ticker: string; name: string; expenseRatio: number }> = {
+    usEquity: { ticker: 'VTI', name: 'Vanguard Total Stock Market ETF', expenseRatio: 0.03 },
+    intlEquity: { ticker: 'VXUS', name: 'Vanguard Total International Stock ETF', expenseRatio: 0.07 },
+    bonds: { ticker: 'BND', name: 'Vanguard Total Bond Market ETF', expenseRatio: 0.03 },
+    crypto: { ticker: 'IBIT', name: 'iShares Bitcoin Trust ETF', expenseRatio: 0.25 },
+    cash: { ticker: 'VMFXX', name: 'Vanguard Federal Money Market Fund', expenseRatio: 0.11 },
+    reits: { ticker: 'VNQ', name: 'Vanguard Real Estate ETF', expenseRatio: 0.12 },
+    gold: { ticker: 'IAU', name: 'iShares Gold Trust', expenseRatio: 0.25 },
+    alternatives: { ticker: 'DBMF', name: 'iM DBi Managed Futures Strategy ETF', expenseRatio: 0.85 },
+  };
+  
+  return recommendations[assetClass];
+}
+
+/**
+ * Calculate rebalancing trades needed to match target allocation
+ */
+export function calculateRebalancingTrades(
+  holdings: HoldingWithAccount[],
+  targetAllocation: TargetAllocation,
+  options: {
+    driftThreshold?: number;      // Only trade if drift > this (default 5%)
+    taxAware?: boolean;           // Prefer selling losers, avoid short-term gains
+    minTradeAmount?: number;      // Minimum trade size (default $100)
+    preferTaxAdvantaged?: boolean; // Do sells in taxable, buys in IRA when possible
+  } = {}
+): RebalancingPreview {
+  const {
+    driftThreshold = 5,
+    taxAware = true,
+    minTradeAmount = 100,
+    preferTaxAdvantaged = true,
+  } = options;
+  
+  // Calculate total portfolio value
+  const totalValue = holdings.reduce((sum, h) => {
+    const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+    return sum + value;
+  }, 0);
+  
+  if (totalValue <= 0) {
+    return {
+      trades: [],
+      summary: {
+        totalSellAmount: 0,
+        totalBuyAmount: 0,
+        netCashFlow: 0,
+        estimatedTaxes: 0,
+        estimatedTaxSavings: 0,
+        shortTermGains: 0,
+        longTermGains: 0,
+        realizedLosses: 0,
+        washSaleRisks: 0,
+        tradesNeeded: 0,
+        tradesByAccount: {},
+      },
+      assetClassChanges: [],
+      warnings: [],
+      recommendations: ['Add holdings to your portfolio to get rebalancing recommendations'],
+    };
+  }
+  
+  // Calculate current allocation by asset class
+  const currentByClass: Record<AssetClass, number> = {
+    usEquity: 0, intlEquity: 0, bonds: 0, crypto: 0, cash: 0, 
+    reits: 0, gold: 0, alternatives: 0
+  };
+  
+  const holdingsByClass: Record<AssetClass, HoldingWithAccount[]> = {
+    usEquity: [], intlEquity: [], bonds: [], crypto: [], cash: [],
+    reits: [], gold: [], alternatives: []
+  };
+  
+  holdings.forEach(h => {
+    const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+    const assetClass = classifyTicker(h.ticker);
+    currentByClass[assetClass] += value;
+    holdingsByClass[assetClass].push(h);
+  });
+  
+  // Convert to percentages
+  const currentAllocationPct: Record<AssetClass, number> = {} as Record<AssetClass, number>;
+  Object.keys(currentByClass).forEach(key => {
+    currentAllocationPct[key as AssetClass] = (currentByClass[key as AssetClass] / totalValue) * 100;
+  });
+  
+  // Build target allocation with defaults
+  const fullTarget: Record<AssetClass, number> = {
+    usEquity: targetAllocation.usEquity || 0,
+    intlEquity: targetAllocation.intlEquity || 0,
+    bonds: targetAllocation.bonds || 0,
+    crypto: targetAllocation.crypto || 0,
+    cash: targetAllocation.cash || 0,
+    reits: targetAllocation.reits || 0,
+    gold: targetAllocation.gold || 0,
+    alternatives: targetAllocation.alternatives || 0,
+  };
+  
+  // Calculate drift for each asset class
+  const assetClassChanges: RebalancingPreview['assetClassChanges'] = [];
+  const trades: RebalancingTrade[] = [];
+  const warnings: string[] = [];
+  const recommendations: string[] = [];
+  
+  Object.keys(fullTarget).forEach(key => {
+    const assetClass = key as AssetClass;
+    const current = currentAllocationPct[assetClass];
+    const target = fullTarget[assetClass];
+    const drift = current - target;
+    const driftAmount = (Math.abs(drift) / 100) * totalValue;
+    
+    // Only act if drift exceeds threshold
+    if (Math.abs(drift) < driftThreshold) {
+      assetClassChanges.push({
+        assetClass,
+        currentPercent: current,
+        targetPercent: target,
+        drift,
+        action: 'hold',
+        amount: 0,
+      });
+      return;
+    }
+    
+    const action = drift > 0 ? 'sell' : 'buy';
+    assetClassChanges.push({
+      assetClass,
+      currentPercent: current,
+      targetPercent: target,
+      drift,
+      action,
+      amount: driftAmount,
+    });
+    
+    if (action === 'sell') {
+      // Generate sell trades from existing holdings
+      const holdingsToSell = [...holdingsByClass[assetClass]];
+      
+      // Tax-aware sorting: prefer losers, then long-term gains, then short-term gains
+      if (taxAware) {
+        holdingsToSell.sort((a, b) => {
+          const aValue = a.currentValue || (a.shares * (a.currentPrice || 0));
+          const bValue = b.currentValue || (b.shares * (b.currentPrice || 0));
+          const aGain = a.costBasis ? aValue - a.costBasis : 0;
+          const bGain = b.costBasis ? bValue - b.costBasis : 0;
+          
+          // Losses first (negative gain)
+          if (aGain < 0 && bGain >= 0) return -1;
+          if (bGain < 0 && aGain >= 0) return 1;
+          
+          // If both losses, sell bigger loss first
+          if (aGain < 0 && bGain < 0) return aGain - bGain;
+          
+          // Prefer long-term over short-term gains
+          const aType = getGainType(a.purchaseDate);
+          const bType = getGainType(b.purchaseDate);
+          if (aType === 'long-term' && bType === 'short-term') return -1;
+          if (bType === 'long-term' && aType === 'short-term') return 1;
+          
+          // Prefer tax-advantaged accounts for sells (no tax impact)
+          const aTaxAdv = ['ira', 'roth', '401k', 'hsa'].includes(a.accountType || '');
+          const bTaxAdv = ['ira', 'roth', '401k', 'hsa'].includes(b.accountType || '');
+          if (preferTaxAdvantaged && aTaxAdv && !bTaxAdv) return -1;
+          if (preferTaxAdvantaged && bTaxAdv && !aTaxAdv) return 1;
+          
+          // Default: sell smaller gains first
+          return aGain - bGain;
+        });
+      }
+      
+      // Generate trades to meet target sell amount
+      let remainingSell = driftAmount;
+      for (const holding of holdingsToSell) {
+        if (remainingSell <= minTradeAmount) break;
+        
+        const holdingValue = holding.currentValue || (holding.shares * (holding.currentPrice || 0));
+        const sellAmount = Math.min(holdingValue, remainingSell);
+        const sellShares = holding.currentPrice ? sellAmount / holding.currentPrice : 0;
+        
+        const gainType = getGainType(holding.purchaseDate);
+        const costBasisForSale = holding.costBasis 
+          ? (sellAmount / holdingValue) * holding.costBasis 
+          : undefined;
+        const unrealizedGain = costBasisForSale !== undefined 
+          ? sellAmount - costBasisForSale 
+          : undefined;
+        
+        const trade: RebalancingTrade = {
+          action: 'sell',
+          ticker: holding.ticker,
+          name: holding.name || holding.ticker,
+          shares: Math.round(sellShares * 1000) / 1000,
+          amount: Math.round(sellAmount),
+          currentPrice: holding.currentPrice || 0,
+          assetClass,
+          accountName: holding.accountName,
+          accountType: holding.accountType,
+          costBasis: costBasisForSale ? Math.round(costBasisForSale) : undefined,
+          unrealizedGain: unrealizedGain !== undefined ? Math.round(unrealizedGain) : undefined,
+          gainType,
+          estimatedTax: unrealizedGain !== undefined 
+            ? Math.round(estimateTax(unrealizedGain, gainType, holding.accountType)) 
+            : undefined,
+          priority: Math.abs(drift) > 10 ? 'high' : Math.abs(drift) > 7 ? 'medium' : 'low',
+          reason: `Reduce ${assetClass} allocation from ${current.toFixed(1)}% to ${target.toFixed(1)}%`,
+        };
+        
+        trades.push(trade);
+        remainingSell -= sellAmount;
+      }
+      
+      // Warning if can't fully rebalance
+      if (remainingSell > minTradeAmount) {
+        warnings.push(`Cannot fully reduce ${assetClass} - need to sell $${Math.round(remainingSell)} more`);
+      }
+    } else {
+      // Generate buy trade for recommended ETF
+      const recommended = getRecommendedETF(assetClass);
+      const buyShares = recommended.ticker === 'VMFXX' 
+        ? driftAmount 
+        : driftAmount / 100; // Approximate price for shares calc
+      
+      trades.push({
+        action: 'buy',
+        ticker: recommended.ticker,
+        name: recommended.name,
+        shares: Math.round(buyShares * 100) / 100,
+        amount: Math.round(driftAmount),
+        currentPrice: recommended.ticker === 'VMFXX' ? 1 : 100, // Placeholder
+        assetClass,
+        priority: Math.abs(drift) > 10 ? 'high' : Math.abs(drift) > 7 ? 'medium' : 'low',
+        reason: `Increase ${assetClass} allocation from ${current.toFixed(1)}% to ${target.toFixed(1)}%`,
+      });
+    }
+  });
+  
+  // Check for wash sale risks
+  trades.forEach(trade => {
+    if (trade.action === 'sell' && trade.unrealizedGain !== undefined && trade.unrealizedGain < 0) {
+      const { risk, reason } = checkWashSaleRisk(trade.ticker, true, trades);
+      if (risk) {
+        trade.washSaleRisk = true;
+        trade.washSaleReason = reason;
+      }
+    }
+  });
+  
+  // Calculate summary
+  const summary: RebalancingSummary = {
+    totalSellAmount: trades.filter(t => t.action === 'sell').reduce((sum, t) => sum + t.amount, 0),
+    totalBuyAmount: trades.filter(t => t.action === 'buy').reduce((sum, t) => sum + t.amount, 0),
+    netCashFlow: 0,
+    estimatedTaxes: trades.reduce((sum, t) => sum + (t.estimatedTax || 0), 0),
+    estimatedTaxSavings: trades
+      .filter(t => t.action === 'sell' && t.unrealizedGain !== undefined && t.unrealizedGain < 0)
+      .reduce((sum, t) => sum + Math.abs(t.unrealizedGain || 0) * 0.22, 0), // Tax savings from losses
+    shortTermGains: trades
+      .filter(t => t.action === 'sell' && t.gainType === 'short-term' && (t.unrealizedGain || 0) > 0)
+      .reduce((sum, t) => sum + (t.unrealizedGain || 0), 0),
+    longTermGains: trades
+      .filter(t => t.action === 'sell' && t.gainType === 'long-term' && (t.unrealizedGain || 0) > 0)
+      .reduce((sum, t) => sum + (t.unrealizedGain || 0), 0),
+    realizedLosses: Math.abs(trades
+      .filter(t => t.action === 'sell' && (t.unrealizedGain || 0) < 0)
+      .reduce((sum, t) => sum + (t.unrealizedGain || 0), 0)),
+    washSaleRisks: trades.filter(t => t.washSaleRisk).length,
+    tradesNeeded: trades.length,
+    tradesByAccount: {},
+  };
+  
+  summary.netCashFlow = summary.totalSellAmount - summary.totalBuyAmount;
+  
+  // Group by account
+  trades.forEach(t => {
+    const account = t.accountName || 'Unspecified';
+    if (!summary.tradesByAccount[account]) {
+      summary.tradesByAccount[account] = { buys: 0, sells: 0, amount: 0 };
+    }
+    if (t.action === 'buy') {
+      summary.tradesByAccount[account].buys++;
+      summary.tradesByAccount[account].amount += t.amount;
+    } else {
+      summary.tradesByAccount[account].sells++;
+      summary.tradesByAccount[account].amount += t.amount;
+    }
+  });
+  
+  // Generate recommendations
+  if (summary.shortTermGains > 1000) {
+    recommendations.push(`Consider waiting - $${summary.shortTermGains.toLocaleString()} in short-term gains will be taxed at ordinary income rates`);
+  }
+  if (summary.realizedLosses > 500) {
+    recommendations.push(`Tax-loss harvesting opportunity: $${summary.realizedLosses.toLocaleString()} in losses can offset gains`);
+  }
+  if (summary.washSaleRisks > 0) {
+    warnings.push(`${summary.washSaleRisks} potential wash sale violation(s) detected - review before executing`);
+  }
+  if (trades.length === 0) {
+    recommendations.push('Your portfolio is well-balanced! No rebalancing needed.');
+  }
+  
+  // Sort trades: sells first (to generate cash), then buys
+  trades.sort((a, b) => {
+    if (a.action !== b.action) return a.action === 'sell' ? -1 : 1;
+    return b.amount - a.amount; // Larger amounts first
+  });
+  
+  return {
+    trades,
+    summary,
+    assetClassChanges: assetClassChanges.sort((a, b) => Math.abs(b.drift) - Math.abs(a.drift)),
+    warnings,
+    recommendations,
+  };
+}
+
+/**
+ * Generate CSV export of trade list
+ */
+export function generateTradeListCSV(preview: RebalancingPreview): string {
+  const headers = [
+    'Action',
+    'Ticker',
+    'Name',
+    'Shares',
+    'Amount',
+    'Price',
+    'Account',
+    'Asset Class',
+    'Cost Basis',
+    'Gain/Loss',
+    'Gain Type',
+    'Est. Tax',
+    'Wash Sale Risk',
+    'Priority',
+    'Reason'
+  ];
+  
+  const rows = preview.trades.map(t => [
+    t.action.toUpperCase(),
+    t.ticker,
+    `"${t.name}"`,
+    t.shares.toFixed(3),
+    t.amount.toFixed(2),
+    t.currentPrice.toFixed(2),
+    t.accountName || '',
+    t.assetClass,
+    t.costBasis?.toFixed(2) || '',
+    t.unrealizedGain?.toFixed(2) || '',
+    t.gainType || '',
+    t.estimatedTax?.toFixed(2) || '',
+    t.washSaleRisk ? 'YES' : '',
+    t.priority,
+    `"${t.reason}"`
+  ]);
+  
+  return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+}
+
+/**
+ * Generate summary text for trade list
+ */
+export function generateTradeListSummary(preview: RebalancingPreview): string {
+  const { summary, trades } = preview;
+  const lines = [
+    '=== REBALANCING TRADE LIST ===',
+    `Generated: ${new Date().toLocaleDateString()}`,
+    '',
+    '--- SUMMARY ---',
+    `Total Trades: ${summary.tradesNeeded}`,
+    `Sell Total: $${summary.totalSellAmount.toLocaleString()}`,
+    `Buy Total: $${summary.totalBuyAmount.toLocaleString()}`,
+    `Net Cash Flow: ${summary.netCashFlow >= 0 ? '+' : ''}$${summary.netCashFlow.toLocaleString()}`,
+    '',
+    '--- TAX IMPACT ---',
+    `Short-term Gains: $${summary.shortTermGains.toLocaleString()}`,
+    `Long-term Gains: $${summary.longTermGains.toLocaleString()}`,
+    `Realized Losses: $${summary.realizedLosses.toLocaleString()}`,
+    `Estimated Taxes: $${summary.estimatedTaxes.toLocaleString()}`,
+    `Potential Tax Savings: $${Math.round(summary.estimatedTaxSavings).toLocaleString()}`,
+    '',
+    '--- TRADES ---',
+  ];
+  
+  trades.forEach((t, i) => {
+    lines.push(`${i + 1}. ${t.action.toUpperCase()} ${t.shares.toFixed(3)} ${t.ticker} @ $${t.currentPrice.toFixed(2)}`);
+    lines.push(`   Amount: $${t.amount.toLocaleString()} | ${t.accountName || 'Unspecified'}`);
+    if (t.unrealizedGain !== undefined) {
+      lines.push(`   Gain/Loss: ${t.unrealizedGain >= 0 ? '+' : ''}$${t.unrealizedGain.toLocaleString()} (${t.gainType})`);
+    }
+    if (t.washSaleRisk) {
+      lines.push(`   ⚠️ WASH SALE RISK: ${t.washSaleReason}`);
+    }
+    lines.push('');
+  });
+  
+  return lines.join('\n');
+}
