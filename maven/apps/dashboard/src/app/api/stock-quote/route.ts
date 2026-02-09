@@ -2,11 +2,81 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Stock Quote API
- * Fetches real-time stock/fund/crypto prices from Yahoo Finance
+ * Fetches real-time stock/fund/crypto prices
+ * - Crypto: Uses CoinGecko for accurate prices
+ * - Stocks/Funds: Uses Yahoo Finance
  * 
  * GET /api/stock-quote?symbol=VOO
  * Returns: { symbol, name, price, change, changePercent }
  */
+
+// Known crypto tickers mapped to CoinGecko IDs
+const CRYPTO_MAP: Record<string, { id: string; name: string }> = {
+  'BTC': { id: 'bitcoin', name: 'Bitcoin' },
+  'ETH': { id: 'ethereum', name: 'Ethereum' },
+  'TAO': { id: 'bittensor', name: 'Bittensor' },
+  'SOL': { id: 'solana', name: 'Solana' },
+  'ADA': { id: 'cardano', name: 'Cardano' },
+  'DOT': { id: 'polkadot', name: 'Polkadot' },
+  'AVAX': { id: 'avalanche-2', name: 'Avalanche' },
+  'MATIC': { id: 'matic-network', name: 'Polygon' },
+  'LINK': { id: 'chainlink', name: 'Chainlink' },
+  'UNI': { id: 'uniswap', name: 'Uniswap' },
+  'ATOM': { id: 'cosmos', name: 'Cosmos' },
+  'XRP': { id: 'ripple', name: 'XRP' },
+  'DOGE': { id: 'dogecoin', name: 'Dogecoin' },
+  'SHIB': { id: 'shiba-inu', name: 'Shiba Inu' },
+  'LTC': { id: 'litecoin', name: 'Litecoin' },
+  'BCH': { id: 'bitcoin-cash', name: 'Bitcoin Cash' },
+  'XLM': { id: 'stellar', name: 'Stellar' },
+  'ALGO': { id: 'algorand', name: 'Algorand' },
+  'FIL': { id: 'filecoin', name: 'Filecoin' },
+  'ICP': { id: 'internet-computer', name: 'Internet Computer' },
+  'NEAR': { id: 'near', name: 'NEAR Protocol' },
+  'APT': { id: 'aptos', name: 'Aptos' },
+  'ARB': { id: 'arbitrum', name: 'Arbitrum' },
+  'OP': { id: 'optimism', name: 'Optimism' },
+};
+
+// Fetch crypto price from CoinGecko
+async function fetchCryptoPrice(symbol: string): Promise<{
+  name: string;
+  price: number;
+  change24h: number;
+  changePercent24h: number;
+} | null> {
+  const crypto = CRYPTO_MAP[symbol];
+  if (!crypto) return null;
+  
+  try {
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${crypto.id}&vs_currencies=usd&include_24hr_change=true`;
+    
+    const response = await fetch(url, {
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    });
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const coinData = data[crypto.id];
+    
+    if (!coinData) return null;
+    
+    const price = coinData.usd || 0;
+    const changePercent = coinData.usd_24h_change || 0;
+    const change = (price * changePercent) / 100;
+    
+    return {
+      name: crypto.name,
+      price,
+      change24h: change,
+      changePercent24h: changePercent,
+    };
+  } catch (error) {
+    console.error('CoinGecko fetch error:', error);
+    return null;
+  }
+}
 
 interface YahooQuoteResult {
   symbol: string;
@@ -26,6 +96,25 @@ export async function GET(request: NextRequest) {
   }
   
   const upperSymbol = symbol.toUpperCase().trim();
+  
+  // Check if it's a known crypto ticker - use CoinGecko
+  if (CRYPTO_MAP[upperSymbol]) {
+    const cryptoData = await fetchCryptoPrice(upperSymbol);
+    
+    if (cryptoData) {
+      return NextResponse.json({
+        symbol: upperSymbol,
+        name: cryptoData.name,
+        price: cryptoData.price,
+        change: cryptoData.change24h,
+        changePercent: cryptoData.changePercent24h,
+        currency: 'USD',
+        type: 'CRYPTOCURRENCY',
+        source: 'coingecko',
+      });
+    }
+    // Fall through to Yahoo as backup
+  }
   
   try {
     // Use Yahoo Finance v8 API

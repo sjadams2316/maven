@@ -602,16 +602,18 @@ function HoldingsEntry({
       {holdings.length > 0 && (
         <div className="space-y-2">
           {holdings.map((holding, i) => (
-            <div key={i} className="flex items-center gap-2 p-3 bg-white/5 rounded-lg">
+            <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <div className="w-16 shrink-0">
+                <span className="inline-block px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-semibold rounded">
+                  {holding.ticker}
+                </span>
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-indigo-400 font-medium">{holding.ticker}</span>
-                  <span className="text-gray-500 text-sm truncate">{holding.name}</span>
-                </div>
-                {holding.ticker !== 'CASH' && (
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    ${holding.currentPrice?.toFixed(2)} per share
-                  </div>
+                <p className="text-white text-sm truncate">{holding.name}</p>
+                {holding.ticker !== 'CASH' && holding.currentPrice > 0 && (
+                  <p className="text-xs text-gray-500">
+                    ${holding.currentPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per share
+                  </p>
                 )}
               </div>
               
@@ -679,10 +681,15 @@ function HoldingsEntry({
                 </div>
               )}
               
-              <div className="w-24 text-right">
+              <div className="w-32 text-right">
                 <span className="text-emerald-400 font-medium">
                   ${(holding.currentValue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
+                {totalValue > 0 && (
+                  <span className="text-gray-500 text-xs ml-1">
+                    ({((holding.currentValue || 0) / totalValue * 100).toFixed(1)}%)
+                  </span>
+                )}
               </div>
               
               <button
