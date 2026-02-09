@@ -1,16 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import Header from '../components/Header';
+import { useUserProfile } from '@/providers/UserProvider';
 
 export default function SettingsPage() {
+  const { user } = useUser();
+  const { profile, updateProfile, isLoading, isDemoMode } = useUserProfile();
+  
   const [settings, setSettings] = useState({
-    // Profile
-    firstName: 'Sam',
-    lastName: 'Adams',
-    email: 'sam@example.com',
-    phone: '(555) 123-4567',
+    // Profile (loaded from UserProvider)
+    firstName: '',
+    lastName: '',
+    email: '',
+    dateOfBirth: '',
+    state: '',
     
     // Notifications
     emailInsights: true,
@@ -33,14 +39,63 @@ export default function SettingsPage() {
     sessionTimeout: '30',
   });
   
+  // Load profile data
+  useEffect(() => {
+    if (profile) {
+      setSettings(prev => ({
+        ...prev,
+        firstName: profile.firstName || user?.firstName || '',
+        lastName: profile.lastName || user?.lastName || '',
+        email: profile.email || user?.emailAddresses?.[0]?.emailAddress || '',
+        dateOfBirth: profile.dateOfBirth || '',
+        state: profile.state || '',
+      }));
+    }
+  }, [profile, user]);
+  
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy' | 'security'>('profile');
   
-  const handleSave = () => {
-    localStorage.setItem('maven_user_settings', JSON.stringify(settings));
+  const handleSave = async () => {
+    if (isDemoMode) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      return;
+    }
+    
+    await updateProfile({
+      firstName: settings.firstName,
+      lastName: settings.lastName,
+      email: settings.email,
+      dateOfBirth: settings.dateOfBirth,
+      state: settings.state,
+    });
+    
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+  
+  const STATES = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC'
+  ];
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f]">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="animate-pulse">
+            <div className="h-8 w-48 bg-white/10 rounded mb-4" />
+            <div className="h-64 bg-white/5 rounded-2xl" />
+          </div>
+        </main>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -52,6 +107,14 @@ export default function SettingsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Settings</h1>
           <p className="text-gray-400 mt-1">Manage your account and preferences</p>
         </div>
+        
+        {/* Demo Mode Warning */}
+        {isDemoMode && (
+          <div className="mb-6 p-4 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center gap-3">
+            <span>⚠️</span>
+            <span className="text-amber-300">You're in demo mode. Changes won't be saved.</span>
+          </div>
+        )}
         
         {/* Save Success */}
         {saved && (
@@ -85,6 +148,15 @@ export default function SettingsPage() {
                 </button>
               ))}
             </nav>
+            
+            {/* Edit Full Profile Link */}
+            <Link
+              href="/profile/setup"
+              className="mt-4 flex items-center gap-2 px-4 py-3 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded-xl transition text-sm"
+            >
+              <span>✏️</span>
+              <span className="hidden sm:inline">Edit Full Profile</span>
+            </Link>
           </div>
           
           {/* Content */}
@@ -97,53 +169,105 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-6 mb-6">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl">
-                      👨
+                      {settings.firstName ? settings.firstName[0].toUpperCase() : '👤'}
                     </div>
-                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
-                      Change Avatar
-                    </button>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">
+                        {settings.firstName} {settings.lastName}
+                      </h3>
+                      <p className="text-gray-400">{settings.email}</p>
+                      {profile?.filingStatus && (
+                        <p className="text-sm text-gray-500 mt-1">{profile.filingStatus}</p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm text-gray-400 mb-1 block">First Name</label>
+                      <label className="block text-sm text-gray-400 mb-1">First Name</label>
                       <input
                         type="text"
                         value={settings.firstName}
                         onChange={(e) => setSettings({ ...settings, firstName: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-400 mb-1 block">Last Name</label>
+                      <label className="block text-sm text-gray-400 mb-1">Last Name</label>
                       <input
                         type="text"
                         value={settings.lastName}
                         onChange={(e) => setSettings({ ...settings, lastName: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-500 outline-none"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Email</label>
+                    <label className="block text-sm text-gray-400 mb-1">Email</label>
                     <input
                       type="email"
                       value={settings.email}
                       onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-500 outline-none"
                     />
                   </div>
                   
-                  <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Phone</label>
-                    <input
-                      type="tel"
-                      value={settings.phone}
-                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                    />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={settings.dateOfBirth}
+                        onChange={(e) => setSettings({ ...settings, dateOfBirth: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">State</label>
+                      <select
+                        value={settings.state}
+                        onChange={(e) => setSettings({ ...settings, state: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-indigo-500 outline-none"
+                      >
+                        <option value="">Select state...</option>
+                        {STATES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                  
+                  {/* Financial Summary */}
+                  {profile && (
+                    <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+                      <p className="text-indigo-300 font-medium mb-2">Financial Profile Summary</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Cash Accounts</p>
+                          <p className="text-white font-medium">{profile.cashAccounts?.length || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Retirement</p>
+                          <p className="text-white font-medium">{profile.retirementAccounts?.length || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Investment</p>
+                          <p className="text-white font-medium">{profile.investmentAccounts?.length || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Liabilities</p>
+                          <p className="text-white font-medium">{profile.liabilities?.length || 0}</p>
+                        </div>
+                      </div>
+                      <Link
+                        href="/profile/setup"
+                        className="mt-3 inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm"
+                      >
+                        Edit detailed financial profile →
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -153,72 +277,57 @@ export default function SettingsPage() {
               <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">Notification Preferences</h2>
                 
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-white mb-4">Email Notifications</h3>
-                    <div className="space-y-4">
-                      {[
-                        { key: 'emailInsights', label: 'New insights & recommendations', desc: 'Tax savings, rebalancing opportunities, etc.' },
-                        { key: 'emailWeeklyDigest', label: 'Weekly portfolio digest', desc: 'Summary of your portfolio performance' },
-                        { key: 'emailMarketAlerts', label: 'Market alerts', desc: 'Significant market events affecting your portfolio' },
-                      ].map(item => (
-                        <div key={item.key} className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white">{item.label}</p>
-                            <p className="text-sm text-gray-500">{item.desc}</p>
-                          </div>
-                          <button
-                            onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key as keyof typeof settings] })}
-                            className={`w-12 h-6 rounded-full transition-colors ${
-                              settings[item.key as keyof typeof settings] ? 'bg-indigo-600' : 'bg-gray-700'
-                            }`}
-                          >
-                            <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                              settings[item.key as keyof typeof settings] ? 'translate-x-6' : 'translate-x-0.5'
-                            }`} />
-                          </button>
-                        </div>
-                      ))}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div>
+                      <p className="text-white font-medium">Personalized Insights</p>
+                      <p className="text-sm text-gray-500">AI-generated insights about your portfolio</p>
                     </div>
+                    <button
+                      onClick={() => setSettings({ ...settings, emailInsights: !settings.emailInsights })}
+                      className={`w-12 h-6 rounded-full transition ${settings.emailInsights ? 'bg-indigo-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.emailInsights ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                    </button>
                   </div>
                   
-                  <div className="border-t border-white/10 pt-6">
-                    <h3 className="text-sm font-medium text-white mb-4">Other Notifications</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-white">Push notifications</p>
-                          <p className="text-sm text-gray-500">Receive alerts on your device</p>
-                        </div>
-                        <button
-                          onClick={() => setSettings({ ...settings, pushNotifications: !settings.pushNotifications })}
-                          className={`w-12 h-6 rounded-full transition-colors ${
-                            settings.pushNotifications ? 'bg-indigo-600' : 'bg-gray-700'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                            settings.pushNotifications ? 'translate-x-6' : 'translate-x-0.5'
-                          }`} />
-                        </button>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-white">SMS alerts</p>
-                          <p className="text-sm text-gray-500">Critical alerts via text message</p>
-                        </div>
-                        <button
-                          onClick={() => setSettings({ ...settings, smsAlerts: !settings.smsAlerts })}
-                          className={`w-12 h-6 rounded-full transition-colors ${
-                            settings.smsAlerts ? 'bg-indigo-600' : 'bg-gray-700'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                            settings.smsAlerts ? 'translate-x-6' : 'translate-x-0.5'
-                          }`} />
-                        </button>
-                      </div>
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div>
+                      <p className="text-white font-medium">Weekly Digest</p>
+                      <p className="text-sm text-gray-500">Weekly summary of your financial health</p>
                     </div>
+                    <button
+                      onClick={() => setSettings({ ...settings, emailWeeklyDigest: !settings.emailWeeklyDigest })}
+                      className={`w-12 h-6 rounded-full transition ${settings.emailWeeklyDigest ? 'bg-indigo-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.emailWeeklyDigest ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div>
+                      <p className="text-white font-medium">Market Alerts</p>
+                      <p className="text-sm text-gray-500">Important market movements & news</p>
+                    </div>
+                    <button
+                      onClick={() => setSettings({ ...settings, emailMarketAlerts: !settings.emailMarketAlerts })}
+                      className={`w-12 h-6 rounded-full transition ${settings.emailMarketAlerts ? 'bg-indigo-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.emailMarketAlerts ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div>
+                      <p className="text-white font-medium">Push Notifications</p>
+                      <p className="text-sm text-gray-500">Browser notifications for important updates</p>
+                    </div>
+                    <button
+                      onClick={() => setSettings({ ...settings, pushNotifications: !settings.pushNotifications })}
+                      className={`w-12 h-6 rounded-full transition ${settings.pushNotifications ? 'bg-indigo-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.pushNotifications ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -229,53 +338,39 @@ export default function SettingsPage() {
               <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">Privacy Settings</h2>
                 
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                     <div>
-                      <p className="text-white">Share data with advisor</p>
-                      <p className="text-sm text-gray-500">Allow your financial advisor to view your portfolio</p>
+                      <p className="text-white font-medium">Share with Advisor</p>
+                      <p className="text-sm text-gray-500">Allow your financial advisor to view your data</p>
                     </div>
                     <button
                       onClick={() => setSettings({ ...settings, shareWithAdvisor: !settings.shareWithAdvisor })}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        settings.shareWithAdvisor ? 'bg-indigo-600' : 'bg-gray-700'
-                      }`}
+                      className={`w-12 h-6 rounded-full transition ${settings.shareWithAdvisor ? 'bg-indigo-500' : 'bg-gray-600'}`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                        settings.shareWithAdvisor ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.shareWithAdvisor ? 'translate-x-6' : 'translate-x-0.5'}`} />
                     </button>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                     <div>
-                      <p className="text-white">Anonymous analytics</p>
+                      <p className="text-white font-medium">Anonymous Analytics</p>
                       <p className="text-sm text-gray-500">Help improve Maven with anonymous usage data</p>
                     </div>
                     <button
                       onClick={() => setSettings({ ...settings, anonymousAnalytics: !settings.anonymousAnalytics })}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        settings.anonymousAnalytics ? 'bg-indigo-600' : 'bg-gray-700'
-                      }`}
+                      className={`w-12 h-6 rounded-full transition ${settings.anonymousAnalytics ? 'bg-indigo-500' : 'bg-gray-600'}`}
                     >
-                      <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                        settings.anonymousAnalytics ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.anonymousAnalytics ? 'translate-x-6' : 'translate-x-0.5'}`} />
                     </button>
                   </div>
                   
-                  <div className="border-t border-white/10 pt-6">
-                    <h3 className="text-sm font-medium text-white mb-4">Data Management</h3>
-                    <div className="space-y-3">
-                      <button className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-left transition">
-                        <p className="text-white">Download my data</p>
-                        <p className="text-sm text-gray-500">Get a copy of all your Maven data</p>
-                      </button>
-                      <button className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-left transition">
-                        <p className="text-red-400">Delete my account</p>
-                        <p className="text-sm text-red-400/70">Permanently remove all data</p>
-                      </button>
-                    </div>
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 font-medium mb-2">Danger Zone</p>
+                    <p className="text-sm text-gray-400 mb-3">Delete your account and all associated data. This cannot be undone.</p>
+                    <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition">
+                      Delete Account
+                    </button>
                   </div>
                 </div>
               </div>
@@ -286,70 +381,47 @@ export default function SettingsPage() {
               <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-6">Security Settings</h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        settings.twoFactorEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {settings.twoFactorEnabled ? '✓' : '✕'}
-                      </div>
-                      <div>
-                        <p className="text-white">Two-factor authentication</p>
-                        <p className="text-sm text-gray-500">
-                          {settings.twoFactorEnabled ? 'Enabled via authenticator app' : 'Not enabled'}
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-white font-medium">Two-Factor Authentication</p>
+                      <p className="text-sm text-gray-500">Add an extra layer of security</p>
                     </div>
-                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
-                      {settings.twoFactorEnabled ? 'Manage' : 'Enable'}
+                    <button
+                      onClick={() => setSettings({ ...settings, twoFactorEnabled: !settings.twoFactorEnabled })}
+                      className={`w-12 h-6 rounded-full transition ${settings.twoFactorEnabled ? 'bg-indigo-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition transform ${settings.twoFactorEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
                     </button>
                   </div>
                   
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Session timeout</label>
+                  <div className="p-4 bg-white/5 rounded-xl">
+                    <p className="text-white font-medium mb-2">Session Timeout</p>
+                    <p className="text-sm text-gray-500 mb-3">Auto-logout after inactivity</p>
                     <select
                       value={settings.sessionTimeout}
                       onChange={(e) => setSettings({ ...settings, sessionTimeout: e.target.value })}
-                      className="w-full sm:w-64 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
+                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-indigo-500 outline-none"
                     >
                       <option value="15">15 minutes</option>
                       <option value="30">30 minutes</option>
                       <option value="60">1 hour</option>
-                      <option value="240">4 hours</option>
+                      <option value="never">Never</option>
                     </select>
                   </div>
                   
-                  <div className="border-t border-white/10 pt-6">
-                    <h3 className="text-sm font-medium text-white mb-4">Password</h3>
-                    <button className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
-                      Change Password
-                    </button>
-                  </div>
-                  
-                  <div className="border-t border-white/10 pt-6">
-                    <h3 className="text-sm font-medium text-white mb-4">Active Sessions</h3>
-                    <div className="space-y-3">
-                      {[
-                        { device: 'Chrome on MacBook Pro', location: 'Vienna, VA', current: true },
-                        { device: 'Safari on iPhone', location: 'Vienna, VA', current: false },
-                      ].map((session, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{session.device.includes('iPhone') ? '📱' : '💻'}</span>
-                            <div>
-                              <p className="text-white text-sm">{session.device}</p>
-                              <p className="text-xs text-gray-500">{session.location}</p>
-                            </div>
-                          </div>
-                          {session.current ? (
-                            <span className="text-xs text-emerald-400">Current</span>
-                          ) : (
-                            <button className="text-xs text-red-400 hover:text-red-300">Revoke</button>
-                          )}
-                        </div>
-                      ))}
+                  <div className="p-4 bg-white/5 rounded-xl">
+                    <p className="text-white font-medium mb-2">Active Sessions</p>
+                    <p className="text-sm text-gray-500 mb-3">Manage devices where you're logged in</p>
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">🖥️ This device</span>
+                        <span className="text-emerald-400">Active now</span>
+                      </div>
                     </div>
+                    <button className="text-sm text-indigo-400 hover:text-indigo-300 transition">
+                      Sign out all other sessions
+                    </button>
                   </div>
                 </div>
               </div>

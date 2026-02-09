@@ -13,6 +13,7 @@ import { Term } from '../components/InfoTooltip';
 import { ThesisInsight } from '../components/ThesisInsight';
 import { QuickStartTips } from '../components/QuickStartTips';
 import { openOracle } from '@/lib/open-oracle';
+import ProfileCompletionBanner from '../components/ProfileCompletionBanner';
 
 interface MarketData {
   timestamp: string;
@@ -305,6 +306,9 @@ export default function Dashboard() {
       {!profileLoading && (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         
+        {/* Profile Completion Prompt (shows when profile is incomplete) */}
+        <ProfileCompletionBanner />
+        
         {/* ==================== ONBOARDED USER HERO ==================== */}
         {isOnboarded && profile && (
           <>
@@ -318,7 +322,7 @@ export default function Dashboard() {
                 <div className="flex flex-col lg:flex-row gap-8 items-center">
                   {/* Left: Net Worth + Stats */}
                   <div className="flex-1 w-full">
-                    <p className="text-gray-400 text-sm mb-1">{getGreeting()}, {profile.firstName}</p>
+                    <p className="text-gray-400 text-sm mb-1">{getGreeting()}, {profile.firstName || 'there'}</p>
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Your Wealth Dashboard</h2>
                     
                     {/* Big Net Worth Number */}

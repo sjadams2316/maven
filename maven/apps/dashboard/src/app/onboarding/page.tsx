@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
+import { useUserProfile } from '@/providers/UserProvider';
 
 const GOALS = [
   { id: 'retirement', icon: '🏖️', label: 'Retire comfortably', desc: 'Build wealth for financial independence' },
@@ -27,6 +29,8 @@ const RISK_LEVELS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const { updateProfile } = useUserProfile();
   const [step, setStep] = useState(1);
   const [selections, setSelections] = useState({
     goals: [] as string[],
@@ -35,6 +39,9 @@ export default function OnboardingPage() {
     netWorth: '',
     hasAdvisor: null as boolean | null,
   });
+  
+  // Get user's first name for personalization
+  const firstName = user?.firstName || 'there';
   
   const totalSteps = 5;
   
@@ -58,12 +65,25 @@ export default function OnboardingPage() {
     }
   };
   
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    // Save basic preferences to profile
+    await updateProfile({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.emailAddresses?.[0]?.emailAddress || '',
+      primaryGoal: selections.goals[0] || '',
+      riskTolerance: selections.risk as any,
+      investmentExperience: selections.experience as any,
+    });
+    
+    // Also save to localStorage for backward compatibility
     localStorage.setItem('maven_onboarding', JSON.stringify({
       ...selections,
       completedAt: new Date().toISOString(),
     }));
-    router.push('/dashboard');
+    
+    // Go to detailed financial profile setup
+    router.push('/profile/setup');
   };
   
   return (
@@ -107,7 +127,7 @@ export default function OnboardingPage() {
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                What are your financial goals?
+                Hey {firstName}! What are your financial goals?
               </h1>
               <p className="text-gray-400">Select all that apply. We'll personalize Maven for you.</p>
             </div>
@@ -318,7 +338,7 @@ export default function OnboardingPage() {
               disabled={!canProceed()}
               className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 disabled:from-gray-700 disabled:to-gray-700 text-white font-medium rounded-xl transition"
             >
-              Get Started 🚀
+              Continue to Profile Setup →
             </button>
           )}
         </div>
