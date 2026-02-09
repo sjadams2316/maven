@@ -240,8 +240,190 @@ export const DEMO_PROFILE: UserProfile = {
 // Liabilities: Mortgage($425K) + Auto($28K) + CC($4.5K) = $457.5K
 export const DEMO_NET_WORTH = 797500;
 
+/**
+ * RETIREE DEMO PROFILE
+ * Conservative portfolio for retirees/pre-retirees to see income-focused features
+ * ~$1.2M portfolio with 40% stocks, 50% bonds, 10% cash
+ * Focus on dividend income (~$40K/year)
+ */
+export const RETIREE_DEMO_PROFILE: UserProfile = {
+  // Personal (fictional retiree demo user)
+  firstName: "Pat",
+  lastName: "Retiree",
+  email: "pat.retiree@mavenwealth.ai",
+  dateOfBirth: "1964-07-20", // Age 62
+  state: "FL",
+  filingStatus: "Married Filing Jointly",
+  householdIncome: "$100,000 - $200,000",
+  
+  // Cash Accounts (10% = ~$120K)
+  cashAccounts: [
+    {
+      id: "ret-cash-1",
+      name: "Ally Checking",
+      institution: "Ally Bank",
+      balance: 25000,
+      type: "Checking"
+    },
+    {
+      id: "ret-cash-2",
+      name: "Ally HYSA",
+      institution: "Ally Bank",
+      balance: 50000,
+      type: "High-Yield Savings",
+      interestRate: 4.25
+    },
+    {
+      id: "ret-cash-3",
+      name: "Vanguard Money Market",
+      institution: "Vanguard",
+      balance: 45000,
+      type: "Money Market"
+    }
+  ],
+  
+  // Retirement Accounts
+  retirementAccounts: [
+    {
+      id: "ret-401k",
+      name: "Former Employer 401(k)",
+      institution: "Fidelity",
+      balance: 485000,
+      type: "401(k)",
+      employer: "Former Corp",
+      contributionPercent: 0,
+      employerMatchPercent: 0,
+      holdings: [
+        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 2800, costBasis: 210000, currentPrice: 72.40, currentValue: 202720 },
+        { ticker: "VTIP", name: "Vanguard Short-Term Inflation-Protected", shares: 1200, costBasis: 58000, currentPrice: 48.50, currentValue: 58200 },
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 350, costBasis: 75000, currentPrice: 268.50, currentValue: 93975 },
+        { ticker: "SCHD", name: "Schwab US Dividend Equity", shares: 800, costBasis: 55000, currentPrice: 82.30, currentValue: 65840 },
+        { ticker: "VXUS", name: "Vanguard Total International", shares: 1020, costBasis: 58000, currentPrice: 62.80, currentValue: 64056 }
+      ]
+    },
+    {
+      id: "ret-ira",
+      name: "Traditional IRA",
+      institution: "Vanguard",
+      balance: 380000,
+      type: "Traditional IRA",
+      holdings: [
+        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 2200, costBasis: 165000, currentPrice: 72.40, currentValue: 159280 },
+        { ticker: "VYM", name: "Vanguard High Dividend Yield", shares: 850, costBasis: 82000, currentPrice: 118.50, currentValue: 100725 },
+        { ticker: "VTIP", name: "Vanguard Short-Term Inflation-Protected", shares: 1400, costBasis: 68000, currentPrice: 48.50, currentValue: 67900 },
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 195, costBasis: 42000, currentPrice: 268.50, currentValue: 52358 }
+      ]
+    },
+    {
+      id: "ret-roth",
+      name: "Roth IRA",
+      institution: "Vanguard",
+      balance: 165000,
+      type: "Roth IRA",
+      holdings: [
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 280, costBasis: 55000, currentPrice: 268.50, currentValue: 75180 },
+        { ticker: "SCHD", name: "Schwab US Dividend Equity", shares: 550, costBasis: 38000, currentPrice: 82.30, currentValue: 45265 },
+        { ticker: "VXUS", name: "Vanguard Total International", shares: 710, costBasis: 42000, currentPrice: 62.80, currentValue: 44588 }
+      ]
+    }
+  ],
+  
+  // Investment Accounts (Taxable - income-focused)
+  investmentAccounts: [
+    {
+      id: "ret-brokerage",
+      name: "Joint Brokerage",
+      institution: "Vanguard",
+      balance: 170000,
+      type: "Joint",
+      holdings: [
+        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 900, costBasis: 68000, currentPrice: 72.40, currentValue: 65160, acquisitionDate: "2019-03-15" },
+        { ticker: "VYM", name: "Vanguard High Dividend Yield", shares: 420, costBasis: 42000, currentPrice: 118.50, currentValue: 49770, acquisitionDate: "2018-06-20" },
+        { ticker: "SCHD", name: "Schwab US Dividend Equity", shares: 380, costBasis: 28000, currentPrice: 82.30, currentValue: 31274, acquisitionDate: "2020-01-10" },
+        { ticker: "VTIP", name: "Vanguard Short-Term Inflation-Protected", shares: 490, costBasis: 24000, currentPrice: 48.50, currentValue: 23765, acquisitionDate: "2021-08-05" }
+      ]
+    }
+  ],
+  
+  // Other Assets
+  realEstateEquity: 285000, // Paid off home
+  cryptoValue: 0,
+  businessEquity: 0,
+  otherAssets: 35000, // Valuables, vehicles
+  
+  // Liabilities (minimal - good debt management)
+  liabilities: [
+    {
+      id: "ret-liab-1",
+      name: "Home Equity Line",
+      type: "HELOC",
+      balance: 15000,
+      interestRate: 8.5,
+      monthlyPayment: 250
+    }
+  ],
+  
+  // Goals
+  goals: [
+    {
+      id: "ret-goal-1",
+      name: "Retire at 65",
+      targetAmount: 1500000,
+      targetDate: "2029-07-20",
+      priority: "high"
+    },
+    {
+      id: "ret-goal-2",
+      name: "Grandkids' Education",
+      targetAmount: 100000,
+      targetDate: "2035-09-01",
+      priority: "medium"
+    },
+    {
+      id: "ret-goal-3",
+      name: "Travel Fund",
+      targetAmount: 50000,
+      targetDate: "2030-01-01",
+      priority: "medium"
+    }
+  ],
+  
+  primaryGoal: "Secure retirement with sustainable income",
+  riskTolerance: "conservative",
+  investmentExperience: "intermediate",
+  
+  // Social Security (critical for retirees)
+  socialSecurity: {
+    dateOfBirth: "1964-07-20",
+    lifeExpectancy: 90,
+    benefitAt62: 2100,
+    benefitAtFRA: 2980, // Full Retirement Age 67
+    benefitAt70: 3700,
+    currentlyWorking: true,
+    expectedEarnings: 95000,
+    retirementAge: 65,
+    spouseDOB: "1966-03-15",
+    spouseBenefitAt62: 1650,
+    spouseBenefitAtFRA: 2350,
+    spouseBenefitAt70: 2915,
+    marriageDate: "1990-05-20"
+  },
+  
+  onboardingComplete: true,
+};
+
+// Calculated net worth from RETIREE_DEMO_PROFILE (~$1.2M)
+export const RETIREE_NET_WORTH = 1200000;
+
+// Annual dividend/interest income estimate
+export const RETIREE_ANNUAL_INCOME = 42000; // ~3.5% yield on portfolio
+
+// Demo variant types
+export type DemoVariant = 'growth' | 'retiree';
+
 // Demo mode storage key
 export const DEMO_MODE_KEY = 'maven_demo_mode';
+export const DEMO_VARIANT_KEY = 'maven_demo_variant';
 
 export function isDemoModeEnabled(): boolean {
   if (typeof window === 'undefined') return false;
@@ -256,4 +438,23 @@ export function enableDemoMode(): void {
 export function disableDemoMode(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(DEMO_MODE_KEY);
+  localStorage.removeItem(DEMO_VARIANT_KEY);
+}
+
+export function getDemoVariant(): DemoVariant {
+  if (typeof window === 'undefined') return 'growth';
+  return (localStorage.getItem(DEMO_VARIANT_KEY) as DemoVariant) || 'growth';
+}
+
+export function setDemoVariant(variant: DemoVariant): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DEMO_VARIANT_KEY, variant);
+}
+
+export function getDemoProfile(variant: DemoVariant = 'growth'): UserProfile {
+  return variant === 'retiree' ? RETIREE_DEMO_PROFILE : DEMO_PROFILE;
+}
+
+export function getDemoNetWorth(variant: DemoVariant = 'growth'): number {
+  return variant === 'retiree' ? RETIREE_NET_WORTH : DEMO_NET_WORTH;
 }

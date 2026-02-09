@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-02-09
 **Total Issues:** 11
-**Open:** 4 | **In Progress:** 0 | **Resolved:** 7
+**Open:** 3 | **In Progress:** 0 | **Resolved:** 8
 
 ---
 
@@ -149,7 +149,7 @@
 
 ---
 
-### DASH-RET-008: No Retiree-Appropriate Demo
+### DASH-RET-008: No Retiree-Appropriate Demo ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -160,8 +160,10 @@
 | **Impact** | Retirees feel Maven isn't for them. Lost user segment. |
 | **Fix** | 1) Add retiree demo option 2) Income visibility 3) Persona-specific variants |
 | **Effort** | High |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | Dashboard Persona Specialist |
+| **Status** | ✅ Resolved |
+| **Resolution** | Added comprehensive retiree demo variant with: (1) Demo variant selector UI ("Growth Portfolio" vs "Retirement Income") with visual differentiation, (2) RETIREE_DEMO_PROFILE with ~$1.2M conservative portfolio (40% stocks, 50% bonds, 10% cash), (3) Income-focused holdings: BND, VTIP, VYM, SCHD, VTI, VXUS with dividend yields displayed, (4) $42K/year passive income summary widget, (5) Retiree-specific insights: Social Security optimization (62/67/70 claiming strategies), RMD planning with Roth conversion advice, Medicare/IRMAA considerations, sequence of returns risk education, (6) Social Security preview widget showing benefit amounts at different ages, (7) Retiree-specific feature tour (Social Security, RMD Planner, Healthcare, Income Planner), (8) Age 62 persona retiring at 65 with appropriate goals (retire at 65, grandkids' education, travel). Retirees now see Maven understands their unique needs. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
