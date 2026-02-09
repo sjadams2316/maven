@@ -28,19 +28,144 @@ interface Insight {
   priority?: 'high' | 'medium' | 'low';
 }
 
+// Crypto symbols we track via CoinGecko
+const CRYPTO_TICKERS = new Set(['BTC', 'ETH', 'SOL', 'TAO', 'AVAX', 'LINK', 'DOT', 'ADA', 'XRP', 'DOGE']);
+const CRYPTO_TO_COINGECKO: Record<string, string> = {
+  'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'TAO': 'bittensor',
+  'AVAX': 'avalanche-2', 'LINK': 'chainlink', 'DOT': 'polkadot', 'ADA': 'cardano', 'XRP': 'ripple', 'DOGE': 'dogecoin'
+};
+
 export default function Dashboard() {
   const { profile, financials, isLoading } = useUserProfile();
   const [dismissedInsights, setDismissedInsights] = useState<number[]>([]);
   const [showAllHoldings, setShowAllHoldings] = useState(false);
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [pricesLoading, setPricesLoading] = useState(false);
   
   // Get all holdings from accounts
-  const allHoldings = useMemo((): Holding[] => {
+  const baseHoldings = useMemo((): Holding[] => {
     if (!profile) return [];
     return [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
       .flatMap(a => a.holdings || [])
-      .filter(h => h.currentValue && h.currentValue > 0)
+      .filter(h => (h.currentValue && h.currentValue > 0) || h.shares > 0)
       .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
   }, [profile]);
+  
+  // Fetch live prices for all holdings
+  useEffect(() => {
+    const fetchLivePrices = async () => {
+      if (baseHoldings.length === 0) return;
+      
+      setPricesLoading(true);
+      const newPrices: Record<string, number> = {};
+      
+      try {
+        // Separate crypto and stock tickers
+        const cryptoTickers = baseHoldings
+          .map(h => h.ticker.toUpperCase())
+          .filter(t => CRYPTO_TICKERS.has(t));
+        const stockTickers = baseHoldings
+          .map(h => h.ticker.toUpperCase())
+          .filter(t => !CRYPTO_TICKERS.has(t));
+        
+        // Fetch crypto prices from CoinGecko
+        if (cryptoTickers.length > 0) {
+          const ids = cryptoTickers
+            .map(t => CRYPTO_TO_COINGECKO[t])
+            .filter(Boolean)
+            .join(',');
+          
+          if (ids) {
+            const cryptoRes = await fetch(
+              `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+            );
+            if (cryptoRes.ok) {
+              const cryptoData = await cryptoRes.json();
+              cryptoTickers.forEach(ticker => {
+                const cgId = CRYPTO_TO_COINGECKO[ticker];
+                if (cgId && cryptoData[cgId]?.usd) {
+                  newPrices[ticker] = cryptoData[cgId].usd;
+                }
+              });
+            }
+          }
+        }
+        
+        // Fetch stock prices from Yahoo Finance (batch)
+        if (stockTickers.length > 0) {
+          // Fetch in batches of 5 to avoid rate limits
+          for (let i = 0; i < stockTickers.length; i += 5) {
+            const batch = stockTickers.slice(i, i + 5);
+            await Promise.all(batch.map(async (ticker) => {
+              try {
+                const res = await fetch(
+                  `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`
+                );
+                if (res.ok) {
+                  const data = await res.json();
+                  const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+                  if (price) {
+                    newPrices[ticker] = price;
+                  }
+                }
+              } catch (e) {
+                console.warn(`Failed to fetch price for ${ticker}:`, e);
+              }
+            }));
+          }
+        }
+        
+        setLivePrices(newPrices);
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Error fetching live prices:', error);
+      } finally {
+        setPricesLoading(false);
+      }
+    };
+    
+    // Fetch immediately
+    fetchLivePrices();
+    
+    // Then refresh every 60 seconds
+    const interval = setInterval(fetchLivePrices, 60000);
+    return () => clearInterval(interval);
+  }, [baseHoldings]);
+  
+  // Merge live prices into holdings
+  const allHoldings = useMemo((): Holding[] => {
+    return baseHoldings.map(h => {
+      const ticker = h.ticker.toUpperCase();
+      const livePrice = livePrices[ticker];
+      if (livePrice && h.shares) {
+        return {
+          ...h,
+          currentPrice: livePrice,
+          currentValue: h.shares * livePrice,
+        };
+      }
+      return h;
+    }).sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
+  }, [baseHoldings, livePrices]);
+  
+  // Calculate live net worth
+  const liveNetWorth = useMemo(() => {
+    if (!financials) return 0;
+    
+    // Start with cash and other assets
+    let total = financials.totalCash + financials.totalOtherAssets;
+    
+    // Add live holdings values
+    allHoldings.forEach(h => {
+      total += h.currentValue || 0;
+    });
+    
+    // Subtract liabilities
+    total -= financials.totalLiabilities;
+    
+    return total;
+  }, [financials, allHoldings]);
   
   // Calculate allocation from actual holdings
   const allocation = useMemo(() => {
@@ -149,7 +274,7 @@ export default function Dashboard() {
   
   // Get user's first name
   const firstName = profile?.firstName || 'there';
-  const netWorth = financials?.netWorth || 0;
+  const netWorth = liveNetWorth || financials?.netWorth || 0;
   
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -161,9 +286,17 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
             Welcome back, {firstName} 👋
           </h1>
-          <p className="text-gray-400">
-            Here's your financial snapshot for today.
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-gray-400">
+              Here's your financial snapshot for today.
+            </p>
+            {lastUpdated && (
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className={`w-2 h-2 rounded-full ${pricesLoading ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`} />
+                {pricesLoading ? 'Updating...' : `Live prices as of ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+              </span>
+            )}
+          </div>
         </div>
         
         {/* Main Grid */}
