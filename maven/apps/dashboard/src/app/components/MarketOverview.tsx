@@ -10,24 +10,6 @@ interface MarketQuote {
   changePercent: number;
 }
 
-// CoinGecko IDs
-const CRYPTO_IDS: Record<string, string> = {
-  BTC: 'bitcoin',
-  TAO: 'bittensor',
-};
-
-const CRYPTO_NAMES: Record<string, string> = {
-  BTC: 'Bitcoin',
-  TAO: 'Bittensor',
-};
-
-const STOCK_NAMES: Record<string, string> = {
-  SPY: 'S&P 500',
-  QQQ: 'Nasdaq 100',
-  DIA: 'Dow Jones',
-  IWM: 'Russell 2000',
-};
-
 export default function MarketOverview() {
   const [indices, setIndices] = useState<MarketQuote[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -36,69 +18,19 @@ export default function MarketOverview() {
   
   const fetchMarketData = async () => {
     try {
-      // Fetch crypto from CoinGecko
-      const cryptoResponse = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,bittensor&vs_currencies=usd&include_24hr_change=true'
-      );
+      // Fetch from our API route (handles CORS issues with Yahoo Finance)
+      const response = await fetch('/api/market-data');
       
-      let cryptoData: MarketQuote[] = [];
-      if (cryptoResponse.ok) {
-        const crypto = await cryptoResponse.json();
-        cryptoData = [
-          {
-            symbol: 'BTC',
-            name: 'Bitcoin',
-            price: crypto.bitcoin?.usd || 0,
-            change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
-            changePercent: crypto.bitcoin?.usd_24h_change || 0,
-          },
-          {
-            symbol: 'TAO',
-            name: 'Bittensor',
-            price: crypto.bittensor?.usd || 0,
-            change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
-            changePercent: crypto.bittensor?.usd_24h_change || 0,
-          },
-        ];
+      if (!response.ok) {
+        throw new Error('Failed to fetch market data');
       }
       
-      // Fetch stocks from Yahoo Finance
-      const stockSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
-      const stockData: MarketQuote[] = await Promise.all(
-        stockSymbols.map(async (symbol) => {
-          try {
-            const response = await fetch(
-              `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`
-            );
-            if (!response.ok) throw new Error('Yahoo API error');
-            
-            const data = await response.json();
-            const result = data.chart?.result?.[0];
-            const meta = result?.meta;
-            
-            if (!meta) {
-              return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
-            }
-            
-            const price = meta.regularMarketPrice || 0;
-            const previousClose = meta.previousClose || meta.chartPreviousClose || price;
-            const change = price - previousClose;
-            const changePercent = previousClose ? (change / previousClose) * 100 : 0;
-            
-            return {
-              symbol,
-              name: STOCK_NAMES[symbol],
-              price,
-              change,
-              changePercent,
-            };
-          } catch {
-            return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
-          }
-        })
-      );
+      const data = await response.json();
       
-      setIndices([...stockData, ...cryptoData]);
+      // Combine stocks and crypto
+      const allIndices = [...(data.stocks || []), ...(data.crypto || [])];
+      
+      setIndices(allIndices);
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {

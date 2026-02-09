@@ -1,202 +1,103 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getPolygonClient } from '@/lib/polygon-client';
+import { NextResponse } from 'next/server';
 
-// Cache for rate limiting
-let cache: {
-  data: any;
-  timestamp: number;
-} | null = null;
+const STOCK_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
 
-const CACHE_TTL = 60 * 1000; // 1 minute cache
-
-// Crypto symbols we track
-const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'TAO'];
-
-// CoinGecko ID mapping (fallback)
-const CRYPTO_IDS: Record<string, string> = {
-  'BTC': 'bitcoin',
-  'ETH': 'ethereum',
-  'SOL': 'solana',
-  'TAO': 'bittensor',
+const STOCK_NAMES: Record<string, string> = {
+  SPY: 'S&P 500',
+  QQQ: 'Nasdaq 100',
+  DIA: 'Dow Jones',
+  IWM: 'Russell 2000',
 };
 
-async function fetchYahooQuote(symbol: string): Promise<{ price: number; change: number; changePercent: number } | null> {
+export async function GET() {
   try {
-    const response = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        },
-        next: { revalidate: 60 },
-      }
+    // Fetch stocks from Yahoo Finance (server-side to avoid CORS)
+    const stockData = await Promise.all(
+      STOCK_SYMBOLS.map(async (symbol) => {
+        try {
+          const response = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`,
+            {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+              },
+              next: { revalidate: 60 }, // Cache for 60 seconds
+            }
+          );
+          
+          if (!response.ok) {
+            console.error(`Yahoo API error for ${symbol}:`, response.status);
+            return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
+          }
+          
+          const data = await response.json();
+          const result = data.chart?.result?.[0];
+          const meta = result?.meta;
+          
+          if (!meta) {
+            return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
+          }
+          
+          const price = meta.regularMarketPrice || 0;
+          const previousClose = meta.previousClose || meta.chartPreviousClose || price;
+          const change = price - previousClose;
+          const changePercent = previousClose ? (change / previousClose) * 100 : 0;
+          
+          return {
+            symbol,
+            name: STOCK_NAMES[symbol],
+            price,
+            change,
+            changePercent,
+          };
+        } catch (err) {
+          console.error(`Error fetching ${symbol}:`, err);
+          return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
+        }
+      })
     );
-    
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    const result = data.chart?.result?.[0];
-    if (!result) return null;
-    
-    const price = result.meta?.regularMarketPrice;
-    
-    // Get yesterday's close from the historical data
-    const closes = result.indicators?.quote?.[0]?.close || [];
-    const validCloses = closes.filter((c: number | null) => c !== null);
-    const prevClose = validCloses.length >= 2 ? validCloses[validCloses.length - 2] : result.meta?.chartPreviousClose;
-    
-    const change = prevClose ? price - prevClose : 0;
-    const changePercent = prevClose ? (change / prevClose) * 100 : 0;
-    
-    return { price, change, changePercent };
-  } catch (error) {
-    console.error(`Yahoo fetch error for ${symbol}:`, error);
-    return null;
-  }
-}
 
-async function fetchCryptoFromPolygon(symbols: string[]): Promise<Record<string, { price: number; changePercent: number } | null>> {
-  const polygonClient = getPolygonClient();
-  const results: Record<string, { price: number; changePercent: number } | null> = {};
-  
-  if (!polygonClient) {
-    // No Polygon API key, return nulls
-    symbols.forEach(s => results[s] = null);
-    return results;
-  }
-  
-  try {
-    const quotes = await polygonClient.getCryptoQuotes(symbols);
-    
-    symbols.forEach(symbol => {
-      const quote = quotes.get(symbol);
-      if (quote) {
-        results[symbol] = {
-          price: quote.price,
-          changePercent: quote.changePercent
-        };
-      } else {
-        results[symbol] = null;
+    // Fetch crypto from CoinGecko
+    let cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
+    try {
+      const cryptoResponse = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,bittensor&vs_currencies=usd&include_24hr_change=true',
+        { next: { revalidate: 60 } }
+      );
+      
+      if (cryptoResponse.ok) {
+        const crypto = await cryptoResponse.json();
+        cryptoData = [
+          {
+            symbol: 'BTC',
+            name: 'Bitcoin',
+            price: crypto.bitcoin?.usd || 0,
+            change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bitcoin?.usd_24h_change || 0,
+          },
+          {
+            symbol: 'TAO',
+            name: 'Bittensor',
+            price: crypto.bittensor?.usd || 0,
+            change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bittensor?.usd_24h_change || 0,
+          },
+        ];
       }
-    });
-    
-    return results;
-  } catch (error) {
-    console.error('Polygon crypto fetch error:', error);
-    symbols.forEach(s => results[s] = null);
-    return results;
-  }
-}
-
-async function fetchCryptoFromCoinGecko(symbols: string[]): Promise<Record<string, { price: number; changePercent: number } | null>> {
-  const results: Record<string, { price: number; changePercent: number } | null> = {};
-  
-  try {
-    const ids = symbols.map(s => CRYPTO_IDS[s]).filter(Boolean);
-    if (ids.length === 0) {
-      symbols.forEach(s => results[s] = null);
-      return results;
-    }
-    
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`,
-      { next: { revalidate: 60 } }
-    );
-    
-    if (!response.ok) {
-      symbols.forEach(s => results[s] = null);
-      return results;
-    }
-    
-    const data = await response.json();
-    
-    symbols.forEach(symbol => {
-      const geckoId = CRYPTO_IDS[symbol];
-      if (geckoId && data[geckoId]) {
-        results[symbol] = {
-          price: data[geckoId].usd,
-          changePercent: data[geckoId].usd_24h_change || 0
-        };
-      } else {
-        results[symbol] = null;
-      }
-    });
-    
-    return results;
-  } catch (error) {
-    console.error('CoinGecko fetch error:', error);
-    symbols.forEach(s => results[s] = null);
-    return results;
-  }
-}
-
-export async function GET(request: NextRequest) {
-  // Check cache
-  if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
-    return NextResponse.json(cache.data);
-  }
-
-  try {
-    // Fetch indices from Yahoo
-    const [spyData, qqqData, diaData] = await Promise.all([
-      fetchYahooQuote('^GSPC'),
-      fetchYahooQuote('^IXIC'),
-      fetchYahooQuote('^DJI'),
-    ]);
-
-    // Fetch crypto - prefer CoinGecko for real-time prices (Polygon returns previous day close)
-    let cryptoPrices = await fetchCryptoFromCoinGecko(CRYPTO_SYMBOLS);
-    
-    // Check if CoinGecko returned data
-    const geckoHasData = Object.values(cryptoPrices).some(v => v !== null);
-    
-    // If CoinGecko failed, try Polygon as fallback
-    if (!geckoHasData) {
-      console.log('CoinGecko crypto failed, falling back to Polygon');
-      cryptoPrices = await fetchCryptoFromPolygon(CRYPTO_SYMBOLS);
+    } catch (err) {
+      console.error('Error fetching crypto:', err);
     }
 
-    // Build response
-    const marketData = {
+    return NextResponse.json({
+      stocks: stockData,
+      crypto: cryptoData,
       timestamp: new Date().toISOString(),
-      source: {
-        indices: 'yahoo',
-        crypto: geckoHasData ? 'coingecko' : 'polygon'
-      },
-      indices: {
-        sp500: spyData ? {
-          price: spyData.price,
-          change: spyData.change,
-          changePercent: spyData.changePercent,
-        } : null,
-        nasdaq: qqqData ? {
-          price: qqqData.price,
-          change: qqqData.change,
-          changePercent: qqqData.changePercent,
-        } : null,
-        dow: diaData ? {
-          price: diaData.price,
-          change: diaData.change,
-          changePercent: diaData.changePercent,
-        } : null,
-      },
-      crypto: {
-        BTC: cryptoPrices.BTC,
-        ETH: cryptoPrices.ETH,
-        SOL: cryptoPrices.SOL,
-        TAO: cryptoPrices.TAO,
-      },
-    };
-
-    // Update cache
-    cache = {
-      data: marketData,
-      timestamp: Date.now(),
-    };
-
-    return NextResponse.json(marketData);
-  } catch (error) {
-    console.error('Market data API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch market data' }, { status: 500 });
+    });
+  } catch (err) {
+    console.error('Market data API error:', err);
+    return NextResponse.json(
+      { error: 'Failed to fetch market data' },
+      { status: 500 }
+    );
   }
 }
