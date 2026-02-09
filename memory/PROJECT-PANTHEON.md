@@ -55,6 +55,70 @@ To prevent work loss from API credit exhaustion:
 - Knowledge bases persist regardless of agent completion
 - Agents can resume from KNOWLEDGE.md context if restarted
 
+### Agent Coordination
+
+**Status Tracking:** `memory/pantheon/PANTHEON-STATUS.md`
+- Live tracker of running agents and what files they're touching
+- File lock registry to prevent parallel conflicts
+- Update when spawning/completing agents
+
+**Before Spawning:**
+1. Check PANTHEON-STATUS.md — is similar work in flight?
+2. Check file locks — will this touch files another agent is editing?
+3. Read PATTERNS.md — are there known gotchas for this type of work?
+4. Add entry to status tracker
+
+**After Completion:**
+1. Move agent to "Recently Completed"
+2. Release file locks
+3. Spawn QA agent if code was committed
+
+### QA Agent Protocol
+
+After any agent commits code changes, spawn a lightweight QA agent:
+
+```
+Task: QA verification for commit [hash]
+
+1. Read the commit diff: git show [hash]
+2. Open mavenwealth.ai in browser
+3. Navigate to the affected page(s)
+4. Verify the change works as intended
+5. Check for console errors
+6. Test on mobile viewport if UI change
+7. Report: PASS with screenshots, or FAIL with details
+```
+
+**When to skip QA:** Documentation-only changes, memory file updates, research tasks.
+
+### Task Sizing Guidelines
+
+**Ideal task size: 1-2 files, <200 lines changed, 2-5 minutes runtime**
+
+| Task Size | Example | Recommendation |
+|-----------|---------|----------------|
+| ✅ Atomic | Fix goal math, add tooltip | Ship as-is |
+| ⚠️ Medium | Add new component + integrate | Consider splitting |
+| ❌ Large | New demo variant + insights + UI | Must split into 3+ tasks |
+
+**Breaking down large tasks:**
+- "Add retiree demo" becomes:
+  1. "Add demo variant selector UI"
+  2. "Create RETIREE_DEMO_PROFILE data"
+  3. "Add retiree-specific insights"
+
+Smaller tasks = cleaner commits, fewer conflicts, faster iteration.
+
+### Shared Patterns
+
+**Read first:** `memory/pantheon/PATTERNS.md`
+- Common TypeScript fixes
+- Component patterns (InsightCard types, Portfolio Lab tabs)
+- API patterns (CORS, validation)
+- Build and git workflows
+
+When you discover a new pattern or gotcha, **add it to PATTERNS.md** so future agents don't rediscover it.
+
 ---
 
 ## Architecture
