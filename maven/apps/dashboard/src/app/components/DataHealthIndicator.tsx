@@ -181,7 +181,7 @@ export default function DataHealthIndicator({
           className={`
             w-2 h-2 rounded-full ${STATUS_COLORS[status]}
             ring-4 ${STATUS_RING_COLORS[status]}
-            ${status === 'loading' || status === 'degraded' ? 'animate-pulse' : ''}
+            ${status === 'loading' ? 'animate-pulse' : ''}
           `}
         />
         
@@ -215,14 +215,21 @@ export default function DataHealthIndicator({
               className={`
                 text-xs px-2 py-0.5 rounded-full
                 ${status === 'healthy' ? 'bg-emerald-500/20 text-emerald-400' : ''}
-                ${status === 'degraded' ? 'bg-amber-500/20 text-amber-400' : ''}
+                ${status === 'degraded' ? 'bg-gray-500/20 text-gray-400' : ''}
                 ${status === 'down' || status === 'error' ? 'bg-red-500/20 text-red-400' : ''}
                 ${status === 'loading' ? 'bg-gray-500/20 text-gray-400' : ''}
               `}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {status === 'degraded' ? 'Partial' : status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
           </div>
+          
+          {/* Degraded state - reassuring message */}
+          {status === 'degraded' && (
+            <div className="text-sm text-gray-400 mb-3">
+              Some sources are slow or unavailable, but your data is loading normally from backup sources.
+            </div>
+          )}
           
           {/* Error state */}
           {status === 'error' && (
@@ -256,10 +263,11 @@ export default function DataHealthIndicator({
                     {source.status === 'up' && (
                       <span>{formatLatency(source.latencyMs)}</span>
                     )}
-                    {source.lastError && source.status !== 'up' && (
-                      <span className="text-amber-500 max-w-[100px] truncate" title={source.lastError}>
-                        {source.lastError}
-                      </span>
+                    {source.status === 'degraded' && (
+                      <span className="text-amber-500">slow</span>
+                    )}
+                    {source.status === 'down' && (
+                      <span className="text-gray-500">offline</span>
                     )}
                   </div>
                 </div>
