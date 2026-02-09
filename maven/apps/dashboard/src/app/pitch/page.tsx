@@ -219,6 +219,68 @@ function ToolsSlide() {
   );
 }
 
+function HumanPlusAISlide() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
+      <div className="max-w-4xl w-full animate-fade-in">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white text-center">Human + AI</h2>
+        <p className="text-xl text-gray-400 text-center mb-10">The planners we hire aren't typical. That's the point.</p>
+        
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-600/10 border border-blue-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-blue-500/30">
+              📊
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Planning Expertise</h3>
+            <p className="text-gray-400 text-sm">Deep knowledge of tax, retirement, estate, and investment strategies. The technical foundation.</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/10 border border-purple-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-purple-500/30">
+              🔧
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Technology Fluency</h3>
+            <p className="text-gray-400 text-sm">Native comfort with AI tools. They don't just use Maven — they push it, question it, improve it.</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-amber-500/30">
+              🧠
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Behavioral Psychology</h3>
+            <p className="text-gray-400 text-sm">Understanding that most financial mistakes are emotional, not technical. Fear, greed, loss aversion.</p>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-center gap-8 mb-4">
+            <div className="text-center">
+              <div className="text-4xl mb-2">🤖</div>
+              <p className="text-sm text-gray-400">AI handles</p>
+              <p className="text-indigo-300 font-medium">Analysis & Optimization</p>
+            </div>
+            <div className="text-3xl text-gray-600">+</div>
+            <div className="text-center">
+              <div className="text-4xl mb-2">👤</div>
+              <p className="text-sm text-gray-400">Human handles</p>
+              <p className="text-indigo-300 font-medium">Behavior & Coaching</p>
+            </div>
+            <div className="text-3xl text-gray-600">=</div>
+            <div className="text-center">
+              <div className="text-4xl mb-2">✨</div>
+              <p className="text-sm text-gray-400">Together create</p>
+              <p className="text-emerald-300 font-medium">Superhuman Advisor</p>
+            </div>
+          </div>
+          <p className="text-center text-gray-400 text-sm">
+            This combination is rare. That's the moat. We're building a network of planners who can do what neither AI nor typical advisors can do alone.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FlywheelSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
@@ -517,6 +579,7 @@ export default function PitchPage() {
     { id: 'vision', content: <VisionSlide /> },
     { id: 'maven-partners', content: <MavenPartnersSlide /> },
     { id: 'tools', content: <ToolsSlide /> },
+    { id: 'human-plus-ai', content: <HumanPlusAISlide /> },
     { id: 'flywheel', content: <FlywheelSlide /> },
     { id: 'roadmap', content: <RoadmapSlide /> },
     { id: 'why-now', content: <WhyNowSlide /> },
