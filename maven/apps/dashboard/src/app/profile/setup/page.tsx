@@ -26,6 +26,14 @@ interface Child {
   dateOfBirth: string;
 }
 
+interface CashAccount {
+  id: string;
+  type: 'checking' | 'savings' | 'money_market';
+  name: string;
+  institution: string;
+  balance: number;
+}
+
 interface ProfileData {
   // Personal
   firstName: string;
@@ -46,7 +54,10 @@ interface ProfileData {
   investmentIncome: number;
   otherIncome: number;
   
-  // Cash Accounts (with labels)
+  // Cash Accounts (array - supports multiple)
+  cashAccounts: CashAccount[];
+  
+  // Legacy fields for backwards compatibility
   checkingAccountName: string;
   checkingInstitution: string;
   checkingBalance: number;
@@ -62,6 +73,7 @@ interface ProfileData {
   account401kName: string;
   account401kBalance: number;
   account401kEmployer: string;
+  account401kPlanProvider: string; // NEW: Fidelity, Vanguard, etc.
   account401kContributionMode: 'percent' | 'dollar';
   account401kContribution: number;
   account401kMatch: number;
@@ -501,14 +513,14 @@ function HoldingsEntry({
           value={newTicker}
           onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === 'Enter' && addHolding()}
-          placeholder="Enter ticker (e.g., VOO, AAPL)"
-          className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none font-mono"
+          placeholder="Add a stock or fund symbol..."
+          className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
         />
         <button
           type="button"
           onClick={addHolding}
           disabled={loading || !newTicker.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg transition flex items-center gap-2"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-xl transition flex items-center gap-2"
         >
           {loading ? (
             <span className="animate-spin">⏳</span>
@@ -553,7 +565,9 @@ export default function ProfileSetupPage() {
     selfEmploymentIncome: 0,
     investmentIncome: 0,
     otherIncome: 0,
-    // Cash accounts with labels
+    // Cash accounts (array for multiple)
+    cashAccounts: [],
+    // Legacy fields (for backwards compat)
     checkingAccountName: 'Checking Account',
     checkingInstitution: '',
     checkingBalance: 0,
@@ -568,6 +582,7 @@ export default function ProfileSetupPage() {
     account401kName: '401(k)',
     account401kBalance: 0,
     account401kEmployer: '',
+    account401kPlanProvider: '',
     account401kContributionMode: 'percent',
     account401kContribution: 0,
     account401kMatch: 0,
@@ -767,44 +782,50 @@ export default function ProfileSetupPage() {
     
     try {
       // Build the profile object for UserProvider
-      const cashAccounts = [];
-      if (data.checkingBalance > 0) {
-        cashAccounts.push({
-          id: 'checking-1',
-          name: data.checkingAccountName || 'Checking Account',
-          institution: data.checkingInstitution || 'Bank',
-          balance: data.checkingBalance,
-          type: 'Checking' as const,
-        });
-      }
-      if (data.savingsBalance > 0) {
-        cashAccounts.push({
-          id: 'savings-1',
-          name: data.savingsAccountName || 'Savings Account',
-          institution: data.savingsInstitution || 'Bank',
-          balance: data.savingsBalance,
-          type: 'Savings' as const,
-        });
-      }
-      if (data.mmBalance > 0) {
-        cashAccounts.push({
-          id: 'mm-1',
-          name: data.mmAccountName || 'Money Market',
-          institution: data.mmInstitution || 'Bank',
-          balance: data.mmBalance,
-          type: 'Money Market' as const,
-        });
-      }
+      // Use the new cashAccounts array if it has items, otherwise fall back to legacy fields
+      const cashAccountsOutput = data.cashAccounts.length > 0
+        ? data.cashAccounts.map(acc => ({
+            id: acc.id,
+            name: acc.name || (acc.type === 'checking' ? 'Checking' : acc.type === 'savings' ? 'Savings' : 'Money Market'),
+            institution: acc.institution || 'Bank',
+            balance: acc.balance,
+            type: (acc.type === 'checking' ? 'Checking' : acc.type === 'savings' ? 'Savings' : 'Money Market') as 'Checking' | 'Savings' | 'Money Market',
+          }))
+        : [
+            // Legacy fields support
+            ...(data.checkingBalance > 0 ? [{
+              id: 'checking-1',
+              name: data.checkingAccountName || 'Checking Account',
+              institution: data.checkingInstitution || 'Bank',
+              balance: data.checkingBalance,
+              type: 'Checking' as const,
+            }] : []),
+            ...(data.savingsBalance > 0 ? [{
+              id: 'savings-1',
+              name: data.savingsAccountName || 'Savings Account',
+              institution: data.savingsInstitution || 'Bank',
+              balance: data.savingsBalance,
+              type: 'Savings' as const,
+            }] : []),
+            ...(data.mmBalance > 0 ? [{
+              id: 'mm-1',
+              name: data.mmAccountName || 'Money Market',
+              institution: data.mmInstitution || 'Bank',
+              balance: data.mmBalance,
+              type: 'Money Market' as const,
+            }] : []),
+          ];
       
       const retirementAccounts = [];
       if (data.has401k && data.account401kBalance > 0) {
         retirementAccounts.push({
           id: '401k-1',
           name: data.account401kName || '401(k)',
-          institution: data.account401kEmployer || 'Employer',
+          institution: data.account401kPlanProvider || data.account401kEmployer || 'Employer',
           balance: data.account401kBalance,
           type: '401(k)' as const,
           employer: data.account401kEmployer,
+          planProvider: data.account401kPlanProvider,
           contributionPercent: data.account401kContributionMode === 'percent' ? data.account401kContribution : undefined,
           contributionAmount: data.account401kContributionMode === 'dollar' ? data.account401kContribution : undefined,
           employerMatchPercent: data.account401kMatch,
@@ -1001,7 +1022,7 @@ export default function ProfileSetupPage() {
         state: data.state,
         filingStatus: data.filingStatus as any,
         householdIncome: totalIncome > 0 ? `$${totalIncome.toLocaleString()}` : '',
-        cashAccounts,
+        cashAccounts: cashAccountsOutput,
         retirementAccounts,
         investmentAccounts,
         realEstateEquity: data.realEstateEquity,
@@ -1294,117 +1315,151 @@ export default function ProfileSetupPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 Your cash & savings
               </h1>
-              <p className="text-gray-400">Label each account so it shows up clearly in Maven</p>
+              <p className="text-gray-400">Add all your bank accounts for a complete picture</p>
             </div>
             
-            <div className="space-y-6">
-              {/* Checking Account */}
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="font-medium text-white mb-3">💳 Checking Account</p>
-                <div className="space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
-                      <input
-                        type="text"
-                        value={data.checkingAccountName}
-                        onChange={(e) => update({ checkingAccountName: e.target.value })}
-                        placeholder="e.g., Chase Checking"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
-                      <input
-                        type="text"
-                        value={data.checkingInstitution}
-                        onChange={(e) => update({ checkingInstitution: e.target.value })}
-                        placeholder="e.g., Chase, Wells Fargo"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
+            <div className="space-y-4">
+              {/* Dynamic Cash Accounts */}
+              {data.cashAccounts.map((account, index) => (
+                <div key={account.id} className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-medium text-white flex items-center gap-2">
+                      {account.type === 'checking' && '💳'}
+                      {account.type === 'savings' && '🏦'}
+                      {account.type === 'money_market' && '💵'}
+                      {account.type === 'checking' ? 'Checking' : account.type === 'savings' ? 'Savings' : 'Money Market'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update({ cashAccounts: data.cashAccounts.filter(a => a.id !== account.id) });
+                      }}
+                      className="text-gray-500 hover:text-red-400 transition text-sm"
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
-                    <CurrencyInput value={data.checkingBalance} onChange={(v) => update({ checkingBalance: v })} />
+                  <div className="space-y-3">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          value={account.name}
+                          onChange={(e) => {
+                            const updated = [...data.cashAccounts];
+                            updated[index] = { ...updated[index], name: e.target.value };
+                            update({ cashAccounts: updated });
+                          }}
+                          placeholder="e.g., Chase Checking"
+                          className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Bank / Institution</label>
+                        <input
+                          type="text"
+                          value={account.institution}
+                          onChange={(e) => {
+                            const updated = [...data.cashAccounts];
+                            updated[index] = { ...updated[index], institution: e.target.value };
+                            update({ cashAccounts: updated });
+                          }}
+                          placeholder="e.g., Chase, Wells Fargo"
+                          className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Current Balance</label>
+                      <CurrencyInput 
+                        value={account.balance} 
+                        onChange={(v) => {
+                          const updated = [...data.cashAccounts];
+                          updated[index] = { ...updated[index], balance: v };
+                          update({ cashAccounts: updated });
+                        }} 
+                      />
+                    </div>
                   </div>
                 </div>
+              ))}
+              
+              {/* Add Account Buttons */}
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    update({ 
+                      cashAccounts: [...data.cashAccounts, {
+                        id: crypto.randomUUID(),
+                        type: 'checking',
+                        name: '',
+                        institution: '',
+                        balance: 0,
+                      }]
+                    });
+                  }}
+                  className="p-3 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">💳</span>
+                  <span className="text-xs">+ Checking</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update({ 
+                      cashAccounts: [...data.cashAccounts, {
+                        id: crypto.randomUUID(),
+                        type: 'savings',
+                        name: '',
+                        institution: '',
+                        balance: 0,
+                      }]
+                    });
+                  }}
+                  className="p-3 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🏦</span>
+                  <span className="text-xs">+ Savings</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update({ 
+                      cashAccounts: [...data.cashAccounts, {
+                        id: crypto.randomUUID(),
+                        type: 'money_market',
+                        name: '',
+                        institution: '',
+                        balance: 0,
+                      }]
+                    });
+                  }}
+                  className="p-3 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">💵</span>
+                  <span className="text-xs">+ Money Market</span>
+                </button>
               </div>
               
-              {/* Savings Account */}
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="font-medium text-white mb-3">🏦 Savings Account</p>
-                <div className="space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
-                      <input
-                        type="text"
-                        value={data.savingsAccountName}
-                        onChange={(e) => update({ savingsAccountName: e.target.value })}
-                        placeholder="e.g., Marcus HYSA"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
-                      <input
-                        type="text"
-                        value={data.savingsInstitution}
-                        onChange={(e) => update({ savingsInstitution: e.target.value })}
-                        placeholder="e.g., Marcus, Ally"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
-                    <CurrencyInput value={data.savingsBalance} onChange={(v) => update({ savingsBalance: v })} />
-                  </div>
-                </div>
-              </div>
+              {data.cashAccounts.length === 0 && (
+                <p className="text-center text-gray-500 text-sm py-4">
+                  Click above to add your first account
+                </p>
+              )}
               
-              {/* Money Market */}
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="font-medium text-white mb-3">💵 Money Market / CDs</p>
-                <div className="space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
-                      <input
-                        type="text"
-                        value={data.mmAccountName}
-                        onChange={(e) => update({ mmAccountName: e.target.value })}
-                        placeholder="e.g., Fidelity Money Market"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
-                      <input
-                        type="text"
-                        value={data.mmInstitution}
-                        onChange={(e) => update({ mmInstitution: e.target.value })}
-                        placeholder="e.g., Fidelity, Vanguard"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
-                    <CurrencyInput value={data.mmBalance} onChange={(v) => update({ mmBalance: v })} placeholder="0" />
+              {/* Total */}
+              {data.cashAccounts.length > 0 && (
+                <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-300 font-medium">Total Cash</span>
+                    <span className="text-2xl font-bold text-white">
+                      ${data.cashAccounts.reduce((sum, a) => sum + (a.balance || 0), 0).toLocaleString()}
+                    </span>
                   </div>
                 </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <div className="flex justify-between items-center">
-                  <span className="text-blue-300 font-medium">Total Cash</span>
-                  <span className="text-2xl font-bold text-white">
-                    ${(data.checkingBalance + data.savingsBalance + data.mmBalance).toLocaleString()}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -1432,17 +1487,28 @@ export default function ProfileSetupPage() {
               
               {data.has401k && (
                 <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                    <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                  </div>
+                  
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                      <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                      <label className="block text-sm text-gray-400 mb-1">Employer Name</label>
+                      <input
+                        type="text"
+                        value={data.account401kEmployer}
+                        onChange={(e) => update({ account401kEmployer: e.target.value })}
+                        placeholder="e.g., Capital Group, Google"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Plan Provider</label>
                       <input
                         type="text"
-                        value={data.account401kEmployer}
-                        onChange={(e) => update({ account401kEmployer: e.target.value })}
+                        value={data.account401kPlanProvider}
+                        onChange={(e) => update({ account401kPlanProvider: e.target.value })}
                         placeholder="e.g., Fidelity, Vanguard"
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
                       />
@@ -1457,21 +1523,35 @@ export default function ProfileSetupPage() {
                         mode={data.account401kContributionMode}
                         onChange={(v) => update({ account401kContributionMode: v as 'percent' | 'dollar' })}
                         options={[
-                          { value: 'percent', label: '%' },
-                          { value: 'dollar', label: '$' },
+                          { value: 'percent', label: '% of Salary' },
+                          { value: 'dollar', label: '$ per Year' },
                         ]}
                       />
                     </div>
                     {data.account401kContributionMode === 'percent' ? (
-                      <PercentInput value={data.account401kContribution} onChange={(v) => update({ account401kContribution: v })} />
+                      <PercentInput 
+                        value={data.account401kContribution} 
+                        onChange={(v) => update({ account401kContribution: v })} 
+                        placeholder="e.g., 10"
+                      />
                     ) : (
-                      <CurrencyInput value={data.account401kContribution} onChange={(v) => update({ account401kContribution: v })} placeholder="Annual amount" />
+                      <CurrencyInput 
+                        value={data.account401kContribution} 
+                        onChange={(v) => update({ account401kContribution: v })} 
+                        placeholder="e.g., 23,000"
+                      />
                     )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.account401kContributionMode === 'dollar' 
+                        ? '2024 max: $23,000 ($30,500 if 50+)' 
+                        : 'Enter the percentage of your salary you contribute'}
+                    </p>
                   </div>
                   
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Employer Match %</label>
-                    <PercentInput value={data.account401kMatch} onChange={(v) => update({ account401kMatch: v })} />
+                    <PercentInput value={data.account401kMatch} onChange={(v) => update({ account401kMatch: v })} placeholder="e.g., 4" />
+                    <p className="text-xs text-gray-500 mt-1">What percentage does your employer match?</p>
                   </div>
                   
                   {/* Holdings */}
