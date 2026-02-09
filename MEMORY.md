@@ -223,4 +223,26 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
-*Last updated: 2026-02-07 (late evening)*
+*Last updated: 2026-02-09*
+
+---
+
+## Project Pantheon (NEW - 2026-02-09)
+
+**What:** Multi-agent architecture for Maven. Self-improving intelligence network.
+
+**Key Concepts:**
+- Tool teams (Portfolio Lab, Tax, Retirement, Fragility, Dashboard)
+- Specialized agents (Research, Dev, UX, QA per team)
+- Bittensor-inspired: Competition, reputation, composability
+- Knowledge bases persist between sessions
+- Compound learning 24/7
+
+**First Sprint Success:** Factor Exposure Analysis built in 6 minutes autonomously.
+
+**Files:**
+- `memory/PROJECT-PANTHEON.md` — Full spec
+- `memory/pantheon/*/KNOWLEDGE.md` — Team knowledge bases
+- `maven/docs/DATA-SOURCES-ROADMAP.md` — Data sources and APIs needed
+
+**This is the moat.** Competitors can't copy accumulated learning.
