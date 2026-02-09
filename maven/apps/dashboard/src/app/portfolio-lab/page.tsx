@@ -977,83 +977,230 @@ export default function PortfolioLab() {
                 </div>
               </div>
               
-              {/* Backtest Visualization */}
-              <div className="bg-white/5 rounded-xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-white flex items-center gap-2">
-                    📈 10-Year Backtest Comparison
-                    <span className="text-xs text-gray-500">(Historical simulation)</span>
-                  </h4>
-                </div>
+              {/* Detailed Projections & Risk Metrics */}
+              {(() => {
+                const target = targetAllocation || { usEquity: 50, intlEquity: 20, bonds: 20, crypto: 5, cash: 5 };
                 
-                {/* Chart Area */}
-                <div className="relative h-48 mb-4">
-                  {/* Y-axis labels */}
-                  <div className="absolute left-0 top-0 bottom-6 w-12 flex flex-col justify-between text-xs text-gray-500">
-                    <span>+150%</span>
-                    <span>+100%</span>
-                    <span>+50%</span>
-                    <span>0%</span>
-                  </div>
-                  
-                  {/* Chart */}
-                  <div className="ml-12 h-full relative">
-                    <svg className="w-full h-full" viewBox="0 0 400 160" preserveAspectRatio="none">
-                      {/* Grid lines */}
-                      <line x1="0" y1="40" x2="400" y2="40" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
-                      <line x1="0" y1="80" x2="400" y2="80" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
-                      <line x1="0" y1="120" x2="400" y2="120" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                // Calculate expected returns
+                const currentReturn = (currentAllocation.usEquity * 0.10 + currentAllocation.intlEquity * 0.08 + 
+                  currentAllocation.bonds * 0.04 + currentAllocation.crypto * 0.15 + currentAllocation.cash * 0.02) / 100;
+                const optimizedReturn = (target.usEquity * 0.10 + target.intlEquity * 0.08 + 
+                  target.bonds * 0.04 + target.crypto * 0.15 + target.cash * 0.02) / 100;
+                
+                // Calculate volatility
+                const currentVol = (currentAllocation.usEquity * 0.18 + currentAllocation.intlEquity * 0.22 + 
+                  currentAllocation.bonds * 0.06 + currentAllocation.crypto * 0.60 + currentAllocation.cash * 0.01) / 100;
+                const optimizedVol = (target.usEquity * 0.18 + target.intlEquity * 0.22 + 
+                  target.bonds * 0.06 + target.crypto * 0.60 + target.cash * 0.01) / 100;
+                
+                // Sharpe ratio (assuming 4% risk-free)
+                const riskFree = 0.04;
+                const currentSharpe = currentVol > 0 ? (currentReturn - riskFree) / currentVol : 0;
+                const optimizedSharpe = optimizedVol > 0 ? (optimizedReturn - riskFree) / optimizedVol : 0;
+                
+                // Max drawdown estimates
+                const currentMaxDD = Math.min(-15, -(currentAllocation.usEquity * 0.50 + currentAllocation.intlEquity * 0.55 + 
+                  currentAllocation.bonds * 0.15 + currentAllocation.crypto * 0.80 + currentAllocation.cash * 0.01) / 100 * 100);
+                const optimizedMaxDD = Math.min(-15, -(target.usEquity * 0.50 + target.intlEquity * 0.55 + 
+                  target.bonds * 0.15 + target.crypto * 0.80 + target.cash * 0.01) / 100 * 100);
+                
+                // Project values
+                const projectValue = (startVal: number, rate: number, years: number) => 
+                  startVal * Math.pow(1 + rate, years);
+                
+                return (
+                  <>
+                    {/* Risk/Return Metrics Comparison */}
+                    <div className="bg-white/5 rounded-xl p-5 mb-6">
+                      <h4 className="font-medium text-white mb-4 flex items-center gap-2">
+                        📊 Risk & Return Comparison
+                      </h4>
                       
-                      {/* Current portfolio line (gray) */}
-                      <path 
-                        d="M 0,140 L 40,130 L 80,115 L 120,90 L 160,100 L 200,85 L 240,70 L 280,60 L 320,50 L 360,45 L 400,40"
-                        fill="none"
-                        stroke="#6B7280"
-                        strokeWidth="2"
-                      />
-                      
-                      {/* Optimized portfolio line (purple) */}
-                      <path 
-                        d="M 0,140 L 40,125 L 80,105 L 120,75 L 160,85 L 200,65 L 240,50 L 280,35 L 320,25 L 360,18 L 400,10"
-                        fill="none"
-                        stroke="#8B5CF6"
-                        strokeWidth="2.5"
-                      />
-                      
-                      {/* Dots at end */}
-                      <circle cx="400" cy="40" r="4" fill="#6B7280" />
-                      <circle cx="400" cy="10" r="4" fill="#8B5CF6" />
-                    </svg>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-gray-400 border-b border-white/10">
+                              <th className="text-left py-2 font-medium">Metric</th>
+                              <th className="text-center py-2 font-medium">Current</th>
+                              <th className="text-center py-2 font-medium text-indigo-300">Optimized</th>
+                              <th className="text-right py-2 font-medium">Difference</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            <tr>
+                              <td className="py-3 text-gray-400">Expected Annual Return</td>
+                              <td className="py-3 text-center text-white">{(currentReturn * 100).toFixed(1)}%</td>
+                              <td className="py-3 text-center text-indigo-300">{(optimizedReturn * 100).toFixed(1)}%</td>
+                              <td className={`py-3 text-right ${optimizedReturn > currentReturn ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {optimizedReturn > currentReturn ? '+' : ''}{((optimizedReturn - currentReturn) * 100).toFixed(1)}%
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="py-3 text-gray-400">Volatility (Risk)</td>
+                              <td className="py-3 text-center text-white">{(currentVol * 100).toFixed(1)}%</td>
+                              <td className="py-3 text-center text-indigo-300">{(optimizedVol * 100).toFixed(1)}%</td>
+                              <td className={`py-3 text-right ${optimizedVol < currentVol ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {optimizedVol < currentVol ? '' : '+'}{((optimizedVol - currentVol) * 100).toFixed(1)}%
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="py-3 text-gray-400">Sharpe Ratio</td>
+                              <td className="py-3 text-center text-white">{currentSharpe.toFixed(2)}</td>
+                              <td className="py-3 text-center text-indigo-300">{optimizedSharpe.toFixed(2)}</td>
+                              <td className={`py-3 text-right ${optimizedSharpe > currentSharpe ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {optimizedSharpe > currentSharpe ? '+' : ''}{(optimizedSharpe - currentSharpe).toFixed(2)}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="py-3 text-gray-400">Est. Max Drawdown</td>
+                              <td className="py-3 text-center text-red-400">{currentMaxDD.toFixed(0)}%</td>
+                              <td className="py-3 text-center text-indigo-300">{optimizedMaxDD.toFixed(0)}%</td>
+                              <td className={`py-3 text-right ${Math.abs(optimizedMaxDD) < Math.abs(currentMaxDD) ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {Math.abs(optimizedMaxDD) < Math.abs(currentMaxDD) ? 'Better' : 'Similar'}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                     
-                    {/* X-axis labels */}
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>2016</span>
-                      <span>2018</span>
-                      <span>2020</span>
-                      <span>2022</span>
-                      <span>2024</span>
+                    {/* Dollar Projections Table */}
+                    <div className="bg-white/5 rounded-xl p-5 mb-6">
+                      <h4 className="font-medium text-white mb-4 flex items-center gap-2">
+                        💰 Projected Portfolio Value
+                        <span className="text-xs text-gray-500 font-normal">Starting with ${totalValue.toLocaleString()}</span>
+                      </h4>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-gray-400 border-b border-white/10">
+                              <th className="text-left py-2 font-medium">Time Horizon</th>
+                              <th className="text-center py-2 font-medium">Current Allocation</th>
+                              <th className="text-center py-2 font-medium text-indigo-300">Optimized</th>
+                              <th className="text-right py-2 font-medium">Extra Wealth</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {[5, 10, 20, 30].map(years => {
+                              const currentVal = projectValue(totalValue, currentReturn, years);
+                              const optimizedVal = projectValue(totalValue, optimizedReturn, years);
+                              const diff = optimizedVal - currentVal;
+                              return (
+                                <tr key={years}>
+                                  <td className="py-3 text-gray-400">{years} Years</td>
+                                  <td className="py-3 text-center text-white">${(currentVal / 1000000).toFixed(2)}M</td>
+                                  <td className="py-3 text-center text-indigo-300">${(optimizedVal / 1000000).toFixed(2)}M</td>
+                                  <td className={`py-3 text-right font-medium ${diff > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {diff > 0 ? '+' : ''}${(diff / 1000).toFixed(0)}K
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <p className="text-xs text-gray-500 mt-3">
+                        * Projections assume constant returns at historical averages. Actual results will vary.
+                      </p>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Legend & Results */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-0.5 bg-gray-500 rounded" />
-                      <span className="text-sm text-gray-400">Current: +95%</span>
+                    
+                    {/* Visual Growth Chart */}
+                    <div className="bg-white/5 rounded-xl p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-white flex items-center gap-2">
+                          📈 Growth Projection (30 Years)
+                        </h4>
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 bg-gray-500 rounded" />
+                            <span className="text-gray-400">Current</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 bg-purple-500 rounded" />
+                            <span className="text-purple-300">Optimized</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Chart Area */}
+                      <div className="relative h-56">
+                        {/* Y-axis labels */}
+                        <div className="absolute left-0 top-0 bottom-6 w-16 flex flex-col justify-between text-xs text-gray-500">
+                          <span>${(projectValue(totalValue, Math.max(currentReturn, optimizedReturn), 30) / 1000000).toFixed(1)}M</span>
+                          <span>${(projectValue(totalValue, Math.max(currentReturn, optimizedReturn), 20) / 1000000).toFixed(1)}M</span>
+                          <span>${(projectValue(totalValue, Math.max(currentReturn, optimizedReturn), 10) / 1000000).toFixed(1)}M</span>
+                          <span>${(totalValue / 1000000).toFixed(1)}M</span>
+                        </div>
+                        
+                        {/* Chart */}
+                        <div className="ml-16 h-full relative">
+                          <svg className="w-full h-full" viewBox="0 0 400 180" preserveAspectRatio="none">
+                            {/* Grid lines */}
+                            <line x1="0" y1="45" x2="400" y2="45" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                            <line x1="0" y1="90" x2="400" y2="90" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                            <line x1="0" y1="135" x2="400" y2="135" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                            
+                            {/* Current portfolio curve (gray) */}
+                            <path 
+                              d={`M 0,170 ${[5,10,15,20,25,30].map((y, i) => {
+                                const val = projectValue(totalValue, currentReturn, y);
+                                const maxVal = projectValue(totalValue, Math.max(currentReturn, optimizedReturn), 30);
+                                const yPos = 170 - (val / maxVal) * 160;
+                                return `L ${(i + 1) * 66},${yPos}`;
+                              }).join(' ')}`}
+                              fill="none"
+                              stroke="#6B7280"
+                              strokeWidth="2"
+                            />
+                            
+                            {/* Optimized portfolio curve (purple) */}
+                            <path 
+                              d={`M 0,170 ${[5,10,15,20,25,30].map((y, i) => {
+                                const val = projectValue(totalValue, optimizedReturn, y);
+                                const maxVal = projectValue(totalValue, Math.max(currentReturn, optimizedReturn), 30);
+                                const yPos = 170 - (val / maxVal) * 160;
+                                return `L ${(i + 1) * 66},${yPos}`;
+                              }).join(' ')}`}
+                              fill="none"
+                              stroke="#8B5CF6"
+                              strokeWidth="2.5"
+                            />
+                          </svg>
+                          
+                          {/* X-axis labels */}
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Today</span>
+                            <span>10 yrs</span>
+                            <span>20 yrs</span>
+                            <span>30 yrs</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Summary */}
+                      <div className="mt-4 p-4 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                          <div>
+                            <p className="text-sm text-gray-400">After 30 years, the optimized portfolio could be worth</p>
+                            <p className="text-2xl font-bold text-white">
+                              ${(projectValue(totalValue, optimizedReturn, 30) / 1000000).toFixed(2)}M
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-400">That&apos;s</p>
+                            <p className="text-xl font-bold text-emerald-400">
+                              +${((projectValue(totalValue, optimizedReturn, 30) - projectValue(totalValue, currentReturn, 30)) / 1000000).toFixed(2)}M more
+                            </p>
+                            <p className="text-xs text-gray-500">than your current allocation</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-0.5 bg-purple-500 rounded" />
-                      <span className="text-sm text-purple-300">Optimized: +142%</span>
-                    </div>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-gray-400">Improvement: </span>
-                    <span className="text-emerald-400 font-medium">+47% more growth</span>
-                  </div>
-                </div>
-              </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Suggested Trades */}
