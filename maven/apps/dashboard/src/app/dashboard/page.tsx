@@ -29,12 +29,7 @@ interface Insight {
   priority?: 'high' | 'medium' | 'low';
 }
 
-// Crypto symbols we track via CoinGecko
-const CRYPTO_TICKERS = new Set(['BTC', 'ETH', 'SOL', 'TAO', 'AVAX', 'LINK', 'DOT', 'ADA', 'XRP', 'DOGE']);
-const CRYPTO_TO_COINGECKO: Record<string, string> = {
-  'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'TAO': 'bittensor',
-  'AVAX': 'avalanche-2', 'LINK': 'chainlink', 'DOT': 'polkadot', 'ADA': 'cardano', 'XRP': 'ripple', 'DOGE': 'dogecoin'
-};
+// Note: Crypto prices are now fetched via /api/stock-quote which handles both stocks and crypto
 
 export default function Dashboard() {
   const { profile, financials, isLoading } = useUserProfile();
