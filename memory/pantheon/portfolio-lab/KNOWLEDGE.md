@@ -16,11 +16,13 @@ Make Portfolio Lab the best portfolio analysis tool in existence — institution
 ### Features Built
 - **Analysis Tab:** Portfolio health score, sector concentration, key metrics, **factor exposure analysis**, **fee analyzer**, **holdings overlap detection**
 - **Optimize Tab:** AI-powered rebalancing recommendations with explanations
+- **What-If Tab:** Hypothetical trade simulator — model trades before executing
 - **Stress Test Tab:** 6 historical scenarios (2008, COVID, 2022, Dot-Com, Stagflation, Flash Crash)
 - **Projections Tab:** Monte Carlo-style wealth projections
 - **Actions Tab:** Prioritized action items
 - **Factor Exposure Analysis:** Shows Market Beta, Size, Value, Momentum, Quality factors with visual bars
 - **Holdings Overlap Detection:** Identifies redundant ETF positions with similar underlying holdings
+- **What-If Trade Simulator:** Preview impact of hypothetical trades on portfolio
 
 ### Code Location
 - Main page: `apps/dashboard/src/app/portfolio-lab/page.tsx`
@@ -347,6 +349,107 @@ holdings.sort((a, b) => {
 - Year-end tax planning mode
 - Multi-account rebalancing optimization
 
+### What-If Trade Simulator (Implemented 2026-02-09)
+
+**Why It Matters:**
+Users often want to explore trades mentally: "What if I buy 8000 shares of CIFR?" The What-If Simulator lets them see the exact impact before committing — allocation changes, concentration shifts, risk metrics, factor exposures — all in a side-by-side comparison.
+
+**Location:**
+- Component: `apps/dashboard/src/app/components/WhatIfSimulator.tsx`
+- Integration: Portfolio Lab → What-If tab (between Optimize and Stress Test)
+
+**Features:**
+
+1. **Trade Input Form**
+   - Trade type: Buy or Sell toggle
+   - Ticker input with autocomplete (existing holdings + popular tickers)
+   - Quantity by shares OR dollar amount (toggle)
+   - Auto-fetches current price from API
+   - Shows max shares for sell trades
+   - Validates you own the position for sells
+
+2. **Trade Impact Summary (4 key metrics)**
+   - New position size as % of portfolio
+   - Concentration change (more/less concentrated)
+   - Portfolio beta change (riskier/less risky)
+   - Estimated volatility change
+
+3. **Side-by-Side Portfolio Comparison**
+   - Current vs Hypothetical allocation bars
+   - Change indicators (+/- percentages)
+   - Top positions comparison with highlighted new position
+   - Visual pie-style allocation breakdown
+
+4. **Factor Exposure Shift**
+   - All 5 factors (Market Beta, Size, Value, Momentum, Quality)
+   - Before → After values with change amount
+   - Mini bar visualization for each factor
+   - Plain-English interpretation of overall impact
+
+5. **Risk Assessment**
+   - Concentration warnings (>15% in single position)
+   - Aggression/defensiveness shift interpretation
+   - Clear "simulation only" disclaimer
+
+**Key Calculations:**
+
+```typescript
+// Build hypothetical holdings
+const hypotheticalHoldings = [...currentHoldings];
+const existingIdx = hypotheticalHoldings.findIndex(
+  h => h.ticker === simulatedTicker
+);
+
+if (tradeType === 'buy') {
+  if (existingIdx >= 0) {
+    // Add to existing position
+    hypotheticalHoldings[existingIdx].shares += tradeShares;
+    hypotheticalHoldings[existingIdx].currentValue += tradeShares * price;
+  } else {
+    // New position
+    hypotheticalHoldings.push({
+      ticker, shares: tradeShares, currentValue: tradeShares * price
+    });
+  }
+} else {
+  // Sell — reduce or remove position
+  const newShares = existingPosition.shares - tradeShares;
+  if (newShares <= 0) {
+    hypotheticalHoldings.splice(existingIdx, 1);
+  } else {
+    hypotheticalHoldings[existingIdx].shares = newShares;
+  }
+}
+
+// Recalculate all metrics with hypothetical holdings
+const hypotheticalAllocation = calculateAllocation(hypotheticalHoldings);
+const hypotheticalFactors = calculatePortfolioFactorExposures(hypotheticalHoldings);
+const hypotheticalBeta = estimateBeta(hypotheticalHoldings);
+```
+
+**UX Design Decisions:**
+- Trade type buttons (Buy/Sell) are color-coded (green/red)
+- Autocomplete shows "In Portfolio" badge for existing holdings
+- Supports both share-based and dollar-based input with easy toggle
+- Results appear instantly as user types (no submit button needed)
+- Clear button to reset simulation
+- Impact summary uses directional language ("More concentrated", "Less risky")
+- Factor visualization uses centered bar for negative/positive values
+
+**Integration Notes:**
+- Reuses existing portfolio utilities (`calculatePortfolioFactorExposures`, `classifyTicker`)
+- Price fetched from `/api/stock-research` endpoint
+- Component is self-contained (no external state needed)
+- Works with any holdings array from UserProvider
+
+**Future Enhancements:**
+- Multiple simultaneous trades (build a trade list)
+- Tax impact estimation for sells
+- Historical performance projection ("if you'd bought X last year")
+- Save simulation as a "plan" to reference later
+- Share simulation results
+- Integration with actual trade execution
+
 ---
 
 ## User Research Insights
@@ -424,7 +527,7 @@ Users don't want more data — they want clarity and confidence.
 ### Lower Priority
 9. **Peer comparison** — How does this compare to similar investors?
 10. **Risk capacity questionnaire** — Refine risk tolerance
-11. **What-if scenarios** — "What if I added $10K to bonds?"
+11. ~~**What-if scenarios**~~ ✅ — "What if I added $10K to bonds?" → What-If Trade Simulator
 12. **Export/share** — PDF reports, shareable links
 
 ---

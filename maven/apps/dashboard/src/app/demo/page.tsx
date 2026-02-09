@@ -278,13 +278,14 @@ export default function DemoPage() {
             
             {/* Demo Variant Selector */}
             <div className="flex-shrink-0">
-              <div className="bg-[#12121a] border border-white/10 rounded-xl p-1 flex gap-1">
+              <p className="text-xs text-gray-400 mb-1.5 text-center sm:text-right">Choose demo profile:</p>
+              <div className="bg-[#1a1a24] border border-white/20 rounded-xl p-1.5 flex gap-1.5 shadow-lg">
                 <button
                   onClick={() => handleVariantChange('growth')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     variant === 'growth'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg ring-2 ring-purple-400/50'
+                      : 'bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 border border-white/10'
                   }`}
                 >
                   <span className="hidden sm:inline">📈 Growth Portfolio</span>
@@ -292,10 +293,10 @@ export default function DemoPage() {
                 </button>
                 <button
                   onClick={() => handleVariantChange('retiree')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     variant === 'retiree'
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg ring-2 ring-emerald-400/50'
+                      : 'bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 border border-white/10'
                   }`}
                 >
                   <span className="hidden sm:inline">🏖️ Retirement Income</span>
