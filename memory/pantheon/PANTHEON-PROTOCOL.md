@@ -81,6 +81,41 @@ This is how Pantheon compounds. Skip this = wasted knowledge.
 
 ---
 
+## Visual Testing Checklist (MANDATORY)
+
+**Before marking any UI task "complete", verify:**
+
+### Data Display
+- [ ] Numbers show actual values (not 0, null, undefined, or "—")
+- [ ] Percentages/changes are correct direction (positive = green/up, negative = red/down)
+- [ ] Prices match reality (check against Yahoo Finance or CoinGecko)
+- [ ] Charts reflect actual data (up chart when up, down chart when down)
+
+### State Initialization
+- [ ] Page looks correct on FIRST load (before any API returns)
+- [ ] Fallback data exists for external API failures
+- [ ] Loading states show real content structure (not generic spinners)
+
+### Demo Mode
+- [ ] No user data visible (check localStorage, cookies)
+- [ ] Uses DEMO_PROFILE consistently across all pages
+- [ ] Chat/history cleared on demo mode entry
+
+### External APIs
+- [ ] Works on Vercel (not just localhost)
+- [ ] Has timeout (5s max)
+- [ ] Has fallback data when API fails
+- [ ] Errors logged but not shown to users
+
+**Pattern for testing:**
+1. Open browser devtools console
+2. Hard refresh (Cmd+Shift+R)
+3. Watch network tab for API calls
+4. Verify displayed data matches API response
+5. Compare to real-world data source (is market actually up/down?)
+
+---
+
 ## Post-Deploy Verification
 
 **Every agent must verify their change is live:**

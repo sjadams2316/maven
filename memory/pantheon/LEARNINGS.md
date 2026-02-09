@@ -116,3 +116,35 @@
 ### pantheon-security-v2
 **Task:** Basic API security hardening - audit for rate limiting, security headers, and exposed debug endpoints
 **Insight:** Before adding new security measures, **audit what's already there**. This codebase already had: (1) Comprehensive rate limiting in middleware.ts with per-route configs (chat: 30/min, quotes: 100/min, compute: 20/min), (2) Security headers in both middleware.ts AND next.config.ts (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy), (3) Good error handling without stack trace exposure. The only issue found was a `/api/debug-env` route that exposed API key prefixes and env info in production. **Fix pattern:** Add `if (process.env.NODE_ENV === 'production') return 403` at the top of any debug/diagnostic endpoints. Don't duplicate security work that's already done well — focus on finding gaps like unprotected debug routes.
+
+---
+
+## 2026-02-09 — Critical User-Reported Bugs
+
+### Landing Page Market Data (User-Reported)
+**Bug:** Markets showed ▼ 0.00% and no prices, charts all red even though stocks were UP
+**Root Cause:** 
+1. `useState(null)` meant nothing displayed until API returned
+2. CoinGecko blocked on Vercel, crypto array was empty
+3. Data transformation worked but state initialization was null
+**Fix:** Initialize with fallback data: `useState(FALLBACK_MARKET_DATA)`
+**Lesson:** **ALWAYS initialize state with displayable defaults for critical UI.** Never let users see 0s or blanks because "API is loading". First-paint matters.
+
+### Demo Mode Chat History (User-Reported)
+**Bug:** User's real chat messages showed in Oracle when in demo mode
+**Root Cause:** localStorage wasn't cleared when entering demo mode
+**Fix:** Clear `maven_chat_history` and `maven_conversation_id` on demo mode entry
+**Lesson:** **Demo mode must be completely isolated.** Check every persistence layer (localStorage, cookies, sessionStorage, IndexedDB) and clear on demo entry.
+
+### Visual Data Accuracy (User-Reported)
+**Bug:** Charts showed red (down) when markets were actually green (up)
+**Root Cause:** Agents verified HTTP 200 but never visually checked the page
+**Fix:** Added to mandatory testing checklist
+**Lesson:** **"Works" ≠ "Correct".** Functional testing must include visual verification. Ask: "Does this chart color match reality? Does this number make sense?"
+
+### External API Failures on Vercel (Discovered)
+**Bug:** CoinGecko works locally but fails silently on Vercel
+**Root Cause:** Vercel IPs get rate-limited or blocked by external APIs
+**Fix:** Always have fallback data for external APIs
+**Lesson:** **External APIs WILL fail in production.** Every external call needs: timeout, fallback data, error logging. Pattern: `try { fetchLive() } catch { return FALLBACK } finally { logStatus() }`
+

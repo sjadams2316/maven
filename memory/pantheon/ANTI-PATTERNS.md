@@ -59,6 +59,26 @@ const price = data?.chart?.result?.[0]?.meta?.price || 0;
 **Why it failed:** Looks broken, undermines trust
 **Do instead:** Fallback data with "Delayed" indicator
 
+### ❌ Initializing state as null when data should always display
+**What happened:** Landing page showed 0.00% and no prices because `useState(null)` meant nothing rendered until API returned
+**Why it failed:** If API is slow or fails, users see broken UI for first few seconds
+**Do instead:** Initialize with fallback data: `useState(FALLBACK_DATA)` — update when real data arrives
+
+### ❌ Silent API failures hiding bugs
+**What happened:** CoinGecko API failed on Vercel (IP blocked), crypto array returned empty, page showed no BTC data
+**Why it failed:** No fallback, error was caught and swallowed silently
+**Do instead:** Always have fallback data for external APIs. Log errors. Return stale data > no data.
+
+### ❌ Chat history persisting in demo mode
+**What happened:** Demo visitors saw previous users' chat messages (stored in localStorage)
+**Why it failed:** Demo mode didn't clear localStorage on entry
+**Do instead:** Clear session-specific localStorage when entering demo mode
+
+### ❌ Multiple sources of demo data
+**What happened:** /demo page showed one portfolio, /portfolio-lab showed completely different holdings
+**Why it failed:** Hardcoded data in one place, DEMO_PROFILE in another — never connected
+**Do instead:** Single source of truth (DEMO_PROFILE), all pages read from it via hooks
+
 ### ❌ Touch targets under 48px
 **What happened:** Tab buttons too small to tap on mobile
 **Why it failed:** 44px is minimum, 48px is comfortable
