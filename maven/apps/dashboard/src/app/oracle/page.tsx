@@ -9,13 +9,21 @@ import { ToolExplainer } from '@/app/components/ToolExplainer';
 
 export default function OraclePage() {
   // Use centralized UserProvider
-  const { profile, isLoading } = useUserProfile();
+  const { profile, isLoading, isDemoMode } = useUserProfile();
   const [insights, setInsights] = useState<any[]>([]);
 
-  // Clear any stale chat history on page load (fresh start)
+  // Clear chat history on page load - always fresh in demo mode, or if corrupted
   useEffect(() => {
-    // Only clear if there's corrupted/old data
     const savedHistory = localStorage.getItem('maven_chat_history');
+    
+    // In demo mode, always start fresh so demo visitors see clean slate
+    if (isDemoMode) {
+      localStorage.removeItem('maven_chat_history');
+      localStorage.removeItem('maven_conversation_id');
+      return;
+    }
+    
+    // For real users, only clear if there's corrupted/old data
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory);
@@ -29,7 +37,7 @@ export default function OraclePage() {
         localStorage.removeItem('maven_conversation_id');
       }
     }
-  }, []);
+  }, [isDemoMode]);
 
   // Generate insights based on profile
   useEffect(() => {
