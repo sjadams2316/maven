@@ -97,6 +97,14 @@
 **Task:** Fixed critical bug where /demo and /portfolio-lab showed completely different portfolios (GROWTH_HOLDINGS vs DEMO_PROFILE with different holdings)
 **Insight:** When building demo/sample data features, establish ONE canonical data source from day one. Having hardcoded data in page components (`/demo/page.tsx` with `GROWTH_HOLDINGS`) separate from the central profile (`lib/demo-profile.ts` with `DEMO_PROFILE`) creates drift that's invisible until users compare pages. **Fix pattern:** (1) Put all demo holdings in `demo-profile.ts` with exports for both the profile object AND display-friendly arrays, (2) Have pages import from that single source, (3) Use helper functions like `getDemoHoldings(variant)` to access the right data. This ensures /demo, /portfolio-lab, /tax, /retirement all pull from the same well.
 
+### pantheon-mobile-qa-v2
+**Task:** Mobile UX audit - checked touch targets, text sizes, and table responsiveness on /demo, /dashboard, /portfolio-lab
+**Insight:** Mobile touch targets need **three things**: (1) `min-h-[44px]` or `min-h-[48px]` minimum on all tappable elements, (2) Use mobile-first responsive padding like `px-4 py-2.5 sm:px-3 sm:py-1.5` so mobile gets the larger targets, (3) Never use `text-[10px]` or `text-[11px]` - use `text-xs` (12px) as the minimum readable size on mobile. For small toggle buttons (Current/Target switches), the pattern `min-h-[44px] sm:min-h-0` gives proper touch targets on mobile while staying compact on desktop. Tables with `overflow-x-auto` are fine for horizontal scroll, but add `scrollbar-hide` class for tab bars to keep the UI cleaner.
+
 ---
 
 *This file grows with every sprint. Review weekly to promote patterns to PATTERNS.md.*
+
+### pantheon-demo-unify-v2
+**Task:** Unify demo data - Dashboard and Portfolio Lab showing different portfolios
+**Insight:** When creating demo data with both a summary view (GROWTH_HOLDINGS) and detailed account-level data (DEMO_PROFILE), the holdings MUST be mathematically consistent. If GROWTH_HOLDINGS says "620 shares of VTI = $185K" but DEMO_PROFILE has VTI in multiple accounts totaling 740 shares, users will see different numbers on different pages. **Always calculate totals from account-level holdings** and verify they match any summary arrays. The pattern: Define holdings at account level first, then compute summary arrays by aggregating across accounts — not the other way around.
