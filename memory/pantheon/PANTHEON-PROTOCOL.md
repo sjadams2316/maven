@@ -1,4 +1,4 @@
-# Pantheon Protocol v2.0
+# Pantheon Protocol v2.1
 
 *How to run effective Pantheon sprints. Read before spawning agents.*
 
@@ -7,14 +7,27 @@
 ## Pre-Sprint Checklist
 
 ### 1. Review Context
-- [ ] Check `PANTHEON-STATUS.md` for running agents
+- [ ] Check `PANTHEON-STATUS.md` for running agents + dependencies
 - [ ] Check `PATTERNS.md` for common fixes
 - [ ] Check `ANTI-PATTERNS.md` for what NOT to do
-- [ ] Check `LEARNINGS.md` for recent insights
+- [ ] Check `LEARNINGS-v2.md` for **tagged** insights (inject relevant domain tags only)
 - [ ] Check `FEEDBACK.md` for user signals
 - [ ] Review `code-patterns/` for reusable snippets
 - [ ] Review relevant backlogs for prioritized tasks
 - [ ] Estimate credits (rule of thumb: ~$1-3 per agent)
+
+### 2. Context Tag Injection (NEW)
+**Don't inject all learnings — inject relevant ones by domain:**
+
+| Task Type | Inject These Tags |
+|-----------|-------------------|
+| UI/Components | `ui`, `ux`, `mobile`, `accessibility` |
+| API Routes | `api`, `external`, `error`, `performance` |
+| Data/Demo | `data`, `state` |
+| Testing/QA | `testing`, `api`, `ux` |
+| Mobile | `mobile`, `ui` |
+
+**Format:** "Read learnings tagged `[tag]` from LEARNINGS-v2.md"
 
 ### 2. Task Sizing
 **Ideal task:** 1-2 files, <200 lines changed, 2-5 min runtime
