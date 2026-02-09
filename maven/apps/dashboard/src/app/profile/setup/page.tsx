@@ -624,25 +624,62 @@ export default function ProfileSetupPage() {
   
   const [data, setData] = useState<ProfileData>(defaultData);
   
-  // Load saved draft from localStorage on mount
+  // Load saved draft from localStorage on mount, OR from existing profile
   useEffect(() => {
     if (typeof window !== 'undefined' && !loaded) {
+      // First, check for a saved draft (in-progress form)
       const savedDraft = localStorage.getItem(PROFILE_DRAFT_KEY);
+      let loadedStep = 0;
+      let loadedData: Partial<ProfileData> = {};
+      
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft);
-          setData(prev => ({ ...prev, ...parsed }));
-          // Resume from last completed step + 1
-          if (parsed.lastStepCompleted && parsed.lastStepCompleted > 0) {
-            setStep(Math.min(parsed.lastStepCompleted + 1, 8));
-          }
+          loadedData = parsed;
+          loadedStep = parsed.lastStepCompleted || 0;
+          console.log('[Profile Setup] Loaded draft, last step:', loadedStep);
         } catch (e) {
           console.error('Failed to parse saved draft:', e);
         }
       }
+      
+      // If we have an existing profile from UserProvider, use that data too
+      // This handles the case where user already completed profile but wants to edit
+      if (profile && profile.firstName) {
+        console.log('[Profile Setup] Found existing profile');
+        // Map profile data to form data
+        loadedData = {
+          ...loadedData,
+          firstName: loadedData.firstName || profile.firstName || '',
+          lastName: loadedData.lastName || profile.lastName || '',
+          dateOfBirth: loadedData.dateOfBirth || profile.dateOfBirth || '',
+          state: loadedData.state || profile.state || '',
+          filingStatus: loadedData.filingStatus || profile.filingStatus || '',
+          // If they have accounts, they've completed profile before
+          ...(profile.cashAccounts?.length > 0 || profile.retirementAccounts?.length > 0 
+            ? { lastStepCompleted: Math.max(loadedStep, 7) } 
+            : {}),
+        };
+        loadedStep = loadedData.lastStepCompleted || loadedStep;
+      }
+      
+      // Apply loaded data
+      if (Object.keys(loadedData).length > 0) {
+        setData(prev => ({ ...prev, ...loadedData }));
+      }
+      
+      // Set step AFTER a short delay to ensure state is updated
+      if (loadedStep > 0) {
+        setTimeout(() => {
+          const targetStep = Math.min(loadedStep + 1, 8);
+          console.log('[Profile Setup] Resuming at step:', targetStep);
+          setStep(targetStep);
+        }, 50);
+      }
+      
       setLoaded(true);
     }
-  }, [loaded]);
+  }, [loaded, profile]);
   
   // Pre-fill from Clerk user data (only if not already filled)
   useEffect(() => {
@@ -655,10 +692,14 @@ export default function ProfileSetupPage() {
     }
   }, [user, loaded]);
   
-  // Auto-save draft to localStorage when data changes
+  // Auto-save draft to localStorage when data changes (debounced)
   useEffect(() => {
     if (loaded && typeof window !== 'undefined') {
-      localStorage.setItem(PROFILE_DRAFT_KEY, JSON.stringify(data));
+      // Use a small timeout to debounce rapid changes
+      const timer = setTimeout(() => {
+        localStorage.setItem(PROFILE_DRAFT_KEY, JSON.stringify(data));
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [data, loaded]);
   
