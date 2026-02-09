@@ -12,6 +12,7 @@ import FactorExposureSection from '@/app/components/FactorExposureSection';
 import FeeAnalyzer from '@/app/components/FeeAnalyzer';
 import OverlapDetection from '@/app/components/OverlapDetection';
 import RebalancingPreview from '@/app/components/RebalancingPreview';
+import WhatIfSimulator from '@/app/components/WhatIfSimulator';
 
 // Types
 interface Holding {
@@ -46,7 +47,7 @@ interface AllocationTarget {
 }
 
 // Tab types
-type Tab = 'analysis' | 'optimize' | 'stress' | 'projections' | 'actions' | 'research';
+type Tab = 'analysis' | 'optimize' | 'whatif' | 'stress' | 'projections' | 'actions' | 'research';
 
 // Research data type
 interface ResearchData {
@@ -530,6 +531,7 @@ export default function PortfolioLab() {
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'analysis', label: 'Analysis', icon: '📊' },
     { id: 'optimize', label: 'Optimize', icon: '🎯' },
+    { id: 'whatif', label: 'What-If', icon: '🔮' },
     { id: 'stress', label: 'Stress Test', icon: '🌪️' },
     { id: 'projections', label: 'Projections', icon: '📈' },
     { id: 'actions', label: 'Action Plan', icon: '✅' },
@@ -1369,6 +1371,13 @@ export default function PortfolioLab() {
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === 'whatif' && (
+          <WhatIfSimulator 
+            holdings={allHoldings} 
+            totalValue={totalValue} 
+          />
         )}
 
         {activeTab === 'stress' && (
