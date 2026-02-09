@@ -10,25 +10,24 @@
 - None currently
 
 ### Ready
-1. **Factor Exposure Analysis** — P0
-   - Show beta, size, value, momentum exposures
-   - Visual representation of factor tilts
-   - Compare to market-cap weighted benchmark
-
-2. **Fee Analyzer** — P0
+1. **Fee Analyzer** — P0
    - Calculate total expense ratios
    - Show annual fee drag in dollars
    - Suggest lower-cost alternatives
+
+2. **Overlap Detection** — P0
+   - Identify overlapping holdings ("VTI and VOO are 99% overlapping")
+   - Suggest consolidation opportunities
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 — Do Next
-- [ ] Factor exposure analysis
 - [ ] Fee analyzer
 - [ ] Overlap detection ("VTI and VOO are 99% overlapping")
 - [ ] Tax efficiency score
+- [ ] Factor loading accuracy improvements (real data integration)
 
 ### P1 — Important
 - [ ] Benchmark comparison (vs. 60/40, vs. age-based)
@@ -53,6 +52,12 @@
 ## Completed
 
 ### 2026-02-09
+- [x] **Factor Exposure Analysis** — Full implementation
+  - Market Beta, Size, Value, Momentum, Quality factors
+  - Visual bar representation with benchmark comparison
+  - Plain-English interpretations with risk assessment
+  - Tooltips explaining each factor
+  - Works with user holdings from UserProvider
 - [x] Mobile responsiveness fixes
 - [x] Data consistency (use calculateAllocationFromFinancials)
 

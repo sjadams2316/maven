@@ -14,11 +14,12 @@ Make Portfolio Lab the best portfolio analysis tool in existence — institution
 ## Current State
 
 ### Features Built
-- **Analysis Tab:** Portfolio health score, sector concentration, key metrics
+- **Analysis Tab:** Portfolio health score, sector concentration, key metrics, **factor exposure analysis**
 - **Optimize Tab:** AI-powered rebalancing recommendations with explanations
 - **Stress Test Tab:** 6 historical scenarios (2008, COVID, 2022, Dot-Com, Stagflation, Flash Crash)
 - **Projections Tab:** Monte Carlo-style wealth projections
 - **Actions Tab:** Prioritized action items
+- **Factor Exposure Analysis:** Shows Market Beta, Size, Value, Momentum, Quality factors with visual bars
 
 ### Code Location
 - Main page: `apps/dashboard/src/app/portfolio-lab/page.tsx`
@@ -50,6 +51,54 @@ Make Portfolio Lab the best portfolio analysis tool in existence — institution
 - Fama-French: Add size and value factors
 - Carhart: Add momentum
 - Modern factors: Quality, low volatility, profitability
+
+### Factor Exposure Analysis (Implemented 2026-02-09)
+
+**Factors We Display:**
+1. **Market Beta** (0.5-1.5): Sensitivity to market movements
+   - Beta 1.0 = moves with market
+   - Beta >1.2 = aggressive/volatile
+   - Beta <0.8 = defensive
+   
+2. **Size Factor** (SMB: -1 to +1): Small vs Large cap exposure
+   - Positive = tilted toward small caps
+   - Negative = concentrated in large caps
+   - Based on Fama-French "Small Minus Big"
+
+3. **Value Factor** (HML: -1 to +1): Value vs Growth exposure
+   - Positive = value tilt (cheaper stocks)
+   - Negative = growth tilt (expensive, high-growth)
+   - Based on Fama-French "High Minus Low" (book-to-market)
+
+4. **Momentum Factor** (-1 to +1): Recent winners exposure
+   - Positive = holding recent outperformers
+   - Negative = contrarian/laggard holdings
+   - Based on Carhart's momentum factor
+
+5. **Quality Factor** (-1 to +1): Financial health exposure
+   - Positive = profitable, low-debt, stable earnings
+   - Negative = speculative, unprofitable companies
+   - Combines profitability + investment patterns
+
+**Implementation Details:**
+- Factors are estimated from ticker characteristics (heuristic-based)
+- ~60 common ETFs/stocks have explicit factor profiles
+- Unknown tickers fall back to asset class defaults
+- Portfolio-weighted average calculation
+- Compared against benchmark (Total Market, S&P 500, or 60/40)
+
+**Data Needs for Future Enhancement:**
+- Real factor loadings from Morningstar, MSCI, or AQR
+- Historical returns-based factor regression
+- Fund holdings look-through for ETF exposures
+- Real-time factor tilts from providers
+
+**UX Decisions:**
+- Horizontal bar visualization (not radar chart — more intuitive)
+- Color-coded by factor (consistent visual language)
+- Benchmark comparison toggle
+- Plain-English interpretation with risk level
+- Educational tooltips for each factor term
 
 **Risk Metrics**
 - **Standard Deviation:** Total volatility

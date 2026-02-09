@@ -8,6 +8,7 @@ import { useUserProfile } from '@/providers/UserProvider';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
 import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsight';
+import FactorExposureSection from '@/app/components/FactorExposureSection';
 
 // Types
 interface Holding {
@@ -726,6 +727,9 @@ export default function PortfolioLab() {
                 </table>
               </div>
             </div>
+
+            {/* Factor Exposure Analysis */}
+            <FactorExposureSection holdings={allHoldings} />
           </div>
         )}
 
