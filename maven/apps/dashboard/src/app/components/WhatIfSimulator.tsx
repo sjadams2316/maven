@@ -551,28 +551,28 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
       .slice(0, 8);
   }, [ticker, existingTickers]);
 
-  // Fetch price when ticker changes
+  // Fetch price when ticker changes — ALWAYS fetch live price for accurate simulation
   const handleTickerChange = useCallback(async (newTicker: string) => {
     setTicker(newTicker.toUpperCase());
     setSimulationApplied(false);
     
     if (newTicker.length >= 1) {
-      // Check if we already have this holding with a price
-      const existingHolding = holdings.find(
-        (h) => h.ticker.toUpperCase() === newTicker.toUpperCase()
-      );
-      if (existingHolding?.currentPrice) {
-        setPrice(existingHolding.currentPrice);
-        return;
-      }
-
-      // Otherwise fetch
+      // Always fetch live price for accurate simulation
+      // (portfolio prices may be stale from demo data or last session)
       setPriceLoading(true);
       const fetchedPrice = await fetchCurrentPrice(newTicker);
       if (fetchedPrice) {
         setPrice(fetchedPrice);
       } else {
-        setPrice(null);
+        // Fallback to portfolio price if API fails
+        const existingHolding = holdings.find(
+          (h) => h.ticker.toUpperCase() === newTicker.toUpperCase()
+        );
+        if (existingHolding?.currentPrice) {
+          setPrice(existingHolding.currentPrice);
+        } else {
+          setPrice(null);
+        }
       }
       setPriceLoading(false);
     } else {

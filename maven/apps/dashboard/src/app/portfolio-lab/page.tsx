@@ -312,11 +312,11 @@ export default function PortfolioLab() {
     return age;
   }, [profile?.dateOfBirth]);
   
-  // Get all holdings from profile, consolidating cash into one line
+  // Get all holdings from profile, consolidating same tickers across accounts
   const allHoldings = useMemo(() => {
     if (!profile) return [];
     
-    // Get all raw holdings
+    // Get all raw holdings from all accounts
     const rawHoldings = [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
       .flatMap((a: any) => a.holdings || [])
       .filter((h: Holding) => h.currentValue && h.currentValue > 0);
@@ -332,6 +332,26 @@ export default function PortfolioLab() {
       !CASH_TICKERS.includes(h.ticker.toUpperCase())
     );
     
+    // CONSOLIDATE same tickers across different accounts
+    // e.g., CIFR in Roth IRA + CIFR in Taxable = one combined CIFR line
+    const consolidatedByTicker = new Map<string, Holding>();
+    nonCashHoldings.forEach((h: Holding) => {
+      const key = h.ticker.toUpperCase();
+      const existing = consolidatedByTicker.get(key);
+      if (existing) {
+        // Combine: add shares, cost basis, and value
+        consolidatedByTicker.set(key, {
+          ...existing,
+          shares: (existing.shares || 0) + (h.shares || 0),
+          costBasis: (existing.costBasis || 0) + (h.costBasis || 0),
+          currentValue: (existing.currentValue || 0) + (h.currentValue || 0),
+          // Keep the price from first occurrence (they should be same)
+        });
+      } else {
+        consolidatedByTicker.set(key, { ...h });
+      }
+    });
+    
     // Add cash from cashAccounts (checking, savings, money market)
     const cashAccountsTotal = (profile.cashAccounts || [])
       .reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0);
@@ -339,8 +359,8 @@ export default function PortfolioLab() {
     // Total cash from holdings + accounts
     const totalCash = cashHoldings.reduce((sum: number, h: Holding) => sum + (h.currentValue || 0), 0) + cashAccountsTotal;
     
-    // Create consolidated cash holding if there's any cash
-    const consolidatedHoldings = [...nonCashHoldings];
+    // Create final consolidated holdings array
+    const consolidatedHoldings = Array.from(consolidatedByTicker.values());
     if (totalCash > 0) {
       consolidatedHoldings.push({
         ticker: 'CASH',

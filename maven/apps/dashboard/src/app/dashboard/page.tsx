@@ -40,12 +40,33 @@ export default function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pricesLoading, setPricesLoading] = useState(false);
   
-  // Get all holdings from accounts
+  // Get all holdings from accounts, CONSOLIDATED by ticker
+  // (e.g., CIFR in Roth + CIFR in Taxable = one combined line)
   const baseHoldings = useMemo((): Holding[] => {
     if (!profile) return [];
-    return [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
+    
+    const rawHoldings = [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
       .flatMap(a => a.holdings || [])
-      .filter(h => (h.currentValue && h.currentValue > 0) || h.shares > 0)
+      .filter(h => (h.currentValue && h.currentValue > 0) || h.shares > 0);
+    
+    // Consolidate same tickers across accounts
+    const byTicker = new Map<string, Holding>();
+    rawHoldings.forEach(h => {
+      const key = h.ticker.toUpperCase();
+      const existing = byTicker.get(key);
+      if (existing) {
+        byTicker.set(key, {
+          ...existing,
+          shares: (existing.shares || 0) + (h.shares || 0),
+          costBasis: (existing.costBasis || 0) + (h.costBasis || 0),
+          currentValue: (existing.currentValue || 0) + (h.currentValue || 0),
+        });
+      } else {
+        byTicker.set(key, { ...h });
+      }
+    });
+    
+    return Array.from(byTicker.values())
       .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
   }, [profile]);
   
