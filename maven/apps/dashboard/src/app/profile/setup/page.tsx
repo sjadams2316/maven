@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -352,7 +352,15 @@ function ModeToggle({
   );
 }
 
-// Holdings Entry Component
+// Search result type
+interface SearchResult {
+  symbol: string;
+  name: string;
+  type: string;
+  exchange?: string;
+}
+
+// Holdings Entry Component with Search
 function HoldingsEntry({
   holdings,
   onChange,
@@ -368,19 +376,91 @@ function HoldingsEntry({
   accountBalance: number;
   showModeToggle?: boolean;
 }) {
-  const { lookup, loading } = useTickerLookup();
-  const [newTicker, setNewTicker] = useState('');
+  const { lookup, loading: priceLoading } = useTickerLookup();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [lookupError, setLookupError] = useState('');
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const addHolding = async () => {
-    if (!newTicker.trim()) return;
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Search as user types
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setLookupError('');
+    
+    // Clear previous timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+    
+    if (value.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    
+    // Debounce search
+    searchTimeout.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/stock-search?q=${encodeURIComponent(value)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.results || []);
+          setShowDropdown(true);
+        }
+      } catch (e) {
+        console.error('Search error:', e);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+  };
+  
+  // Select a result from dropdown
+  const selectResult = async (result: SearchResult) => {
+    setShowDropdown(false);
+    setSearchQuery('');
+    setLookupError('');
+    
+    // Get the current price
+    const priceData = await lookup(result.symbol);
+    
+    const newHolding: Holding = {
+      ticker: result.symbol,
+      name: result.name,
+      shares: 0,
+      costBasis: 0,
+      currentPrice: priceData?.price || 0,
+      currentValue: 0,
+      allocationPercent: 0,
+    };
+    onChange([...holdings, newHolding]);
+  };
+  
+  // Direct ticker entry (when pressing enter)
+  const addDirectTicker = async () => {
+    if (!searchQuery.trim()) return;
     
     setLookupError('');
-    const result = await lookup(newTicker);
+    const result = await lookup(searchQuery);
     
     if (result) {
       const newHolding: Holding = {
-        ticker: newTicker.toUpperCase().trim(),
+        ticker: searchQuery.toUpperCase().trim(),
         name: result.name,
         shares: 0,
         costBasis: 0,
@@ -389,9 +469,10 @@ function HoldingsEntry({
         allocationPercent: 0,
       };
       onChange([...holdings, newHolding]);
-      setNewTicker('');
+      setSearchQuery('');
+      setShowDropdown(false);
     } else {
-      setLookupError('Could not find ticker. Please check the symbol.');
+      setLookupError('Could not find that symbol. Try searching by name.');
     }
   };
   
@@ -506,32 +587,77 @@ function HoldingsEntry({
         </div>
       )}
       
-      {/* Add New Holding */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newTicker}
-          onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
-          onKeyDown={(e) => e.key === 'Enter' && addHolding()}
-          placeholder="Add a stock or fund symbol..."
-          className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-        />
-        <button
-          type="button"
-          onClick={addHolding}
-          disabled={loading || !newTicker.trim()}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-xl transition flex items-center gap-2"
-        >
-          {loading ? (
-            <span className="animate-spin">⏳</span>
-          ) : (
-            <>+ Add</>
-          )}
-        </button>
+      {/* Add New Holding - Search by name or ticker */}
+      <div className="relative" ref={dropdownRef}>
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (searchResults.length > 0) {
+                    selectResult(searchResults[0]);
+                  } else {
+                    addDirectTicker();
+                  }
+                }
+              }}
+              onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+              placeholder="Search by name or ticker (e.g., 'Vanguard Total Stock' or 'VTI')"
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            />
+            {searching && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <span className="animate-spin text-gray-400">⏳</span>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={addDirectTicker}
+            disabled={priceLoading || !searchQuery.trim()}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-xl transition flex items-center gap-2"
+          >
+            {priceLoading ? (
+              <span className="animate-spin">⏳</span>
+            ) : (
+              <>+ Add</>
+            )}
+          </button>
+        </div>
+        
+        {/* Search Results Dropdown */}
+        {showDropdown && searchResults.length > 0 && (
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            {searchResults.map((result, i) => (
+              <button
+                key={`${result.symbol}-${i}`}
+                type="button"
+                onClick={() => selectResult(result)}
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition text-left border-b border-white/5 last:border-0"
+              >
+                <div className="w-12 text-center">
+                  <span className="text-indigo-400 font-semibold">{result.symbol}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white truncate">{result.name}</p>
+                  <p className="text-xs text-gray-500">{result.type}{result.exchange ? ` • ${result.exchange}` : ''}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       
       {lookupError && (
         <p className="text-red-400 text-sm">{lookupError}</p>
+      )}
+      
+      {searchQuery.length > 0 && searchQuery.length < 2 && (
+        <p className="text-gray-500 text-xs">Type at least 2 characters to search...</p>
       )}
     </div>
   );
