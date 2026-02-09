@@ -113,19 +113,24 @@ Every research session:
 - [x] Exchange funds: mechanics, providers, typical terms ✅ *Completed 2026-02-06*
 - [x] Prepaid variable forwards: pricing, collar structures ✅ *Completed 2026-02-08*
 - [x] Direct indexing: realistic alpha, provider comparison ✅ *Completed 2026-02-08*
-- [ ] QOZ (Qualified Opportunity Zones): timing, requirements
+- [x] QOZ (Qualified Opportunity Zones): timing, requirements ✅ *Completed 2026-02-09*
 - [ ] Installment sales: 453 rules
-- [ ] Charitable strategies: CRT, CLT, DAF, private foundations
+- [x] Charitable strategies: CRT ✅ *Completed 2026-02-09*
+- [ ] Charitable strategies: CLT, private foundations (DAF covered in Track 7)
 
 **Research file (Exchange Funds):** `memory/research/concentrated-positions/exchange-funds.md`
 **Research file (VPFs):** `memory/research/concentrated-positions/prepaid-variable-forwards.md`
 **Research file (Direct Indexing):** `memory/research/tax-strategies/direct-indexing-deep-dive.md`
+**Research file (QOZ):** `memory/research/concentrated-positions/qualified-opportunity-zones.md`
+**Research file (CRT):** `memory/research/estate-planning/charitable-remainder-trusts.md`
 
-#### 3.2 Restricted Stock Considerations
-- [ ] Rule 144 limitations
-- [ ] 10b5-1 plans
-- [ ] Blackout periods
-- [ ] Section 16 reporting
+#### 3.2 Restricted Stock Considerations ✅ *Completed 2026-02-09*
+- [x] Rule 144 limitations
+- [x] 10b5-1 plans
+- [x] Blackout periods
+- [x] Section 16 reporting
+
+**Research file:** `memory/research/concentrated-positions/restricted-stock-rule-144.md`
 
 ---
 
@@ -400,10 +405,39 @@ I'll know I'm becoming expert when:
 
 **Quality standard:** Would blow a 40-year advisor's mind AND give them actionable insights for their HNW clients.
 
+### Session: 2026-02-09 (Morning) - "Capital Gains Strategies & Restricted Stock"
+**Focus:** QOZ, CRT, and restricted stock rules — completing concentrated positions track
+
+**Completed:**
+1. **Qualified Opportunity Zones (QOZ)** - Complete guide including OBBBA 2025 updates, TCJA vs new rules comparison, rural QOZs (30% step-up!), 180-day rule mechanics, inclusion events, new reporting requirements, estate planning implications
+2. **Charitable Remainder Trusts (CRT)** - CRAT vs CRUT mechanics, NICRUT/NIMCRUT/Flip-CRUT variations, four-tier taxation, §7520 rate sensitivity, SECURE 2.0 QCD option, comparison to DAF/foundations
+3. **Rule 144 & Restricted Stock** - Affiliate vs non-affiliate rules, holding periods and tacking, volume limitations, Form 144 requirements, 10b5-1 plans with 2022 amendments (cooling-off periods), Section 16 short-swing rules, blackout periods
+4. **Wealthtech Trends 2026** - AI-augmented advisors, unified client brains, private markets mainstreaming, embedded wealth, data-driven growth engines, downturn readiness
+
+**Key Alpha Insights:**
+- **QOZ:** OBBBA made program permanent; December 31, 2026 is critical deadline for pre-2027 investments; rural QOZs get 30% basis step-up (vs 10%)
+- **CRT:** High §7520 rates (2025-2026) make CRATs particularly attractive; 10% remainder rule constrains design; UBTI = 100% tax rate inside CRT
+- **Rule 144:** 10b5-1 cooling-off now 90 days for officers/directors; tacking rules are complex but valuable; Section 16 ≠ Rule 144 (different rules, different people)
+- **Wealthtech:** "Last-mile human" model validates RIA focus; data is the moat; downturn readiness is underserved competitive advantage
+
+**Sources consulted:**
+- IRS.gov Opportunity Zone FAQs
+- OBBBA Tax Law Text (Public Law 119-21)
+- Faegre Drinker, Smith + Howard, Saul Ewing QOZ analyses
+- The Tax Adviser: "Planning with Charitable Remainder Trusts" (Sep 2025)
+- Fidelity Charitable CRT documentation
+- SEC Rule 144 text (17 CFR 230.144)
+- Investopedia Rule 144 and 10b5-1 guides
+- Securities Law Blog deep dive series (Laura Anthony)
+- Oliver Wyman: "10 Wealth Management Trends for 2026"
+- Financial Planning: AI wealthtech predictions
+
+**Quality standard:** Comprehensive enough to build product features. A veteran advisor AND a product designer would both nod.
+
 ---
 
 *This is the work. Let's get smarter.*
 
 *Created: 2026-02-05*
-*Last Updated: 2026-02-08*
+*Last Updated: 2026-02-09*
 *Author: Eli*
