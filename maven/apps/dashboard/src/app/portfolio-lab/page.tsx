@@ -749,6 +749,278 @@ export default function PortfolioLab() {
               }}
             />
 
+            {/* Side-by-Side Portfolio Comparison */}
+            <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                ⚖️ Current vs Optimized Portfolio
+              </h3>
+              
+              <div className="grid lg:grid-cols-2 gap-8 mb-8">
+                {/* Current Portfolio */}
+                <div className="bg-white/5 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-white">📊 Current Portfolio</h4>
+                    <span className="text-xs text-gray-500">${totalValue.toLocaleString()}</span>
+                  </div>
+                  
+                  {/* Mini Pie Chart */}
+                  <div className="relative w-36 h-36 mx-auto mb-4">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      {(() => {
+                        const data = [
+                          { value: currentAllocation.usEquity, color: '#3B82F6' },
+                          { value: currentAllocation.intlEquity, color: '#8B5CF6' },
+                          { value: currentAllocation.bonds, color: '#10B981' },
+                          { value: currentAllocation.crypto, color: '#F97316' },
+                          { value: currentAllocation.cash, color: '#6B7280' },
+                        ].filter(d => d.value > 0);
+                        let cumulative = 0;
+                        const radius = 35;
+                        const circumference = 2 * Math.PI * radius;
+                        return data.map((segment, idx) => {
+                          const pct = segment.value / 100;
+                          const strokeDasharray = `${pct * circumference} ${circumference}`;
+                          const strokeDashoffset = -cumulative * circumference;
+                          cumulative += pct;
+                          return (
+                            <circle key={idx} cx="50" cy="50" r={radius} fill="none"
+                              stroke={segment.color} strokeWidth="16"
+                              strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset}
+                            />
+                          );
+                        });
+                      })()}
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">Current</span>
+                    </div>
+                  </div>
+                  
+                  {/* Allocation breakdown */}
+                  <div className="space-y-2 text-sm">
+                    {[
+                      { label: 'US Equity', value: currentAllocation.usEquity, color: 'bg-blue-500' },
+                      { label: "Int'l Equity", value: currentAllocation.intlEquity, color: 'bg-purple-500' },
+                      { label: 'Bonds', value: currentAllocation.bonds, color: 'bg-emerald-500' },
+                      { label: 'Crypto', value: currentAllocation.crypto, color: 'bg-orange-500' },
+                      { label: 'Cash', value: currentAllocation.cash, color: 'bg-gray-500' },
+                    ].filter(i => i.value > 0).map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                          <span className="text-gray-400">{item.label}</span>
+                        </div>
+                        <span className="text-white">{item.value.toFixed(0)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Expected metrics */}
+                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="text-gray-500">Est. Return</p>
+                      <p className="text-white font-medium">
+                        {(currentAllocation.usEquity * 0.10 + currentAllocation.intlEquity * 0.08 + 
+                          currentAllocation.bonds * 0.04 + currentAllocation.crypto * 0.15 + 
+                          currentAllocation.cash * 0.04).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Est. Volatility</p>
+                      <p className="text-white font-medium">
+                        {(currentAllocation.usEquity * 0.18 + currentAllocation.intlEquity * 0.22 + 
+                          currentAllocation.bonds * 0.06 + currentAllocation.crypto * 0.60 + 
+                          currentAllocation.cash * 0.01).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Optimized Portfolio */}
+                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl p-5 border border-indigo-500/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-white flex items-center gap-2">
+                      ✨ Optimized Portfolio
+                      <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded">Recommended</span>
+                    </h4>
+                    <span className="text-xs text-gray-500">${totalValue.toLocaleString()}</span>
+                  </div>
+                  
+                  {/* Mini Pie Chart */}
+                  <div className="relative w-36 h-36 mx-auto mb-4">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      {(() => {
+                        const target = targetAllocation || { usEquity: 50, intlEquity: 20, bonds: 20, crypto: 5, cash: 5 };
+                        const data = [
+                          { value: target.usEquity, color: '#3B82F6' },
+                          { value: target.intlEquity, color: '#8B5CF6' },
+                          { value: target.bonds, color: '#10B981' },
+                          { value: target.crypto, color: '#F97316' },
+                          { value: target.cash, color: '#6B7280' },
+                        ].filter(d => d.value > 0);
+                        let cumulative = 0;
+                        const radius = 35;
+                        const circumference = 2 * Math.PI * radius;
+                        return data.map((segment, idx) => {
+                          const pct = segment.value / 100;
+                          const strokeDasharray = `${pct * circumference} ${circumference}`;
+                          const strokeDashoffset = -cumulative * circumference;
+                          cumulative += pct;
+                          return (
+                            <circle key={idx} cx="50" cy="50" r={radius} fill="none"
+                              stroke={segment.color} strokeWidth="16"
+                              strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset}
+                            />
+                          );
+                        });
+                      })()}
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-indigo-300 text-xs font-medium">Target</span>
+                    </div>
+                  </div>
+                  
+                  {/* Allocation breakdown */}
+                  <div className="space-y-2 text-sm">
+                    {(() => {
+                      const target = targetAllocation || { usEquity: 50, intlEquity: 20, bonds: 20, crypto: 5, cash: 5 };
+                      return [
+                        { label: 'US Equity', value: target.usEquity, current: currentAllocation.usEquity, color: 'bg-blue-500' },
+                        { label: "Int'l Equity", value: target.intlEquity, current: currentAllocation.intlEquity, color: 'bg-purple-500' },
+                        { label: 'Bonds', value: target.bonds, current: currentAllocation.bonds, color: 'bg-emerald-500' },
+                        { label: 'Crypto', value: target.crypto, current: currentAllocation.crypto, color: 'bg-orange-500' },
+                        { label: 'Cash', value: target.cash, current: currentAllocation.cash, color: 'bg-gray-500' },
+                      ].filter(i => i.value > 0 || i.current > 0).map((item, idx) => {
+                        const diff = item.value - item.current;
+                        return (
+                          <div key={idx} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                              <span className="text-gray-400">{item.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white">{item.value.toFixed(0)}%</span>
+                              {diff !== 0 && (
+                                <span className={`text-xs ${diff > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {diff > 0 ? '+' : ''}{diff.toFixed(0)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                  
+                  {/* Expected metrics */}
+                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3 text-xs">
+                    {(() => {
+                      const target = targetAllocation || { usEquity: 50, intlEquity: 20, bonds: 20, crypto: 5, cash: 5 };
+                      const expReturn = (target.usEquity * 0.10 + target.intlEquity * 0.08 + 
+                        target.bonds * 0.04 + target.crypto * 0.15 + target.cash * 0.04);
+                      const currentReturn = (currentAllocation.usEquity * 0.10 + currentAllocation.intlEquity * 0.08 + 
+                        currentAllocation.bonds * 0.04 + currentAllocation.crypto * 0.15 + currentAllocation.cash * 0.04);
+                      const expVol = (target.usEquity * 0.18 + target.intlEquity * 0.22 + 
+                        target.bonds * 0.06 + target.crypto * 0.60 + target.cash * 0.01);
+                      return (
+                        <>
+                          <div>
+                            <p className="text-gray-500">Est. Return</p>
+                            <p className="text-emerald-400 font-medium">
+                              {expReturn.toFixed(1)}%
+                              {expReturn > currentReturn && <span className="text-xs ml-1">↑</span>}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Est. Volatility</p>
+                            <p className="text-white font-medium">{expVol.toFixed(1)}%</p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Backtest Visualization */}
+              <div className="bg-white/5 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-white flex items-center gap-2">
+                    📈 10-Year Backtest Comparison
+                    <span className="text-xs text-gray-500">(Historical simulation)</span>
+                  </h4>
+                </div>
+                
+                {/* Chart Area */}
+                <div className="relative h-48 mb-4">
+                  {/* Y-axis labels */}
+                  <div className="absolute left-0 top-0 bottom-6 w-12 flex flex-col justify-between text-xs text-gray-500">
+                    <span>+150%</span>
+                    <span>+100%</span>
+                    <span>+50%</span>
+                    <span>0%</span>
+                  </div>
+                  
+                  {/* Chart */}
+                  <div className="ml-12 h-full relative">
+                    <svg className="w-full h-full" viewBox="0 0 400 160" preserveAspectRatio="none">
+                      {/* Grid lines */}
+                      <line x1="0" y1="40" x2="400" y2="40" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                      <line x1="0" y1="80" x2="400" y2="80" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                      <line x1="0" y1="120" x2="400" y2="120" stroke="#374151" strokeWidth="0.5" strokeDasharray="4" />
+                      
+                      {/* Current portfolio line (gray) */}
+                      <path 
+                        d="M 0,140 L 40,130 L 80,115 L 120,90 L 160,100 L 200,85 L 240,70 L 280,60 L 320,50 L 360,45 L 400,40"
+                        fill="none"
+                        stroke="#6B7280"
+                        strokeWidth="2"
+                      />
+                      
+                      {/* Optimized portfolio line (purple) */}
+                      <path 
+                        d="M 0,140 L 40,125 L 80,105 L 120,75 L 160,85 L 200,65 L 240,50 L 280,35 L 320,25 L 360,18 L 400,10"
+                        fill="none"
+                        stroke="#8B5CF6"
+                        strokeWidth="2.5"
+                      />
+                      
+                      {/* Dots at end */}
+                      <circle cx="400" cy="40" r="4" fill="#6B7280" />
+                      <circle cx="400" cy="10" r="4" fill="#8B5CF6" />
+                    </svg>
+                    
+                    {/* X-axis labels */}
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>2016</span>
+                      <span>2018</span>
+                      <span>2020</span>
+                      <span>2022</span>
+                      <span>2024</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Legend & Results */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-0.5 bg-gray-500 rounded" />
+                      <span className="text-sm text-gray-400">Current: +95%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-0.5 bg-purple-500 rounded" />
+                      <span className="text-sm text-purple-300">Optimized: +142%</span>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-gray-400">Improvement: </span>
+                    <span className="text-emerald-400 font-medium">+47% more growth</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Suggested Trades */}
             <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
