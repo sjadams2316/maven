@@ -2705,9 +2705,53 @@ export default function ProfileSetupPage() {
                 <p className="text-gray-400 text-sm mb-4">Other Assets</p>
                 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">🏠 Real Estate Equity</label>
-                    <CurrencyInput value={data.realEstateEquity} onChange={(v) => update({ realEstateEquity: v })} placeholder="Home value minus mortgage" />
+                  {/* Real Estate - Home Value and Mortgage together */}
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <p className="font-medium text-white mb-3">🏠 Real Estate</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Home Value</label>
+                        <CurrencyInput 
+                          value={data.realEstateEquity + data.mortgageBalance} 
+                          onChange={(v) => {
+                            // When home value changes, recalculate equity
+                            const newEquity = Math.max(0, v - data.mortgageBalance);
+                            update({ realEstateEquity: newEquity });
+                          }} 
+                          placeholder="Current market value" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Mortgage Balance</label>
+                        <CurrencyInput 
+                          value={data.mortgageBalance} 
+                          onChange={(v) => {
+                            // When mortgage changes, recalculate equity
+                            const homeValue = data.realEstateEquity + data.mortgageBalance;
+                            const newEquity = Math.max(0, homeValue - v);
+                            update({ mortgageBalance: v, realEstateEquity: newEquity });
+                          }} 
+                          placeholder="What you still owe" 
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm text-gray-400 mb-1">Interest Rate</label>
+                          <PercentInput value={data.mortgageRate} onChange={(v) => update({ mortgageRate: v })} placeholder="e.g., 6.5" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-400 mb-1">Monthly Payment</label>
+                          <CurrencyInput value={data.mortgagePayment} onChange={(v) => update({ mortgagePayment: v })} placeholder="0" />
+                        </div>
+                      </div>
+                      {/* Show calculated equity */}
+                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <span className="text-sm text-gray-400">Your Equity</span>
+                        <span className="text-emerald-400 font-semibold">
+                          ${data.realEstateEquity.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   
                   <div>
@@ -2869,25 +2913,19 @@ export default function ProfileSetupPage() {
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="font-medium text-white mb-3">🏠 Mortgage</p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Remaining Balance</label>
-                    <CurrencyInput value={data.mortgageBalance} onChange={(v) => update({ mortgageBalance: v })} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Interest Rate</label>
-                      <PercentInput value={data.mortgageRate} onChange={(v) => update({ mortgageRate: v })} />
+              {/* Show mortgage summary if entered in previous step */}
+              {data.mortgageBalance > 0 && (
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>🏠</span>
+                      <span className="text-emerald-300 font-medium">Mortgage</span>
+                      <span className="text-xs text-emerald-400/60">(from Real Estate)</span>
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Monthly Payment</label>
-                      <CurrencyInput value={data.mortgagePayment} onChange={(v) => update({ mortgagePayment: v })} />
-                    </div>
+                    <span className="text-emerald-300">${data.mortgageBalance.toLocaleString()}</span>
                   </div>
                 </div>
-              </div>
+              )}
               
               <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
                 <p className="font-medium text-white mb-3">🎓 Student Loans</p>
