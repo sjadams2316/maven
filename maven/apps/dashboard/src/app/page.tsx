@@ -10,10 +10,24 @@ import DemoModal from './components/DemoModal';
 import FirstWinModal from './components/FirstWinModal';
 import { enableDemoMode } from '@/lib/demo-profile';
 
+// Fallback market data - shown if API fails or takes too long
+const FALLBACK_MARKET_DATA = {
+  indices: {
+    sp500: { price: 694, changePercent: 0.48 },
+    nasdaq: { price: 614, changePercent: 0.77 },
+    dow: { price: 501, changePercent: 0.04 },
+  },
+  crypto: {
+    BTC: { price: 70000, changePercent: -0.68 },
+  },
+  timestamp: new Date().toISOString(),
+};
+
 export default function LandingPage() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
-  const [marketData, setMarketData] = useState<any>(null);
+  // Initialize with fallback data so we never show 0s
+  const [marketData, setMarketData] = useState<any>(FALLBACK_MARKET_DATA);
   const [showDemo, setShowDemo] = useState(false);
   const [showFirstWin, setShowFirstWin] = useState(false);
   const { triggerMeme, MemeComponent } = useMemeRedirect();
