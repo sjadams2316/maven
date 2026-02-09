@@ -6,15 +6,19 @@
 
 | Agent | Task | Files Touching | Started | Status |
 |-------|------|----------------|---------|--------|
-| pantheon-market-debug | Fix Markets widget "—" prices | api/market-data/route.ts | 10:40 | 🔄 Running |
-| pantheon-benchmark-compare | Benchmark comparison component | BenchmarkComparison.tsx | 10:40 | 🔄 Running |
-| pantheon-income-analysis | Dividend/income analysis | IncomeAnalysis.tsx, portfolio-utils.ts | 10:40 | 🔄 Running |
-| pantheon-fragility-holdings | Connect fragility to holdings | fragility/page.tsx | 10:40 | 🔄 Running |
+| pantheon-qa-markets | QA: Markets widget prices | — (browser test) | 11:22 | 🔄 Running |
+| pantheon-qa-benchmark | QA: Benchmark comparison | — (browser test) | 11:22 | 🔄 Running |
+| pantheon-qa-income | QA: Income analysis | — (browser test) | 11:22 | 🔄 Running |
+| pantheon-pitch-deck | Build /pitch presentation | pitch/page.tsx | 11:22 | 🔄 Running |
 
 ## Recently Completed (Last 24h)
 
 | Agent | Task | Duration | Result |
 |-------|------|----------|--------|
+| pantheon-market-debug | Fix Markets widget Yahoo rate limiting | 2m | ✅ 482d325 |
+| pantheon-benchmark-compare | Benchmark comparison (S&P/60-40/age) | 3m | ✅ c5220da |
+| pantheon-fragility-holdings | Personalized fragility impact | 3m | ✅ c5220da |
+| pantheon-income-analysis | Dividend/income analysis | 4m | ✅ 78eb77c |
 | pantheon-rebalancing-preview | Rebalancing Preview component | 5m | ✅ Committed |
 | pantheon-competitive-intel | Competitive landscape research | 4m | ✅ Research complete |
 | pantheon-overlap-detection | Holdings overlap detection | 7m | ✅ Committed |

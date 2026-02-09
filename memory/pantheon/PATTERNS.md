@@ -115,6 +115,19 @@ npm run build             # Ensure it builds
 git commit -m "..."       # Commit with good message
 ```
 
+### After Committing — VERIFY DEPLOY
+```bash
+git push
+# Wait 2-3 min, then verify:
+curl -s -o /dev/null -w "%{http_code}" https://mavenwealth.ai/[route]
+# Should return 200
+
+# If deploy fails (GitHub outage), use manual deploy:
+cd maven && ./scripts/deploy.sh --prod
+```
+
+**IMPORTANT:** Don't announce "shipped" until you verify the route returns 200 on production.
+
 ---
 
 ## Task Scoping

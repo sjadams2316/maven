@@ -2,6 +2,12 @@
 
 ## On Every Heartbeat
 
+### Deploy Health Check (FIRST!)
+Before other checks, verify deploys are working:
+- [ ] Check https://githubstatus.com — if degraded, alert Sam
+- [ ] Check recent Vercel deploys aren't all failing
+- [ ] If GitHub down: run `cd maven && ./scripts/deploy.sh --prod`
+
 ### Quick Checks (rotate through these)
 - [ ] **Maven smoke test**: Open mavenwealth.ai in browser, verify dashboard loads, spot-check one tool
 - [ ] **Console check**: Look for JavaScript errors on key pages
