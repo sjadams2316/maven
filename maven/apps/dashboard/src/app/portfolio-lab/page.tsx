@@ -11,6 +11,7 @@ import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsig
 import FactorExposureSection from '@/app/components/FactorExposureSection';
 import FeeAnalyzer from '@/app/components/FeeAnalyzer';
 import OverlapDetection from '@/app/components/OverlapDetection';
+import IncomeAnalysis from '@/app/components/IncomeAnalysis';
 import RebalancingPreview from '@/app/components/RebalancingPreview';
 import WhatIfSimulator from '@/app/components/WhatIfSimulator';
 import BenchmarkComparison from '@/app/components/BenchmarkComparison';
@@ -736,6 +737,9 @@ export default function PortfolioLab() {
 
             {/* Factor Exposure Analysis */}
             <FactorExposureSection holdings={allHoldings} />
+            
+            {/* Income Analysis */}
+            <IncomeAnalysis holdings={allHoldings} />
             
             {/* Fee Analysis */}
             <FeeAnalyzer holdings={allHoldings} />
