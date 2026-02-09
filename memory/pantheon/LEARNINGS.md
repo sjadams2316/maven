@@ -77,6 +77,10 @@
 - Always type empty arrays: `let items: Type[] = []`
 - Optional chaining for API data: `data?.field?.nested || fallback`
 
+### pantheon-form-validation
+**Task:** Audited form inputs across Maven for validation issues. Fixed WhatIfSimulator, SocialSecurityForm, Stress Test, and Retirement Hub pages to prevent negative values and show clear error states.
+**Insight:** HTML5 `min` attributes on number inputs only work with the spinner arrows—users can still type negative values directly. Always combine `min` constraints with `onChange` validation that rejects invalid input AND visual error states (border color + message) so users understand why their input wasn't accepted. The pattern: `onChange={(e) => { const val = Number(e.target.value); if (val >= 0) setValue(val); }}` plus conditional border/message styling.
+
 ---
 
 *This file grows with every sprint. Review weekly to promote patterns to PATTERNS.md.*
