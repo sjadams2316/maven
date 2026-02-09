@@ -48,6 +48,10 @@
 **Task:** Fixed market data structure mismatch on landing pages causing silent failures
 **Insight:** When UI code and API responses evolve separately, data structure mismatches happen silently. The API returned `{ stocks: [...], crypto: [...] }` but landing pages expected `{ indices: { sp500: {...} }, crypto: { BTC: {...} } }`. Optional chaining (`?.`) prevents crashes but also hides the bug — data just doesn't render. **Always verify data shapes match** between API and UI, especially after refactoring. A quick `console.log(data)` during development catches these fast.
 
+### pantheon-edge-cases
+**Task:** Added bulletproof error handling to /api/stock-quote with validation, multi-source fallback, and cached prices
+**Insight:** User-facing APIs need **layered resilience**: (1) Validate inputs early with specific error messages ("symbol format invalid" not "bad request"), (2) Try multiple data sources with timeouts (`AbortSignal.timeout(5000)`), (3) Keep fallback data for ~20 common symbols (SPY, VOO, AAPL, BTC) that covers 80% of use cases, (4) Return `isLive` flag so UI can show "Delayed" badge instead of confusing users, (5) Error responses need 4 parts: `error` (title), `message` (human explanation), `code` (machine-readable), `hint` (what to try). The pattern `FALLBACK_PRICES[symbol] || null` means graceful degradation for known symbols, explicit failure for unknowns.
+
 ---
 
 ## Learning Categories
