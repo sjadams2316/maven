@@ -543,46 +543,46 @@ export default function Dashboard() {
                   </button>
                 )}
                 
-                {/* High cash allocation - ask about intent */}
-                {portfolioCategories.cash > totalInvested * 0.15 && totalInvested > 0 && (
-                  <button
-                    onClick={() => {
-                      const cashPercent = ((portfolioCategories.cash / totalInvested) * 100).toFixed(0);
-                      localStorage.setItem('maven_chat_prompt', `I have ${cashPercent}% of my portfolio in cash. Help me think through whether this makes sense. Is it:\n- An emergency fund I should keep?\n- Money I'm waiting to invest?\n- Am I nervous about the market?\n- Earmarked for a big purchase?\n\nHelp me figure out the right cash allocation for my situation.`);
-                      openOracle();
-                    }}
-                    className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-yellow-500/30 rounded-xl transition group"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">💵</span>
-                      <span className="text-xs text-yellow-400">Cash Check</span>
-                    </div>
-                    <p className="text-sm text-white group-hover:text-yellow-300">
-                      High cash allocation ({((portfolioCategories.cash / totalInvested) * 100).toFixed(0)}%)
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Let&apos;s discuss if this is intentional</p>
-                  </button>
-                )}
-                
-                {/* Also check for high cash in checking/savings relative to income */}
-                {netWorth.cashTotal > (profile.householdIncome ? parseInt(profile.householdIncome.replace(/[^0-9]/g, '')) * 0.5 : 100000) && (
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('maven_chat_prompt', `I have $${netWorth.cashTotal.toLocaleString()} in cash accounts. This seems like a lot. Help me think through:\n\n1. How much should I keep as an emergency fund (typically 3-6 months expenses)?\n2. Is any of this earmarked for something specific?\n3. Should some of this be invested or in a higher-yield account?\n4. What's the opportunity cost of holding this much cash?\n\nLet's figure out the right cash strategy for my situation.`);
-                      openOracle();
-                    }}
-                    className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-yellow-500/30 rounded-xl transition group"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">🏦</span>
-                      <span className="text-xs text-yellow-400">Cash Strategy</span>
-                    </div>
-                    <p className="text-sm text-white group-hover:text-yellow-300">
-                      ${(netWorth.cashTotal / 1000).toFixed(0)}K sitting in cash
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Optimize your cash allocation</p>
-                  </button>
-                )}
+                {/* High cash allocation - check BOTH portfolio cash holdings AND cash accounts */}
+                {(() => {
+                  // Calculate total cash: portfolio cash holdings + cash accounts
+                  const portfolioCash = portfolioCategories.cash || 0;
+                  const accountCash = netWorth.cashTotal || 0;
+                  const totalCash = portfolioCash + accountCash;
+                  const totalAssets = totalInvested + accountCash;
+                  const cashPercent = totalAssets > 0 ? (totalCash / totalAssets) * 100 : 0;
+                  
+                  // Parse income properly (handle ranges like "$200,000 - $500,000")
+                  const incomeStr = profile.householdIncome || '';
+                  const incomeMatch = incomeStr.match(/\$?([\d,]+)/);
+                  const estimatedIncome = incomeMatch ? parseInt(incomeMatch[1].replace(/,/g, '')) : 100000;
+                  
+                  // Show if cash is >15% of total assets OR cash accounts > 6 months of income
+                  const highCashPercent = cashPercent > 15;
+                  const highCashAbsolute = accountCash > (estimatedIncome / 2); // 6 months
+                  
+                  if ((highCashPercent || highCashAbsolute) && totalCash > 10000) {
+                    return (
+                      <button
+                        onClick={() => {
+                          localStorage.setItem('maven_chat_prompt', `I have $${totalCash.toLocaleString()} in cash (${cashPercent.toFixed(0)}% of my total assets). Help me think through whether this makes sense:\n\n1. Is this the right amount for an emergency fund? (Usually 3-6 months expenses)\n2. Am I holding cash because I'm nervous about the market?\n3. Is this earmarked for a big purchase (house, car, etc.)?\n4. Am I waiting for a better time to invest?\n5. What's the opportunity cost of this much cash?\n\nBased on my situation, what would you recommend?`);
+                          openOracle();
+                        }}
+                        className="text-left p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-yellow-500/30 rounded-xl transition group"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">💵</span>
+                          <span className="text-xs text-yellow-400">Cash Check</span>
+                        </div>
+                        <p className="text-sm text-white group-hover:text-yellow-300">
+                          ${(totalCash / 1000).toFixed(0)}K in cash ({cashPercent.toFixed(0)}% of assets)
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Let&apos;s discuss if this is intentional</p>
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
                 
                 {/* Always show these general suggestions */}
                 <button
