@@ -44,6 +44,10 @@
 **Task:** Audit navigation links across demo page, dashboard, QuickActions, and insight cards for dead links
 **Insight:** When adding features with hrefs (especially insight cards, feature tours, or quick actions), always verify the destination page exists with `ls` or check against `find . -name "page.tsx"` output. Common dead link patterns: (1) future pages referenced before they're built (`/rmd-planner`, `/healthcare-planning`), (2) `href="#"` placeholder links that never get updated, (3) inconsistent naming (`/income-planner` vs `/income`). Fix strategy: map to closest existing page, or change link to non-navigating button if no destination makes sense.
 
+### pantheon-console-errors
+**Task:** Fixed market data structure mismatch on landing pages causing silent failures
+**Insight:** When UI code and API responses evolve separately, data structure mismatches happen silently. The API returned `{ stocks: [...], crypto: [...] }` but landing pages expected `{ indices: { sp500: {...} }, crypto: { BTC: {...} } }`. Optional chaining (`?.`) prevents crashes but also hides the bug — data just doesn't render. **Always verify data shapes match** between API and UI, especially after refactoring. A quick `console.log(data)` during development catches these fast.
+
 ---
 
 ## Learning Categories
