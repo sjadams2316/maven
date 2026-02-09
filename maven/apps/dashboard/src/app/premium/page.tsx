@@ -82,11 +82,11 @@ export default function PremiumDashboard() {
           {/* Left Column - Wealth Pulse */}
           <div className="lg:col-span-2">
             <WealthPulse
-              netWorth={1150000}
-              dayChange={12400}
-              dayChangePercent={1.09}
-              weekData={[1100000, 1110000, 1105000, 1120000, 1135000, 1142000, 1150000]}
-              monthData={[1050000, 1080000, 1070000, 1095000, 1110000, 1120000, 1125000, 1118000, 1135000, 1142000, 1148000, 1150000]}
+              netWorth={797500}
+              dayChange={8500}
+              dayChangePercent={1.08}
+              weekData={[775000, 780000, 778000, 785000, 790000, 794000, 797500]}
+              monthData={[755000, 765000, 760000, 770000, 775000, 780000, 778000, 785000, 790000, 794000, 796000, 797500]}
             />
             
             {/* Holdings */}

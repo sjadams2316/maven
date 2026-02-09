@@ -22,7 +22,7 @@ const MOCK_GOALS: Goal[] = [
     name: 'Retirement at 55',
     type: 'retirement',
     targetAmount: 3000000,
-    currentAmount: 1150000,
+    currentAmount: 797500,
     targetDate: new Date('2038-09-10'),
     monthlyContribution: 5000,
     priority: 'high',

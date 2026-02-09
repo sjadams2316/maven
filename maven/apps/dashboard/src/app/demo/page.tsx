@@ -69,9 +69,9 @@ export default function DemoPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Net Worth */}
             <NetWorthCard 
-              netWorth={1150000}
-              change={12400}
-              changePercent={1.09}
+              netWorth={797500}
+              change={8500}
+              changePercent={1.08}
             />
             
             {/* Insights */}
@@ -186,7 +186,7 @@ export default function DemoPage() {
               
               <div className="space-y-4">
                 {[
-                  { name: 'Retirement', current: 1150000, target: 3000000, icon: '🏖️' },
+                  { name: 'Retirement', current: 797500, target: 3000000, icon: '🏖️' },
                   { name: 'Beach House', current: 85000, target: 400000, icon: '🏠' },
                   { name: 'Banks College', current: 28000, target: 200000, icon: '🎓' },
                 ].map((goal, idx) => {

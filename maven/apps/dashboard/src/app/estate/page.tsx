@@ -38,7 +38,7 @@ const ACCOUNT_BENEFICIARIES = [
 export default function EstatePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'beneficiaries'>('overview');
   
-  const totalEstate = 1150000 + 1000000; // Net worth + life insurance
+  const totalEstate = 797500 + 1000000; // Net worth + life insurance
   const estateTaxExemption = 13610000; // 2024 federal exemption
   const isOverExemption = totalEstate > estateTaxExemption;
   

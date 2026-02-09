@@ -235,6 +235,11 @@ export const DEMO_PROFILE: UserProfile = {
   onboardingComplete: true,
 };
 
+// Calculated net worth from DEMO_PROFILE (~$797,500)
+// Assets: Cash($85K) + Retirement($620K) + Investment($325K) + Other($225K) = $1,255K
+// Liabilities: Mortgage($425K) + Auto($28K) + CC($4.5K) = $457.5K
+export const DEMO_NET_WORTH = 797500;
+
 // Demo mode storage key
 export const DEMO_MODE_KEY = 'maven_demo_mode';
 

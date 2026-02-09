@@ -13,11 +13,11 @@ interface WealthPulseProps {
 }
 
 export default function WealthPulse({
-  netWorth = 1150000,
+  netWorth = 797500,
   dayChange = 2340,
-  dayChangePercent = 0.20,
-  weekData = [1120000, 1125000, 1118000, 1135000, 1142000, 1148000, 1150000],
-  monthData = [1050000, 1080000, 1070000, 1095000, 1110000, 1120000, 1125000, 1118000, 1135000, 1142000, 1148000, 1150000],
+  dayChangePercent = 0.29,
+  weekData = [775000, 780000, 778000, 785000, 790000, 794000, 797500],
+  monthData = [755000, 765000, 760000, 770000, 775000, 780000, 778000, 785000, 790000, 794000, 796000, 797500],
 }: WealthPulseProps) {
   const [activeTimeframe, setActiveTimeframe] = useState<'day' | 'week' | 'month'>('week');
   const [isVisible, setIsVisible] = useState(false);

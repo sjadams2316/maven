@@ -10,9 +10,9 @@ interface NetWorthCardProps {
 }
 
 export default function NetWorthCard({ 
-  netWorth = 1150000, 
-  change = 12400, 
-  changePercent = 1.09,
+  netWorth = 797500, 
+  change = 8500, 
+  changePercent = 1.08,
   period = '1M'
 }: NetWorthCardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);

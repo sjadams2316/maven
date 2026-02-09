@@ -6,18 +6,18 @@ import Header from '../components/Header';
 
 // Mock historical net worth data
 const MOCK_HISTORY = [
-  { date: '2025-03-01', value: 680000 },
-  { date: '2025-04-01', value: 720000 },
-  { date: '2025-05-01', value: 710000 },
-  { date: '2025-06-01', value: 780000 },
-  { date: '2025-07-01', value: 820000 },
-  { date: '2025-08-01', value: 790000 },
-  { date: '2025-09-01', value: 850000 },
-  { date: '2025-10-01', value: 920000 },
-  { date: '2025-11-01', value: 980000 },
-  { date: '2025-12-01', value: 1050000 },
-  { date: '2026-01-01', value: 1100000 },
-  { date: '2026-02-01', value: 1150000 },
+  { date: '2025-03-01', value: 580000 },
+  { date: '2025-04-01', value: 610000 },
+  { date: '2025-05-01', value: 600000 },
+  { date: '2025-06-01', value: 640000 },
+  { date: '2025-07-01', value: 670000 },
+  { date: '2025-08-01', value: 655000 },
+  { date: '2025-09-01', value: 695000 },
+  { date: '2025-10-01', value: 725000 },
+  { date: '2025-11-01', value: 755000 },
+  { date: '2025-12-01', value: 770000 },
+  { date: '2026-01-01', value: 785000 },
+  { date: '2026-02-01', value: 797500 },
 ];
 
 const MOCK_ACCOUNTS = [
