@@ -593,11 +593,36 @@ async function executeTool(name: string, input: any, userContext: UserContext, c
       
     case 'get_market_data':
       try {
-        const symbols = input.symbols.join(',');
-        // Would call our market-data API in production
-        return `[Market data for ${symbols} would be fetched here. For now, prices are in user context.]`;
+        const symbols: string[] = input.symbols;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/stock-quote`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbols }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch prices: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const quotes = data.quotes || {};
+        
+        // Format for readable output
+        const priceList = Object.entries(quotes).map(([symbol, info]) => {
+          const q = info as { name: string; price: number; change: number; changePercent: number };
+          const direction = q.change >= 0 ? '+' : '';
+          return `${symbol}: $${q.price.toFixed(2)} (${direction}${q.changePercent.toFixed(2)}%)`;
+        });
+        
+        return JSON.stringify({
+          prices: quotes,
+          summary: priceList.join(', '),
+          timestamp: new Date().toISOString(),
+        });
       } catch (e) {
-        return `Error fetching market data: ${e}`;
+        console.error('get_market_data error:', e);
+        return `Error fetching market data: ${e instanceof Error ? e.message : e}`;
       }
       
     case 'calculate_tax_impact':
