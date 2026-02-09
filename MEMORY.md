@@ -227,7 +227,7 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
-## Project Pantheon (Proven - 2026-02-09)
+## Project Pantheon (v2.5 - Compounding System Live)
 
 **What:** Multi-agent architecture for Maven. Self-improving intelligence network.
 
@@ -237,22 +237,38 @@ Full spec: `maven/docs/TIERING.md`
 - Equivalent traditional dev cost: $30-50K+
 - ROI: ~1000x
 
-**Key Learnings:**
-- Atomic tasks (1-2 files) work best
-- QA agents catch bugs that slip through (e.g., demo variant invisible)
-- PATTERNS.md prevents rediscovering same fixes
-- Status tracker prevents duplicate work
+**Compounding System (Built 2026-02-09 afternoon):**
+- **LEARNINGS.md** — Every agent captures one insight
+- **ANTI-PATTERNS.md** — 23 documented failures to avoid
+- **FEEDBACK.md** — User reactions as ground truth
+- **code-patterns/** — Copy-paste solutions
+- **Automated crons:** Weekly review, research accumulation, auto-QA
+
+**Verified Working:** Test sprint 3/3 agents captured learnings automatically.
+
+**The Flywheel:**
+```
+Sprint 1 → Learnings captured
+Sprint 2 → Agents read learnings, work smarter
+Sprint 3 → Patterns emerge, anti-patterns avoided
+Month 2 → System improving itself
+Month 6 → Competitors need 6 months to match DAY 1
+```
 
 **Infrastructure:**
-- `memory/pantheon/PANTHEON-STATUS.md` — Live agent tracker
-- `memory/pantheon/PATTERNS.md` — Common fixes/patterns
-- Automated crons: Data validation (4hr), Consistency check (6hr)
+- `memory/pantheon/PANTHEON-STATUS.md` — Live agent tracker + file locks
+- `memory/pantheon/PANTHEON-PROTOCOL.md` — Full spawn guidelines
+- `memory/pantheon/LEARNINGS.md` — Running insight log
+- `memory/pantheon/PATTERNS.md` — Proven solutions
+- `memory/pantheon/ANTI-PATTERNS.md` — What NOT to do
+- `memory/pantheon/FEEDBACK.md` — User signals
+- `memory/pantheon/code-patterns/` — Reusable code
 
 **Files:**
-- `memory/PROJECT-PANTHEON.md` — Full spec
-- `memory/pantheon/*/KNOWLEDGE.md` — Team knowledge bases
+- `memory/PROJECT-PANTHEON.md` — Full spec (updated with compounding system)
+- `memory/pantheon/COMPOUNDING-ROADMAP.md` — Future improvements
 
-**This is the moat.** 6-12 months of runway advantage PER MONTH at this intensity.
+**This is the moat.** Every sprint makes the next one smarter. Gap widens daily.
 
 ---
 
