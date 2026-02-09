@@ -24,6 +24,10 @@
 **Task:** Fix FMP showing as "down" falsely  
 **Insight:** Health checks should test the same endpoints the app actually uses. Testing `/profile/AAPL` when the app uses `/quote/` gives false negatives.
 
+### pantheon-loading-states
+**Task:** Improved dashboard loading skeleton to match actual page layout
+**Insight:** Skeleton loaders should match the real content structure — show the same grid layout, card shapes, and hierarchy. A generic "3 gray boxes" skeleton looks lazy; matching the real layout (left column with net worth/insights/holdings, right column with quick actions/markets/goals) gives users an accurate preview and feels more polished.
+
 ---
 
 ## Learning Categories
