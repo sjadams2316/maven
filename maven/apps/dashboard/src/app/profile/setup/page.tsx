@@ -34,6 +34,63 @@ interface CashAccount {
   balance: number;
 }
 
+// Retirement account types that support multiple accounts
+interface TraditionalIRAAccount {
+  id: string;
+  name: string;
+  institution: string;
+  balance: number;
+  holdings: Holding[];
+}
+
+interface RothIRAAccount {
+  id: string;
+  name: string;
+  institution: string;
+  balance: number;
+  holdings: Holding[];
+}
+
+interface Account401k {
+  id: string;
+  name: string;
+  employer: string;
+  planProvider: string;
+  balance: number;
+  contributionMode: 'percent' | 'dollar';
+  contribution: number;
+  matchMode: 'percent' | 'dollar';
+  match: number;
+  holdingsMode: 'value' | 'percentage';
+  holdings: Holding[];
+  isActive: boolean; // Current employer vs old 401k
+}
+
+interface Roth401kAccount {
+  id: string;
+  name: string;
+  employer: string;
+  balance: number;
+  holdings: Holding[];
+}
+
+interface HSAAccount {
+  id: string;
+  name: string;
+  institution: string;
+  balance: number;
+  holdings: Holding[];
+}
+
+interface BrokerageAccount {
+  id: string;
+  name: string;
+  institution: string;
+  balance: number;
+  holdingsMode: 'value' | 'percentage';
+  holdings: Holding[];
+}
+
 interface ProfileData {
   // Personal
   firstName: string;
@@ -56,6 +113,16 @@ interface ProfileData {
   
   // Cash Accounts (array - supports multiple)
   cashAccounts: CashAccount[];
+  
+  // Retirement Accounts (arrays - support multiple of each type)
+  traditionalIRAs: TraditionalIRAAccount[];
+  rothIRAs: RothIRAAccount[];
+  accounts401k: Account401k[];
+  roth401ks: Roth401kAccount[];
+  hsaAccounts: HSAAccount[];
+  
+  // Investment Accounts (arrays - support multiple)
+  brokerageAccounts: BrokerageAccount[];
   
   // Legacy fields for backwards compatibility
   checkingAccountName: string;
@@ -719,6 +786,14 @@ export default function ProfileSetupPage() {
     otherIncome: 0,
     // Cash accounts (array for multiple)
     cashAccounts: [],
+    // Retirement accounts (arrays for multiple of each type)
+    traditionalIRAs: [],
+    rothIRAs: [],
+    accounts401k: [],
+    roth401ks: [],
+    hsaAccounts: [],
+    // Investment accounts (arrays for multiple)
+    brokerageAccounts: [],
     // Legacy fields (for backwards compat)
     checkingAccountName: 'Checking Account',
     checkingInstitution: '',
@@ -930,6 +1005,124 @@ export default function ProfileSetupPage() {
     });
   };
   
+  // Traditional IRA management
+  const addTraditionalIRA = () => {
+    const newIRA: TraditionalIRAAccount = {
+      id: crypto.randomUUID(),
+      name: `Traditional IRA ${data.traditionalIRAs.length + 1}`,
+      institution: '',
+      balance: 0,
+      holdings: [],
+    };
+    update({ traditionalIRAs: [...data.traditionalIRAs, newIRA] });
+  };
+  
+  const updateTraditionalIRA = (id: string, updates: Partial<TraditionalIRAAccount>) => {
+    update({
+      traditionalIRAs: data.traditionalIRAs.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
+  
+  const removeTraditionalIRA = (id: string) => {
+    update({ traditionalIRAs: data.traditionalIRAs.filter(a => a.id !== id) });
+  };
+  
+  // Roth IRA management
+  const addRothIRA = () => {
+    const newIRA: RothIRAAccount = {
+      id: crypto.randomUUID(),
+      name: `Roth IRA ${data.rothIRAs.length + 1}`,
+      institution: '',
+      balance: 0,
+      holdings: [],
+    };
+    update({ rothIRAs: [...data.rothIRAs, newIRA] });
+  };
+  
+  const updateRothIRA = (id: string, updates: Partial<RothIRAAccount>) => {
+    update({
+      rothIRAs: data.rothIRAs.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
+  
+  const removeRothIRA = (id: string) => {
+    update({ rothIRAs: data.rothIRAs.filter(a => a.id !== id) });
+  };
+  
+  // 401(k) management
+  const add401k = () => {
+    const new401k: Account401k = {
+      id: crypto.randomUUID(),
+      name: `401(k) ${data.accounts401k.length + 1}`,
+      employer: '',
+      planProvider: '',
+      balance: 0,
+      contributionMode: 'percent',
+      contribution: 0,
+      matchMode: 'percent',
+      match: 0,
+      holdingsMode: 'value',
+      holdings: [],
+      isActive: data.accounts401k.length === 0, // First one is active by default
+    };
+    update({ accounts401k: [...data.accounts401k, new401k] });
+  };
+  
+  const update401k = (id: string, updates: Partial<Account401k>) => {
+    update({
+      accounts401k: data.accounts401k.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
+  
+  const remove401k = (id: string) => {
+    update({ accounts401k: data.accounts401k.filter(a => a.id !== id) });
+  };
+  
+  // HSA management
+  const addHSA = () => {
+    const newHSA: HSAAccount = {
+      id: crypto.randomUUID(),
+      name: `HSA ${data.hsaAccounts.length + 1}`,
+      institution: '',
+      balance: 0,
+      holdings: [],
+    };
+    update({ hsaAccounts: [...data.hsaAccounts, newHSA] });
+  };
+  
+  const updateHSA = (id: string, updates: Partial<HSAAccount>) => {
+    update({
+      hsaAccounts: data.hsaAccounts.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
+  
+  const removeHSA = (id: string) => {
+    update({ hsaAccounts: data.hsaAccounts.filter(a => a.id !== id) });
+  };
+  
+  // Brokerage management
+  const addBrokerage = () => {
+    const newBrokerage: BrokerageAccount = {
+      id: crypto.randomUUID(),
+      name: `Brokerage ${data.brokerageAccounts.length + 1}`,
+      institution: '',
+      balance: 0,
+      holdingsMode: 'value',
+      holdings: [],
+    };
+    update({ brokerageAccounts: [...data.brokerageAccounts, newBrokerage] });
+  };
+  
+  const updateBrokerage = (id: string, updates: Partial<BrokerageAccount>) => {
+    update({
+      brokerageAccounts: data.brokerageAccounts.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
+  
+  const removeBrokerage = (id: string) => {
+    update({ brokerageAccounts: data.brokerageAccounts.filter(a => a.id !== id) });
+  };
+  
   const handleComplete = async () => {
     setSaving(true);
     
@@ -1010,7 +1203,29 @@ export default function ProfileSetupPage() {
           })),
         });
       }
-      if (data.hasTraditionalIRA && data.traditionalIRABalance > 0) {
+      // Traditional IRAs (new array format takes priority)
+      if (data.traditionalIRAs.length > 0) {
+        for (const ira of data.traditionalIRAs) {
+          if (ira.balance > 0) {
+            retirementAccounts.push({
+              id: ira.id,
+              name: ira.name || 'Traditional IRA',
+              institution: ira.institution || 'Brokerage',
+              balance: ira.balance,
+              type: 'Traditional IRA' as const,
+              holdings: ira.holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                shares: h.shares,
+                costBasis: h.costBasis,
+                currentPrice: h.currentPrice,
+                currentValue: h.currentValue,
+              })),
+            });
+          }
+        }
+      } else if (data.hasTraditionalIRA && data.traditionalIRABalance > 0) {
+        // Legacy fallback
         retirementAccounts.push({
           id: 'trad-ira-1',
           name: data.traditionalIRAName || 'Traditional IRA',
@@ -1027,7 +1242,30 @@ export default function ProfileSetupPage() {
           })),
         });
       }
-      if (data.hasRothIRA && data.rothIRABalance > 0) {
+      
+      // Roth IRAs (new array format takes priority)
+      if (data.rothIRAs.length > 0) {
+        for (const ira of data.rothIRAs) {
+          if (ira.balance > 0) {
+            retirementAccounts.push({
+              id: ira.id,
+              name: ira.name || 'Roth IRA',
+              institution: ira.institution || 'Brokerage',
+              balance: ira.balance,
+              type: 'Roth IRA' as const,
+              holdings: ira.holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                shares: h.shares,
+                costBasis: h.costBasis,
+                currentPrice: h.currentPrice,
+                currentValue: h.currentValue,
+              })),
+            });
+          }
+        }
+      } else if (data.hasRothIRA && data.rothIRABalance > 0) {
+        // Legacy fallback
         retirementAccounts.push({
           id: 'roth-ira-1',
           name: data.rothIRAName || 'Roth IRA',
@@ -1044,7 +1282,30 @@ export default function ProfileSetupPage() {
           })),
         });
       }
-      if (data.hasHSA && data.hsaBalance > 0) {
+      
+      // HSA accounts (new array format takes priority)
+      if (data.hsaAccounts.length > 0) {
+        for (const hsa of data.hsaAccounts) {
+          if (hsa.balance > 0) {
+            retirementAccounts.push({
+              id: hsa.id,
+              name: hsa.name || 'HSA',
+              institution: hsa.institution || 'HSA Provider',
+              balance: hsa.balance,
+              type: 'HSA' as const,
+              holdings: hsa.holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                shares: h.shares,
+                costBasis: h.costBasis,
+                currentPrice: h.currentPrice,
+                currentValue: h.currentValue,
+              })),
+            });
+          }
+        }
+      } else if (data.hasHSA && data.hsaBalance > 0) {
+        // Legacy fallback
         retirementAccounts.push({
           id: 'hsa-1',
           name: data.hsaName || 'HSA',
@@ -1073,7 +1334,30 @@ export default function ProfileSetupPage() {
       }
       
       const investmentAccounts = [];
-      if (data.hasBrokerage && data.brokerageBalance > 0) {
+      // Brokerage accounts (new array format takes priority)
+      if (data.brokerageAccounts.length > 0) {
+        for (const account of data.brokerageAccounts) {
+          if (account.balance > 0) {
+            investmentAccounts.push({
+              id: account.id,
+              name: account.name || 'Brokerage Account',
+              institution: account.institution || 'Brokerage',
+              balance: account.balance,
+              type: 'Individual' as const,
+              holdingsMode: account.holdingsMode,
+              holdings: account.holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                shares: h.shares,
+                costBasis: h.costBasis,
+                currentPrice: h.currentPrice,
+                currentValue: h.currentValue,
+              })),
+            });
+          }
+        }
+      } else if (data.hasBrokerage && data.brokerageBalance > 0) {
+        // Legacy fallback
         investmentAccounts.push({
           id: 'brokerage-1',
           name: data.brokerageName || 'Brokerage Account',
@@ -1747,89 +2031,230 @@ export default function ProfileSetupPage() {
                 </div>
               )}
               
-              {/* Traditional IRA */}
-              <ToggleCard
-                checked={data.hasTraditionalIRA}
-                onChange={(v) => update({ hasTraditionalIRA: v })}
-                icon="📜"
-                title="Traditional IRA"
-                description="Individual retirement account (pre-tax)"
-              />
-              
-              {data.hasTraditionalIRA && (
-                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                    <CurrencyInput value={data.traditionalIRABalance} onChange={(v) => update({ traditionalIRABalance: v })} />
+              {/* Traditional IRAs - Multiple Accounts */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📜</span>
+                    <div>
+                      <h4 className="text-white font-medium">Traditional IRA</h4>
+                      <p className="text-sm text-gray-500">Individual retirement account (pre-tax)</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
-                    <HoldingsEntry
-                      holdings={data.traditionalIRAHoldings}
-                      onChange={(h) => update({ traditionalIRAHoldings: h })}
-                      mode="value"
-                      accountBalance={data.traditionalIRABalance}
-                      showModeToggle={false}
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={addTraditionalIRA}
+                    className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                  >
+                    + Add Account
+                  </button>
                 </div>
-              )}
-              
-              {/* Roth IRA */}
-              <ToggleCard
-                checked={data.hasRothIRA}
-                onChange={(v) => update({ hasRothIRA: v })}
-                icon="💎"
-                title="Roth IRA"
-                description="Individual retirement account (after-tax)"
-              />
-              
-              {data.hasRothIRA && (
-                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                    <CurrencyInput value={data.rothIRABalance} onChange={(v) => update({ rothIRABalance: v })} />
+                
+                {data.traditionalIRAs.map((ira, index) => (
+                  <div key={ira.id} className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-indigo-400 font-medium">Account {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeTraditionalIRA(ira.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          value={ira.name}
+                          onChange={(e) => updateTraditionalIRA(ira.id, { name: e.target.value })}
+                          placeholder="e.g., Traditional IRA - Merrill"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Institution</label>
+                        <input
+                          type="text"
+                          value={ira.institution}
+                          onChange={(e) => updateTraditionalIRA(ira.id, { institution: e.target.value })}
+                          placeholder="e.g., Merrill Lynch, Alto IRA"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                      <CurrencyInput value={ira.balance} onChange={(v) => updateTraditionalIRA(ira.id, { balance: v })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <HoldingsEntry
+                        holdings={ira.holdings}
+                        onChange={(h) => updateTraditionalIRA(ira.id, { holdings: h })}
+                        mode="value"
+                        accountBalance={ira.balance}
+                        showModeToggle={false}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
-                    <HoldingsEntry
-                      holdings={data.rothIRAHoldings}
-                      onChange={(h) => update({ rothIRAHoldings: h })}
-                      mode="value"
-                      accountBalance={data.rothIRABalance}
-                      showModeToggle={false}
-                    />
+                ))}
+                
+                {data.traditionalIRAs.length === 0 && (
+                  <p className="text-sm text-gray-500 italic ml-4">No Traditional IRA accounts added yet</p>
+                )}
+              </div>
+              
+              {/* Roth IRAs - Multiple Accounts */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💎</span>
+                    <div>
+                      <h4 className="text-white font-medium">Roth IRA</h4>
+                      <p className="text-sm text-gray-500">Individual retirement account (after-tax)</p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={addRothIRA}
+                    className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                  >
+                    + Add Account
+                  </button>
                 </div>
-              )}
-              
-              {/* HSA */}
-              <ToggleCard
-                checked={data.hasHSA}
-                onChange={(v) => update({ hasHSA: v })}
-                icon="🏥"
-                title="HSA"
-                description="Health Savings Account"
-              />
-              
-              {data.hasHSA && (
-                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                    <CurrencyInput value={data.hsaBalance} onChange={(v) => update({ hsaBalance: v })} />
+                
+                {data.rothIRAs.map((ira, index) => (
+                  <div key={ira.id} className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-indigo-400 font-medium">Account {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeRothIRA(ira.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          value={ira.name}
+                          onChange={(e) => updateRothIRA(ira.id, { name: e.target.value })}
+                          placeholder="e.g., Roth IRA - Fidelity"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Institution</label>
+                        <input
+                          type="text"
+                          value={ira.institution}
+                          onChange={(e) => updateRothIRA(ira.id, { institution: e.target.value })}
+                          placeholder="e.g., Fidelity, Alto IRA"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                      <CurrencyInput value={ira.balance} onChange={(v) => updateRothIRA(ira.id, { balance: v })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <HoldingsEntry
+                        holdings={ira.holdings}
+                        onChange={(h) => updateRothIRA(ira.id, { holdings: h })}
+                        mode="value"
+                        accountBalance={ira.balance}
+                        showModeToggle={false}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
-                    <HoldingsEntry
-                      holdings={data.hsaHoldings}
-                      onChange={(h) => update({ hsaHoldings: h })}
-                      mode="value"
-                      accountBalance={data.hsaBalance}
-                      showModeToggle={false}
-                    />
+                ))}
+                
+                {data.rothIRAs.length === 0 && (
+                  <p className="text-sm text-gray-500 italic ml-4">No Roth IRA accounts added yet</p>
+                )}
+              </div>
+              
+              {/* HSA Accounts - Multiple */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🏥</span>
+                    <div>
+                      <h4 className="text-white font-medium">HSA</h4>
+                      <p className="text-sm text-gray-500">Health Savings Account</p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={addHSA}
+                    className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                  >
+                    + Add Account
+                  </button>
                 </div>
-              )}
+                
+                {data.hsaAccounts.map((hsa, index) => (
+                  <div key={hsa.id} className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-indigo-400 font-medium">Account {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeHSA(hsa.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          value={hsa.name}
+                          onChange={(e) => updateHSA(hsa.id, { name: e.target.value })}
+                          placeholder="e.g., HSA - Fidelity"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Institution</label>
+                        <input
+                          type="text"
+                          value={hsa.institution}
+                          onChange={(e) => updateHSA(hsa.id, { institution: e.target.value })}
+                          placeholder="e.g., Fidelity, HealthEquity"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                      <CurrencyInput value={hsa.balance} onChange={(v) => updateHSA(hsa.id, { balance: v })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <HoldingsEntry
+                        holdings={hsa.holdings}
+                        onChange={(h) => updateHSA(hsa.id, { holdings: h })}
+                        mode="value"
+                        accountBalance={hsa.balance}
+                        showModeToggle={false}
+                      />
+                    </div>
+                  </div>
+                ))}
+                
+                {data.hsaAccounts.length === 0 && (
+                  <p className="text-sm text-gray-500 italic ml-4">No HSA accounts added yet</p>
+                )}
+              </div>
               
               {/* Pension */}
               <ToggleCard
@@ -1862,33 +2287,80 @@ export default function ProfileSetupPage() {
             </div>
             
             <div className="space-y-4">
-              {/* Brokerage */}
-              <ToggleCard
-                checked={data.hasBrokerage}
-                onChange={(v) => update({ hasBrokerage: v })}
-                icon="📊"
-                title="Brokerage Account"
-                description="Taxable investment account"
-              />
-              
-              {data.hasBrokerage && (
-                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Total Value</label>
-                    <CurrencyInput value={data.brokerageBalance} onChange={(v) => update({ brokerageBalance: v })} />
+              {/* Brokerage Accounts - Multiple */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📊</span>
+                    <div>
+                      <h4 className="text-white font-medium">Brokerage Account</h4>
+                      <p className="text-sm text-gray-500">Taxable investment account</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
-                    <HoldingsEntry
-                      holdings={data.brokerageHoldings}
-                      onChange={(h) => update({ brokerageHoldings: h })}
-                      mode={data.brokerageHoldingsMode}
-                      onModeChange={(m) => update({ brokerageHoldingsMode: m })}
-                      accountBalance={data.brokerageBalance}
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={addBrokerage}
+                    className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                  >
+                    + Add Account
+                  </button>
                 </div>
-              )}
+                
+                {data.brokerageAccounts.map((account, index) => (
+                  <div key={account.id} className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-indigo-400 font-medium">Account {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeBrokerage(account.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          value={account.name}
+                          onChange={(e) => updateBrokerage(account.id, { name: e.target.value })}
+                          placeholder="e.g., Joint Brokerage"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Institution</label>
+                        <input
+                          type="text"
+                          value={account.institution}
+                          onChange={(e) => updateBrokerage(account.id, { institution: e.target.value })}
+                          placeholder="e.g., Schwab, Fidelity"
+                          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Total Value</label>
+                      <CurrencyInput value={account.balance} onChange={(v) => updateBrokerage(account.id, { balance: v })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                      <HoldingsEntry
+                        holdings={account.holdings}
+                        onChange={(h) => updateBrokerage(account.id, { holdings: h })}
+                        mode={account.holdingsMode}
+                        onModeChange={(m) => updateBrokerage(account.id, { holdingsMode: m })}
+                        accountBalance={account.balance}
+                      />
+                    </div>
+                  </div>
+                ))}
+                
+                {data.brokerageAccounts.length === 0 && (
+                  <p className="text-sm text-gray-500 italic ml-4">No brokerage accounts added yet</p>
+                )}
+              </div>
               
               {/* 529 Plans */}
               <ToggleCard
