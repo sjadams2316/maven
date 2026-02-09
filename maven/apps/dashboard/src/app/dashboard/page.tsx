@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const [showAdditionalTools, setShowAdditionalTools] = useState(false);
+  const [hasProfileDraft, setHasProfileDraft] = useState(false);
   
   // Fund profiles for real Morningstar classifications
   const { profiles: fundProfiles, fetchProfiles, loading: profilesLoading } = useFundProfiles();
@@ -63,6 +64,13 @@ export default function Dashboard() {
     const welcomeSeen = localStorage.getItem('maven_welcome_seen');
     if (!welcomeSeen) {
       setShowWelcome(true);
+    }
+    
+    // Check if user has started profile setup
+    const profileDraft = localStorage.getItem('maven_profile_draft');
+    const onboardingDone = localStorage.getItem('maven_onboarding');
+    if (profileDraft || onboardingDone) {
+      setHasProfileDraft(true);
     }
 
     // Update time every minute
@@ -154,6 +162,17 @@ export default function Dashboard() {
   const netWorth = calculateNetWorth();
   const allHoldings = getEnhancedHoldings;
   const totalInvested = allHoldings.reduce((sum, h) => sum + (h.currentValue || 0), 0);
+  
+  // Smart navigation to profile - resume if draft exists
+  const handleBuildProfile = () => {
+    if (hasProfileDraft) {
+      // User has started profile setup before - resume where they left off
+      router.push('/profile/setup');
+    } else {
+      // New user - start with quick onboarding
+      router.push('/onboarding');
+    }
+  };
 
   // Fetch fund profiles for all holdings (real-time Morningstar data)
   useEffect(() => {
@@ -764,9 +783,9 @@ export default function Dashboard() {
               <p className="text-xs sm:text-sm text-gray-500">Road to retirement</p>
             </a>
           ) : (
-            <a 
-              href="/onboarding"
-              className="bg-[#12121a] border border-white/10 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group"
+            <button 
+              onClick={handleBuildProfile}
+              className="bg-[#12121a] border border-white/10 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-200 group text-left w-full"
             >
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-blue-600/30 border border-indigo-500/20 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform">
@@ -774,11 +793,11 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">Start</span>
+                <span className="text-xs px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full">{hasProfileDraft ? 'Resume' : 'Start'}</span>
               </div>
-              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-indigo-300 transition-colors">Build Your Profile</h4>
-              <p className="text-xs sm:text-sm text-gray-500">Tell Maven about you</p>
-            </a>
+              <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-indigo-300 transition-colors">{hasProfileDraft ? 'Continue Profile Setup' : 'Build Your Profile'}</h4>
+              <p className="text-xs sm:text-sm text-gray-500">{hasProfileDraft ? 'Pick up where you left off' : 'Tell Maven about you'}</p>
+            </button>
           )}
         </div>
         

@@ -76,6 +76,7 @@ interface ProfileData {
   account401kPlanProvider: string; // NEW: Fidelity, Vanguard, etc.
   account401kContributionMode: 'percent' | 'dollar';
   account401kContribution: number;
+  account401kMatchMode: 'percent' | 'dollar';
   account401kMatch: number;
   account401kHoldingsMode: 'value' | 'percentage';
   account401kHoldings: Holding[];
@@ -711,6 +712,7 @@ export default function ProfileSetupPage() {
     account401kPlanProvider: '',
     account401kContributionMode: 'percent',
     account401kContribution: 0,
+    account401kMatchMode: 'percent',
     account401kMatch: 0,
     account401kHoldingsMode: 'value',
     account401kHoldings: [],
@@ -1675,9 +1677,35 @@ export default function ProfileSetupPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Employer Match %</label>
-                    <PercentInput value={data.account401kMatch} onChange={(v) => update({ account401kMatch: v })} placeholder="e.g., 4" />
-                    <p className="text-xs text-gray-500 mt-1">What percentage does your employer match?</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-sm text-gray-400">Employer Match</label>
+                      <ModeToggle 
+                        mode={data.account401kMatchMode}
+                        onChange={(v) => update({ account401kMatchMode: v as 'percent' | 'dollar' })}
+                        options={[
+                          { value: 'percent', label: '% Match' },
+                          { value: 'dollar', label: '$ per Year' },
+                        ]}
+                      />
+                    </div>
+                    {data.account401kMatchMode === 'percent' ? (
+                      <PercentInput 
+                        value={data.account401kMatch} 
+                        onChange={(v) => update({ account401kMatch: v })} 
+                        placeholder="e.g., 4"
+                      />
+                    ) : (
+                      <CurrencyInput 
+                        value={data.account401kMatch} 
+                        onChange={(v) => update({ account401kMatch: v })} 
+                        placeholder="e.g., 6,000"
+                      />
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      {data.account401kMatchMode === 'dollar' 
+                        ? 'Total employer contribution per year' 
+                        : 'What percentage of your salary does your employer match?'}
+                    </p>
                   </div>
                   
                   {/* Holdings */}
