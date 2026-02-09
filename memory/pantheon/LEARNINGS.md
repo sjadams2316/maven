@@ -24,9 +24,17 @@
 **Task:** Fix FMP showing as "down" falsely  
 **Insight:** Health checks should test the same endpoints the app actually uses. Testing `/profile/AAPL` when the app uses `/quote/` gives false negatives.
 
+### pantheon-error-messages
+**Task:** Improved error messaging for monte-carlo API route
+**Insight:** Error responses should have 4 parts: (1) `error` - short title, (2) `message` - user-friendly explanation, (3) `code` - machine-readable for debugging, (4) `hint` - actionable fix suggestion. Also: parse request.json() separately to give a specific "invalid JSON" error rather than a generic catch-all.
+
 ### pantheon-loading-states
 **Task:** Improved dashboard loading skeleton to match actual page layout
 **Insight:** Skeleton loaders should match the real content structure — show the same grid layout, card shapes, and hierarchy. A generic "3 gray boxes" skeleton looks lazy; matching the real layout (left column with net worth/insights/holdings, right column with quick actions/markets/goals) gives users an accurate preview and feels more polished.
+
+### pantheon-tooltip-polish
+**Task:** Add helpful tooltips to financial terms in Portfolio Lab (Volatility, Market Cap, P/E Ratio, Dividend Yield)
+**Insight:** When adding tooltips to financial terms, the Term component + glossary pattern in InfoTooltip.tsx is powerful. Add new terms to the GLOSSARY object with title, explanation, and example. The example field using real-world numbers (e.g., "S&P 500 average: ~20-25") makes definitions actionable rather than abstract.
 
 ---
 
