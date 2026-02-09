@@ -10,6 +10,345 @@ import {
   AssetClass,
 } from '@/lib/portfolio-utils';
 
+// ============== GAMIFICATION TYPES ==============
+
+type TradeGrade = 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+
+interface TradeGradeResult {
+  grade: TradeGrade;
+  label: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  glowClass: string;
+  isPulsing: boolean;
+}
+
+interface AchievementCallout {
+  emoji: string;
+  message: string;
+  type: 'positive' | 'neutral' | 'warning' | 'danger';
+}
+
+// ============== GAMIFICATION UTILITIES ==============
+
+/**
+ * Calculate a trade grade based on concentration, diversification, and risk impact
+ */
+function calculateTradeGrade(
+  concentrationChange: number,
+  volatilityChange: number,
+  betaChange: number,
+  newPositionSize: number
+): TradeGradeResult {
+  // Scoring: lower is better (less risk)
+  let score = 0;
+  
+  // Concentration impact (weight: 40%)
+  // Increasing concentration is bad
+  if (concentrationChange > 5) score += 4;
+  else if (concentrationChange > 2) score += 3;
+  else if (concentrationChange > 0) score += 1;
+  else if (concentrationChange < -2) score -= 2; // Reducing concentration is good
+  else if (concentrationChange < 0) score -= 1;
+  
+  // Position size check (weight: 30%)
+  // Large single positions are risky
+  if (newPositionSize > 25) score += 4;
+  else if (newPositionSize > 15) score += 2;
+  else if (newPositionSize > 10) score += 1;
+  else if (newPositionSize < 5) score -= 1; // Small, diversified position
+  
+  // Volatility impact (weight: 20%)
+  if (volatilityChange > 5) score += 3;
+  else if (volatilityChange > 2) score += 2;
+  else if (volatilityChange > 0) score += 1;
+  else if (volatilityChange < -2) score -= 1;
+  
+  // Beta impact (weight: 10%)
+  if (betaChange > 0.2) score += 2;
+  else if (betaChange > 0.1) score += 1;
+  else if (betaChange < -0.1) score -= 1;
+  
+  // Map score to grade
+  let grade: TradeGrade;
+  if (score <= -2) grade = 'A+';
+  else if (score <= 0) grade = 'A';
+  else if (score <= 2) grade = 'B';
+  else if (score <= 4) grade = 'C';
+  else if (score <= 6) grade = 'D';
+  else grade = 'F';
+  
+  const gradeConfig: Record<TradeGrade, Omit<TradeGradeResult, 'grade'>> = {
+    'A+': {
+      label: 'Excellent Diversifier',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/20',
+      borderColor: 'border-emerald-500/50',
+      glowClass: 'shadow-[0_0_20px_rgba(16,185,129,0.4)]',
+      isPulsing: false,
+    },
+    'A': {
+      label: 'Good Addition',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/15',
+      borderColor: 'border-emerald-500/40',
+      glowClass: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]',
+      isPulsing: false,
+    },
+    'B': {
+      label: 'Neutral Trade',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/15',
+      borderColor: 'border-blue-500/40',
+      glowClass: '',
+      isPulsing: false,
+    },
+    'C': {
+      label: 'Increases Concentration',
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/15',
+      borderColor: 'border-yellow-500/40',
+      glowClass: 'shadow-[0_0_15px_rgba(234,179,8,0.3)]',
+      isPulsing: false,
+    },
+    'D': {
+      label: 'Significant Risk',
+      color: 'text-orange-400',
+      bgColor: 'bg-orange-500/15',
+      borderColor: 'border-orange-500/40',
+      glowClass: 'shadow-[0_0_15px_rgba(249,115,22,0.4)]',
+      isPulsing: false,
+    },
+    'F': {
+      label: 'Dangerous Concentration',
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/20',
+      borderColor: 'border-red-500/50',
+      glowClass: 'shadow-[0_0_25px_rgba(239,68,68,0.5)]',
+      isPulsing: true,
+    },
+  };
+  
+  return { grade, ...gradeConfig[grade] };
+}
+
+/**
+ * Generate achievement-style callouts based on trade impact
+ */
+function generateCallouts(
+  ticker: string,
+  tradeType: 'buy' | 'sell',
+  newPositionSize: number,
+  concentrationChange: number,
+  volatilityChange: number,
+  betaChange: number,
+  tradeCost: number
+): AchievementCallout[] {
+  const callouts: AchievementCallout[] = [];
+  
+  // Position size callout
+  if (newPositionSize > 15) {
+    callouts.push({
+      emoji: '⚠️',
+      message: `${ticker} would become ${newPositionSize.toFixed(1)}% of your portfolio`,
+      type: 'warning',
+    });
+  } else if (newPositionSize > 0 && newPositionSize < 5 && tradeType === 'buy') {
+    callouts.push({
+      emoji: '🎯',
+      message: `Smart sizing! ${ticker} stays under 5% — well diversified`,
+      type: 'positive',
+    });
+  }
+  
+  // Concentration callouts
+  if (concentrationChange < -2) {
+    callouts.push({
+      emoji: '🏆',
+      message: `Great choice! This improves your diversification`,
+      type: 'positive',
+    });
+  } else if (concentrationChange > 5) {
+    callouts.push({
+      emoji: '🚨',
+      message: `Warning: Creates significant concentration risk`,
+      type: 'danger',
+    });
+  }
+  
+  // Volatility callouts
+  if (volatilityChange > 5) {
+    callouts.push({
+      emoji: '📉',
+      message: `Increases portfolio volatility by ${volatilityChange.toFixed(1)}%`,
+      type: 'warning',
+    });
+  } else if (volatilityChange < -3) {
+    callouts.push({
+      emoji: '🛡️',
+      message: `Reduces portfolio volatility by ${Math.abs(volatilityChange).toFixed(1)}%`,
+      type: 'positive',
+    });
+  }
+  
+  // Beta callouts
+  if (betaChange > 0.15) {
+    callouts.push({
+      emoji: '📈',
+      message: `Makes portfolio more sensitive to market swings`,
+      type: 'neutral',
+    });
+  } else if (betaChange < -0.15) {
+    callouts.push({
+      emoji: '⚖️',
+      message: `Adds stability with lower market correlation`,
+      type: 'positive',
+    });
+  }
+  
+  // Estimated dividend (simple heuristic based on asset class)
+  if (tradeType === 'buy' && tradeCost > 0) {
+    const assetClass = classifyTicker(ticker);
+    let yieldEstimate = 0;
+    if (assetClass === 'bonds') yieldEstimate = 0.04;
+    else if (assetClass === 'reits') yieldEstimate = 0.05;
+    else if (assetClass === 'usEquity') yieldEstimate = 0.015;
+    else if (assetClass === 'intlEquity') yieldEstimate = 0.025;
+    
+    if (yieldEstimate > 0) {
+      const annualDividend = tradeCost * yieldEstimate;
+      if (annualDividend >= 100) {
+        callouts.push({
+          emoji: '💰',
+          message: `Adds ~$${annualDividend.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year in estimated dividends`,
+          type: 'positive',
+        });
+      }
+    }
+  }
+  
+  return callouts;
+}
+
+// ============== GAMIFICATION COMPONENTS ==============
+
+/**
+ * Trade Grade Badge - prominent visual indicator
+ */
+function TradeGradeBadge({ gradeResult }: { gradeResult: TradeGradeResult }) {
+  return (
+    <div
+      className={`
+        relative flex flex-col items-center justify-center p-6 rounded-2xl border-2
+        ${gradeResult.bgColor} ${gradeResult.borderColor} ${gradeResult.glowClass}
+        transition-all duration-300
+        ${gradeResult.isPulsing ? 'animate-pulse' : ''}
+      `}
+    >
+      <span className={`text-5xl font-black ${gradeResult.color}`}>
+        {gradeResult.grade}
+      </span>
+      <span className={`text-sm font-medium mt-1 ${gradeResult.color}`}>
+        {gradeResult.label}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Achievement Callout Card
+ */
+function AchievementCallout({ callout }: { callout: AchievementCallout }) {
+  const typeStyles = {
+    positive: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+    neutral: 'bg-blue-500/10 border-blue-500/30 text-blue-300',
+    warning: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300',
+    danger: 'bg-red-500/10 border-red-500/30 text-red-300 animate-pulse',
+  };
+  
+  return (
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${typeStyles[callout.type]}`}>
+      <span className="text-2xl">{callout.emoji}</span>
+      <span className="text-sm font-medium">{callout.message}</span>
+    </div>
+  );
+}
+
+/**
+ * Concentration Risk Meter - visual progress bar with color zones
+ */
+function ConcentrationMeter({ 
+  current, 
+  hypothetical, 
+  label 
+}: { 
+  current: number; 
+  hypothetical: number; 
+  label: string;
+}) {
+  // Thresholds: 0-10% green, 10-20% yellow, 20%+ red
+  const getColor = (value: number) => {
+    if (value < 10) return 'bg-emerald-500';
+    if (value < 20) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+  
+  const change = hypothetical - current;
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-gray-400">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">{current.toFixed(1)}%</span>
+          <span className="text-xs text-gray-600">→</span>
+          <span className={`text-xs font-medium ${
+            hypothetical < 10 ? 'text-emerald-400' : 
+            hypothetical < 20 ? 'text-yellow-400' : 'text-red-400'
+          }`}>
+            {hypothetical.toFixed(1)}%
+          </span>
+          {Math.abs(change) >= 0.5 && (
+            <span className={`text-xs ${change > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              ({change > 0 ? '+' : ''}{change.toFixed(1)})
+            </span>
+          )}
+        </div>
+      </div>
+      
+      {/* Progress bar with zones */}
+      <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+        {/* Zone indicators */}
+        <div className="absolute inset-0 flex">
+          <div className="w-[33%] bg-emerald-500/20 border-r border-white/10" />
+          <div className="w-[33%] bg-yellow-500/20 border-r border-white/10" />
+          <div className="w-[34%] bg-red-500/20" />
+        </div>
+        
+        {/* Current value marker */}
+        <div 
+          className={`absolute h-full w-1 ${getColor(current)} opacity-50 transition-all duration-500`}
+          style={{ left: `${Math.min(current, 100) * 0.33}%` }}
+        />
+        
+        {/* Hypothetical value bar */}
+        <div 
+          className={`absolute h-full ${getColor(hypothetical)} transition-all duration-500 rounded-full`}
+          style={{ width: `${Math.min(hypothetical, 100) * 0.33}%` }}
+        />
+      </div>
+      
+      {/* Zone labels */}
+      <div className="flex justify-between text-[10px] text-gray-500">
+        <span>Safe</span>
+        <span>Moderate</span>
+        <span>High Risk</span>
+      </div>
+    </div>
+  );
+}
+
 // Types
 interface Holding {
   ticker: string;
@@ -596,7 +935,86 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
       {/* Simulation Results */}
       {simulationResult && (
         <>
-          {/* Quick Impact Summary */}
+          {/* ============== GAMIFICATION: Trade Grade & Callouts ============== */}
+          {(() => {
+            const gradeResult = calculateTradeGrade(
+              simulationResult.changes.concentration,
+              simulationResult.changes.volatility,
+              simulationResult.changes.beta,
+              simulationResult.hypotheticalPortfolio.newPositionSize
+            );
+            const callouts = generateCallouts(
+              ticker.toUpperCase(),
+              tradeType,
+              simulationResult.hypotheticalPortfolio.newPositionSize,
+              simulationResult.changes.concentration,
+              simulationResult.changes.volatility,
+              simulationResult.changes.beta,
+              simulationResult.tradeCost
+            );
+            
+            return (
+              <div className={`rounded-2xl p-6 border transition-all duration-300 ${gradeResult.glowClass} ${
+                gradeResult.grade === 'A+' || gradeResult.grade === 'A'
+                  ? 'bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-500/30'
+                  : gradeResult.grade === 'B'
+                  ? 'bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border-blue-500/30'
+                  : gradeResult.grade === 'C'
+                  ? 'bg-gradient-to-br from-yellow-500/10 via-amber-500/5 to-transparent border-yellow-500/30'
+                  : gradeResult.grade === 'D'
+                  ? 'bg-gradient-to-br from-orange-500/10 via-red-500/5 to-transparent border-orange-500/30'
+                  : 'bg-gradient-to-br from-red-500/15 via-red-600/10 to-transparent border-red-500/40'
+              }`}>
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Trade Grade Badge */}
+                  <div className="flex-shrink-0">
+                    <TradeGradeBadge gradeResult={gradeResult} />
+                  </div>
+                  
+                  {/* Achievement Callouts */}
+                  <div className="flex-1 space-y-3">
+                    <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                      {tradeType === 'buy' ? '📈' : '📉'} 
+                      {tradeType === 'buy' ? 'Buying' : 'Selling'} {ticker.toUpperCase()}
+                    </h4>
+                    
+                    {callouts.length > 0 ? (
+                      <div className="space-y-2">
+                        {callouts.map((callout, idx) => (
+                          <AchievementCallout key={idx} callout={callout} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm">
+                        This trade appears neutral with minimal impact on your portfolio.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ============== GAMIFICATION: Risk Meters ============== */}
+          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
+            <h4 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              📊 Risk Impact Meters
+            </h4>
+            <div className="grid md:grid-cols-2 gap-6">
+              <ConcentrationMeter 
+                current={simulationResult.currentPortfolio.concentration}
+                hypothetical={simulationResult.hypotheticalPortfolio.concentration}
+                label="Top Position Concentration"
+              />
+              <ConcentrationMeter 
+                current={simulationResult.currentPortfolio.estimatedVolatility}
+                hypothetical={simulationResult.hypotheticalPortfolio.estimatedVolatility}
+                label="Portfolio Volatility"
+              />
+            </div>
+          </div>
+
+          {/* Quick Impact Summary (existing, enhanced) */}
           <div
             className={`rounded-2xl p-6 border ${
               tradeType === 'buy'
@@ -605,21 +1023,37 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
             }`}
           >
             <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              {tradeType === 'buy' ? '📈' : '📉'} Trade Impact Summary
+              📋 Detailed Metrics
             </h4>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Position Size */}
-              <div className="bg-black/20 rounded-xl p-4">
+              <div className={`bg-black/20 rounded-xl p-4 transition-all duration-300 ${
+                simulationResult.hypotheticalPortfolio.newPositionSize > 15 
+                  ? 'ring-2 ring-yellow-500/50' 
+                  : simulationResult.hypotheticalPortfolio.newPositionSize > 25
+                  ? 'ring-2 ring-red-500/50 animate-pulse'
+                  : ''
+              }`}>
                 <p className="text-xs text-gray-400 mb-1">{ticker.toUpperCase()} Would Be</p>
-                <p className="text-2xl font-bold text-white">
+                <p className={`text-2xl font-bold ${
+                  simulationResult.hypotheticalPortfolio.newPositionSize > 25 ? 'text-red-400' :
+                  simulationResult.hypotheticalPortfolio.newPositionSize > 15 ? 'text-yellow-400' :
+                  'text-white'
+                }`}>
                   {simulationResult.hypotheticalPortfolio.newPositionSize.toFixed(1)}%
                 </p>
                 <p className="text-xs text-gray-500">of portfolio</p>
               </div>
 
               {/* Concentration Change */}
-              <div className="bg-black/20 rounded-xl p-4">
+              <div className={`bg-black/20 rounded-xl p-4 transition-all duration-300 ${
+                simulationResult.changes.concentration < -2 
+                  ? 'ring-2 ring-emerald-500/40' 
+                  : simulationResult.changes.concentration > 5
+                  ? 'ring-2 ring-red-500/40'
+                  : ''
+              }`}>
                 <p className="text-xs text-gray-400 mb-1">
                   <Term id="concentration-risk">Concentration</Term>
                 </p>
@@ -636,7 +1070,13 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
               </div>
 
               {/* Beta Change */}
-              <div className="bg-black/20 rounded-xl p-4">
+              <div className={`bg-black/20 rounded-xl p-4 transition-all duration-300 ${
+                simulationResult.changes.beta < -0.1 
+                  ? 'ring-2 ring-emerald-500/40' 
+                  : simulationResult.changes.beta > 0.2
+                  ? 'ring-2 ring-yellow-500/40'
+                  : ''
+              }`}>
                 <p className="text-xs text-gray-400 mb-1">
                   <Term id="beta">Portfolio Beta</Term>
                 </p>
@@ -653,7 +1093,13 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
               </div>
 
               {/* Volatility Change */}
-              <div className="bg-black/20 rounded-xl p-4">
+              <div className={`bg-black/20 rounded-xl p-4 transition-all duration-300 ${
+                simulationResult.changes.volatility < -3 
+                  ? 'ring-2 ring-emerald-500/40' 
+                  : simulationResult.changes.volatility > 5
+                  ? 'ring-2 ring-red-500/40'
+                  : ''
+              }`}>
                 <p className="text-xs text-gray-400 mb-1">Est. Volatility</p>
                 <p className="text-2xl font-bold text-white">
                   {simulationResult.hypotheticalPortfolio.estimatedVolatility.toFixed(1)}%
