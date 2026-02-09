@@ -41,30 +41,35 @@ export default function LandingPage() {
       .then(res => res.json())
       .then(data => {
         // Transform API response to expected format
-        const stocks = data.stocks || [];
-        const crypto = data.crypto || [];
+        const stocks: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.stocks || [];
+        const crypto: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.crypto || [];
         
-        // Map stocks array to indices object
-        const spyData = stocks.find((s: { symbol: string }) => s.symbol === 'SPY');
-        const qqqData = stocks.find((s: { symbol: string }) => s.symbol === 'QQQ');
-        const diaData = stocks.find((s: { symbol: string }) => s.symbol === 'DIA');
+        // Map stocks array to indices object - use explicit property access
+        const spyData = stocks.find(s => s.symbol === 'SPY');
+        const qqqData = stocks.find(s => s.symbol === 'QQQ');
+        const diaData = stocks.find(s => s.symbol === 'DIA');
         
         // Map crypto array to object
-        const btcData = crypto.find((c: { symbol: string }) => c.symbol === 'BTC');
+        const btcData = crypto.find(c => c.symbol === 'BTC');
         
-        setMarketData({
+        // Build market data with explicit number conversion to ensure values are correct
+        const marketState = {
           indices: {
-            sp500: spyData ? { price: spyData.price, changePercent: spyData.changePercent } : null,
-            nasdaq: qqqData ? { price: qqqData.price, changePercent: qqqData.changePercent } : null,
-            dow: diaData ? { price: diaData.price, changePercent: diaData.changePercent } : null,
+            sp500: spyData ? { price: Number(spyData.price) || 0, changePercent: Number(spyData.changePercent) || 0 } : null,
+            nasdaq: qqqData ? { price: Number(qqqData.price) || 0, changePercent: Number(qqqData.changePercent) || 0 } : null,
+            dow: diaData ? { price: Number(diaData.price) || 0, changePercent: Number(diaData.changePercent) || 0 } : null,
           },
           crypto: {
-            BTC: btcData ? { price: btcData.price, changePercent: btcData.changePercent } : null,
+            BTC: btcData ? { price: Number(btcData.price) || 0, changePercent: Number(btcData.changePercent) || 0 } : null,
           },
           timestamp: data.timestamp,
-        });
+        };
+        
+        setMarketData(marketState);
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Failed to fetch market data:', err);
+      });
   }, []);
 
   // Use financials from UserProvider - only show for signed-in, onboarded users (not demo mode)
