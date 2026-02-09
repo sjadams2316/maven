@@ -1,10 +1,71 @@
 /**
- * DEMO PROFILE
- * Pre-populated portfolio for new users to explore the app
- * ~$800K net worth with diverse holdings across account types
+ * DEMO PROFILE - SINGLE SOURCE OF TRUTH
+ * All demo data lives here. /demo, /portfolio-lab, /tax, etc. all use this.
+ * 
+ * Growth Portfolio: ~$800K net worth with significant crypto exposure
+ * - Focus on TAO (Bittensor), VTI, CIFR, IREN
+ * - Aggressive allocation for tax-loss harvesting and rebalancing demos
  */
 
-import { UserProfile } from '@/providers/UserProvider';
+import { UserProfile, Holding } from '@/providers/UserProvider';
+
+// ============================================================================
+// GROWTH PORTFOLIO HOLDINGS (canonical source - used everywhere)
+// These are the exact holdings shown on /demo dashboard
+// ============================================================================
+
+export interface DemoHolding {
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+  shares: string;
+  sharesNum: number;
+  unrealizedLoss?: number;
+  dividendYield?: number;
+}
+
+/**
+ * GROWTH_HOLDINGS - The canonical demo portfolio
+ * This is the single source of truth for what the demo user owns.
+ * All pages should derive their data from this.
+ */
+export const GROWTH_HOLDINGS: DemoHolding[] = [
+  { symbol: 'TAO', name: 'Bittensor', value: 354900, change: 4.78, shares: '105 tokens', sharesNum: 105 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 185000, change: 1.2, shares: '620 shares', sharesNum: 620 },
+  { symbol: 'CIFR', name: 'Cipher Mining', value: 78000, change: -2.3, shares: '12,000 shares', sharesNum: 12000 },
+  { symbol: 'IREN', name: 'Iris Energy', value: 52000, change: 3.1, shares: '4,200 shares', sharesNum: 4200 },
+  { symbol: 'BND', name: 'Vanguard Total Bond', value: 48000, change: 0.3, shares: '580 shares', sharesNum: 580 },
+  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares', sharesNum: 95 },
+  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares', sharesNum: 540 },
+  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', sharesNum: 380, unrealizedLoss: -4200 },
+  { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares', sharesNum: 195 },
+];
+
+// Calculate totals from holdings
+const HOLDINGS_TOTAL = GROWTH_HOLDINGS.reduce((sum, h) => sum + h.value, 0); // ~$835K
+
+export const GROWTH_TARGET_ALLOCATION = {
+  usStocks: 45,
+  intlStocks: 15,
+  bonds: 20,
+  other: 20,
+};
+
+// Goals derived from holdings total
+export const GROWTH_RETIREMENT_CURRENT = Math.round(HOLDINGS_TOTAL * 0.95); // ~$793K
+export const GROWTH_RETIREMENT_TARGET = 3000000;
+export const GROWTH_RETIREMENT_PROGRESS = Math.round((GROWTH_RETIREMENT_CURRENT / GROWTH_RETIREMENT_TARGET) * 100);
+
+export const GROWTH_GOALS = [
+  { name: 'Retirement', current: GROWTH_RETIREMENT_CURRENT, target: GROWTH_RETIREMENT_TARGET, icon: '🏖️' },
+  { name: 'Beach House', current: 85000, target: 400000, icon: '🏠' },
+  { name: 'Banks College', current: 28000, target: 200000, icon: '🎓' },
+];
+
+// ============================================================================
+// DEMO PROFILE - Uses GROWTH_HOLDINGS as source of truth
+// ============================================================================
 
 export const DEMO_PROFILE: UserProfile = {
   // Personal (fictional demo user)
@@ -42,114 +103,82 @@ export const DEMO_PROFILE: UserProfile = {
     }
   ],
   
-  // Retirement Accounts
+  // Retirement Accounts - Contains Growth Portfolio ETFs
   retirementAccounts: [
     {
       id: "demo-ret-1",
       name: "Employer 401(k)",
       institution: "Fidelity",
-      balance: 385000,
+      balance: 275000,
       type: "401(k)",
       employer: "Tech Corp",
       contributionPercent: 15,
       employerMatchPercent: 6,
       holdings: [
-        { ticker: "AGTHX", name: "Growth Fund of America", shares: 450, costBasis: 28000, currentPrice: 78.50, currentValue: 35325 },
-        { ticker: "AIVSX", name: "Investment Company of America", shares: 380, costBasis: 22000, currentPrice: 52.30, currentValue: 19874 },
-        { ticker: "ANWFX", name: "New Perspective Fund", shares: 520, costBasis: 35000, currentPrice: 68.20, currentValue: 35464 },
-        { ticker: "AMRMX", name: "American Mutual Fund", shares: 300, costBasis: 18000, currentPrice: 55.80, currentValue: 16740 },
-        { ticker: "ANCFX", name: "New Economy Fund", shares: 280, costBasis: 24000, currentPrice: 72.40, currentValue: 20272 },
-        { ticker: "ABALX", name: "American Balanced Fund", shares: 450, costBasis: 22000, currentPrice: 35.20, currentValue: 15840 },
-        { ticker: "CAIBX", name: "Capital Income Builder", shares: 620, costBasis: 28000, currentPrice: 68.90, currentValue: 42718 },
-        { ticker: "VTHRX", name: "Vanguard Target 2035", shares: 1200, costBasis: 52000, currentPrice: 42.30, currentValue: 50760 },
-        { ticker: "VFIAX", name: "Vanguard 500 Index", shares: 280, costBasis: 95000, currentPrice: 485.20, currentValue: 135856 }
+        // VTI - primary US stock holding
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 620, costBasis: 148000, currentPrice: 298.39, currentValue: 185000 },
+        // BND - bond allocation
+        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 580, costBasis: 44000, currentPrice: 82.76, currentValue: 48000 },
+        // VOO - S&P 500
+        { ticker: "VOO", name: "Vanguard S&P 500", shares: 95, costBasis: 38000, currentPrice: 442.11, currentValue: 42000 },
       ]
     },
     {
       id: "demo-ret-2",
       name: "Traditional IRA",
       institution: "Fidelity",
-      balance: 125000,
+      balance: 75000,
       type: "Traditional IRA",
       holdings: [
-        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 180, costBasis: 38000, currentPrice: 268.50, currentValue: 48330 },
-        { ticker: "VXUS", name: "Vanguard Total International", shares: 320, costBasis: 18000, currentPrice: 62.80, currentValue: 20096 },
-        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 280, costBasis: 22000, currentPrice: 72.40, currentValue: 20272 },
-        { ticker: "VNQ", name: "Vanguard Real Estate ETF", shares: 150, costBasis: 12000, currentPrice: 88.50, currentValue: 13275 },
-        { ticker: "SCHD", name: "Schwab US Dividend Equity", shares: 280, costBasis: 18000, currentPrice: 82.30, currentValue: 23044 }
+        // VXUS - International
+        { ticker: "VXUS", name: "Vanguard Total International", shares: 540, costBasis: 30000, currentPrice: 64.81, currentValue: 35000 },
+        // VWO - Emerging markets (has unrealized loss for tax harvesting demo)
+        { ticker: "VWO", name: "Vanguard Emerging Markets", shares: 380, costBasis: 26200, currentPrice: 57.89, currentValue: 22000 },
+        // VNQ - REIT
+        { ticker: "VNQ", name: "Vanguard Real Estate ETF", shares: 195, costBasis: 16000, currentPrice: 92.31, currentValue: 18000 },
       ]
     },
     {
       id: "demo-ret-3",
       name: "Roth IRA",
       institution: "Schwab",
-      balance: 78000,
+      balance: 35000,
       type: "Roth IRA",
       holdings: [
-        { ticker: "QQQ", name: "Invesco QQQ Trust", shares: 45, costBasis: 15000, currentPrice: 485.20, currentValue: 21834 },
-        { ticker: "ARKK", name: "ARK Innovation ETF", shares: 120, costBasis: 8500, currentPrice: 52.30, currentValue: 6276 },
-        { ticker: "VGT", name: "Vanguard Info Tech ETF", shares: 35, costBasis: 12000, currentPrice: 562.40, currentValue: 19684 },
-        { ticker: "SMH", name: "VanEck Semiconductor ETF", shares: 55, costBasis: 10000, currentPrice: 245.80, currentValue: 13519 },
-        { ticker: "SOXX", name: "iShares Semiconductor ETF", shares: 30, costBasis: 8000, currentPrice: 558.90, currentValue: 16767 }
+        // Tech-focused speculative holdings in Roth (tax-free growth)
+        { ticker: "CIFR", name: "Cipher Mining", shares: 2500, costBasis: 18000, currentPrice: 6.50, currentValue: 16250 },
+        { ticker: "IREN", name: "Iris Energy", shares: 1500, costBasis: 12000, currentPrice: 12.38, currentValue: 18570 },
       ]
     },
-    {
-      id: "demo-ret-4",
-      name: "HSA",
-      institution: "Fidelity",
-      balance: 32000,
-      type: "HSA",
-      holdings: [
-        { ticker: "FZROX", name: "Fidelity ZERO Total Market", shares: 380, costBasis: 18000, currentPrice: 16.80, currentValue: 6384 },
-        { ticker: "FXAIX", name: "Fidelity 500 Index", shares: 120, costBasis: 14000, currentPrice: 198.50, currentValue: 23820 }
-      ]
-    }
   ],
   
-  // Investment Accounts
+  // Investment Accounts - Contains crypto and speculative
   investmentAccounts: [
     {
       id: "demo-inv-1",
-      name: "Joint Brokerage",
+      name: "Taxable Brokerage",
       institution: "Fidelity",
-      balance: 195000,
-      type: "Joint",
+      balance: 130000,
+      type: "Individual",
       holdings: [
-        { ticker: "AAPL", name: "Apple Inc", shares: 150, costBasis: 18000, currentPrice: 185.20, currentValue: 27780, acquisitionDate: "2020-03-15" },
-        { ticker: "MSFT", name: "Microsoft Corp", shares: 85, costBasis: 15000, currentPrice: 415.80, currentValue: 35343, acquisitionDate: "2019-06-20" },
-        { ticker: "GOOGL", name: "Alphabet Inc", shares: 45, costBasis: 8000, currentPrice: 175.40, currentValue: 7893, acquisitionDate: "2021-01-10" },
-        { ticker: "AMZN", name: "Amazon.com Inc", shares: 65, costBasis: 12000, currentPrice: 198.50, currentValue: 12903, acquisitionDate: "2020-08-05" },
-        { ticker: "NVDA", name: "NVIDIA Corp", shares: 40, costBasis: 8500, currentPrice: 875.20, currentValue: 35008, acquisitionDate: "2022-04-12" },
-        { ticker: "VOO", name: "Vanguard S&P 500 ETF", shares: 55, costBasis: 22000, currentPrice: 485.30, currentValue: 26692, acquisitionDate: "2018-11-01" },
-        { ticker: "VEA", name: "Vanguard FTSE Developed", shares: 280, costBasis: 12000, currentPrice: 52.40, currentValue: 14672, acquisitionDate: "2021-05-15" },
-        { ticker: "VWO", name: "Vanguard FTSE Emerging", shares: 320, costBasis: 14500, currentPrice: 45.80, currentValue: 14656, acquisitionDate: "2021-09-20" },
-        { ticker: "TSLA", name: "Tesla Inc", shares: 25, costBasis: 6500, currentPrice: 178.50, currentValue: 4463, acquisitionDate: "2023-01-15" },
-        { ticker: "META", name: "Meta Platforms", shares: 30, costBasis: 5500, currentPrice: 525.40, currentValue: 15762, acquisitionDate: "2022-11-10" }
+        // More CIFR/IREN in taxable
+        { ticker: "CIFR", name: "Cipher Mining", shares: 9500, costBasis: 65000, currentPrice: 6.50, currentValue: 61750, acquisitionDate: "2023-06-15" },
+        { ticker: "IREN", name: "Iris Energy", shares: 2700, costBasis: 28000, currentPrice: 12.38, currentValue: 33430, acquisitionDate: "2023-08-20" },
+        // Some VTI for diversification
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 120, costBasis: 28000, currentPrice: 298.39, currentValue: 35807, acquisitionDate: "2022-01-10" },
       ]
     },
     {
       id: "demo-inv-2",
       name: "Crypto Holdings",
       institution: "Coinbase",
-      balance: 85000,
+      balance: 354900,
       type: "Individual",
       holdings: [
-        { ticker: "BTC", name: "Bitcoin", shares: 0.75, costBasis: 28000, currentPrice: 98500, currentValue: 73875 },
-        { ticker: "ETH", name: "Ethereum", shares: 2.5, costBasis: 6000, currentPrice: 3450, currentValue: 8625 },
-        { ticker: "TAO", name: "Bittensor", shares: 8, costBasis: 2400, currentPrice: 420, currentValue: 3360 }
+        // TAO - The big crypto position that dominates the portfolio
+        { ticker: "TAO", name: "Bittensor", shares: 105, costBasis: 42000, currentPrice: 3380, currentValue: 354900 },
       ]
     },
-    {
-      id: "demo-inv-3",
-      name: "Speculative Stocks",
-      institution: "E*Trade",
-      balance: 45000,
-      type: "Individual",
-      holdings: [
-        { ticker: "CIFR", name: "Cipher Mining", shares: 2500, costBasis: 15000, currentPrice: 8.50, currentValue: 21250 },
-        { ticker: "IREN", name: "Iris Energy", shares: 1200, costBasis: 12000, currentPrice: 18.20, currentValue: 21840 }
-      ]
-    }
   ],
   
   // Other Assets
@@ -186,7 +215,7 @@ export const DEMO_PROFILE: UserProfile = {
     }
   ],
   
-  // Goals
+  // Goals - Match the Growth Portfolio goals
   goals: [
     {
       id: "demo-goal-1",
@@ -204,8 +233,8 @@ export const DEMO_PROFILE: UserProfile = {
     },
     {
       id: "demo-goal-3",
-      name: "Vacation Home",
-      targetAmount: 150000,
+      name: "Beach House",
+      targetAmount: 400000,
       targetDate: "2030-06-01",
       priority: "medium"
     }
@@ -235,17 +264,28 @@ export const DEMO_PROFILE: UserProfile = {
   onboardingComplete: true,
 };
 
-// Calculated net worth from DEMO_PROFILE (~$797,500)
-// Assets: Cash($85K) + Retirement($620K) + Investment($325K) + Other($225K) = $1,255K
-// Liabilities: Mortgage($425K) + Auto($28K) + CC($4.5K) = $457.5K
-export const DEMO_NET_WORTH = 797500;
+// ============================================================================
+// CALCULATED VALUES - Derived from DEMO_PROFILE
+// ============================================================================
 
-/**
- * RETIREE DEMO PROFILE
- * Conservative portfolio for retirees/pre-retirees to see income-focused features
- * ~$1.2M portfolio with 40% stocks, 50% bonds, 10% cash
- * Focus on dividend income (~$40K/year)
- */
+// Calculate net worth from DEMO_PROFILE
+function calculateDemoNetWorth(): number {
+  const cash = DEMO_PROFILE.cashAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const retirement = DEMO_PROFILE.retirementAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const investment = DEMO_PROFILE.investmentAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const other = DEMO_PROFILE.realEstateEquity + DEMO_PROFILE.businessEquity + DEMO_PROFILE.otherAssets;
+  const liabilities = DEMO_PROFILE.liabilities.reduce((sum, l) => sum + l.balance, 0);
+  return cash + retirement + investment + other - liabilities;
+}
+
+// Net worth: ~$797,400
+// Cash: $85K + Retirement: $385K + Investment: $485K + Other: $225K - Liabilities: $457.5K
+export const DEMO_NET_WORTH = calculateDemoNetWorth();
+
+// ============================================================================
+// RETIREE DEMO PROFILE (unchanged from before)
+// ============================================================================
+
 export const RETIREE_DEMO_PROFILE: UserProfile = {
   // Personal (fictional retiree demo user)
   firstName: "Pat",
@@ -412,16 +452,41 @@ export const RETIREE_DEMO_PROFILE: UserProfile = {
   onboardingComplete: true,
 };
 
+// Retiree Holdings for /demo page display
+export const RETIREE_HOLDINGS: DemoHolding[] = [
+  { symbol: 'BND', name: 'Vanguard Total Bond', value: 427160, change: 0.3, shares: '5,900 shares', sharesNum: 5900, dividendYield: 3.8 },
+  { symbol: 'VTIP', name: 'Vanguard Inflation-Protected', value: 149865, change: 0.1, shares: '3,090 shares', sharesNum: 3090, dividendYield: 5.2 },
+  { symbol: 'VYM', name: 'Vanguard High Dividend', value: 150495, change: 0.9, shares: '1,270 shares', sharesNum: 1270, dividendYield: 2.9 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 221513, change: 1.2, shares: '825 shares', sharesNum: 825, dividendYield: 1.4 },
+  { symbol: 'SCHD', name: 'Schwab Dividend Equity', value: 142379, change: 0.7, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.4 },
+  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 108644, change: 0.8, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.1 },
+];
+
+export const RETIREE_TARGET_ALLOCATION = {
+  usStocks: 40,
+  intlStocks: 10,
+  bonds: 50,
+  other: 0,
+};
+
+export const RETIREE_GOALS = [
+  { name: 'Retire at 65', current: 1200000, target: 1500000, icon: '🏖️' },
+  { name: 'Grandkids\' Education', current: 35000, target: 100000, icon: '🎓' },
+  { name: 'Travel Fund', current: 22000, target: 50000, icon: '✈️' },
+];
+
 // Calculated net worth from RETIREE_DEMO_PROFILE (~$1.2M)
 export const RETIREE_NET_WORTH = 1200000;
 
 // Annual dividend/interest income estimate
 export const RETIREE_ANNUAL_INCOME = 42000; // ~3.5% yield on portfolio
 
-// Demo variant types
+// ============================================================================
+// DEMO MODE UTILITIES
+// ============================================================================
+
 export type DemoVariant = 'growth' | 'retiree';
 
-// Demo mode storage key
 export const DEMO_MODE_KEY = 'maven_demo_mode';
 export const DEMO_VARIANT_KEY = 'maven_demo_variant';
 
@@ -457,4 +522,8 @@ export function getDemoProfile(variant: DemoVariant = 'growth'): UserProfile {
 
 export function getDemoNetWorth(variant: DemoVariant = 'growth'): number {
   return variant === 'retiree' ? RETIREE_NET_WORTH : DEMO_NET_WORTH;
+}
+
+export function getDemoHoldings(variant: DemoVariant = 'growth'): DemoHolding[] {
+  return variant === 'retiree' ? RETIREE_HOLDINGS : GROWTH_HOLDINGS;
 }

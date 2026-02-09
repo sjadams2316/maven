@@ -10,11 +10,20 @@ import QuickActions from '../components/QuickActions';
 import { classifyTicker } from '@/lib/portfolio-utils';
 import { 
   DemoVariant, 
+  DemoHolding,
   getDemoVariant, 
   setDemoVariant,
+  getDemoHoldings,
   DEMO_NET_WORTH,
   RETIREE_NET_WORTH,
-  RETIREE_ANNUAL_INCOME
+  RETIREE_ANNUAL_INCOME,
+  GROWTH_TARGET_ALLOCATION,
+  RETIREE_TARGET_ALLOCATION,
+  GROWTH_GOALS,
+  RETIREE_GOALS,
+  GROWTH_RETIREMENT_CURRENT,
+  GROWTH_RETIREMENT_TARGET,
+  GROWTH_RETIREMENT_PROGRESS,
 } from '@/lib/demo-profile';
 
 // Insight type definition
@@ -31,43 +40,9 @@ interface DemoInsight {
   learnMoreText?: string;
 }
 
-interface DemoHolding {
-  symbol: string;
-  name: string;
-  value: number;
-  change: number;
-  shares: string;
-  sharesNum: number; // Numeric shares for price calculation
-  unrealizedLoss?: number;
-  dividendYield?: number;
-}
-
 // ============================================================================
-// GROWTH PORTFOLIO DATA (existing - crypto-heavy, aggressive)
+// GROWTH PORTFOLIO INSIGHTS
 // ============================================================================
-const GROWTH_HOLDINGS: DemoHolding[] = [
-  { symbol: 'TAO', name: 'Bittensor', value: 684000, change: 4.78, shares: '215 tokens', sharesNum: 215 },
-  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 185000, change: 1.2, shares: '620 shares', sharesNum: 620 },
-  { symbol: 'CIFR', name: 'Cipher Mining', value: 78000, change: -2.3, shares: '12,000 shares', sharesNum: 12000 },
-  { symbol: 'IREN', name: 'Iris Energy', value: 52000, change: 3.1, shares: '4,200 shares', sharesNum: 4200 },
-  { symbol: 'BND', name: 'Vanguard Total Bond', value: 48000, change: 0.3, shares: '580 shares', sharesNum: 580 },
-  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares', sharesNum: 95 },
-  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares', sharesNum: 540 },
-  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', sharesNum: 380, unrealizedLoss: -4200 },
-  { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares', sharesNum: 195 },
-];
-
-const GROWTH_TARGET_ALLOCATION = {
-  usStocks: 45,
-  intlStocks: 15,
-  bonds: 20,
-  other: 20,
-};
-
-const GROWTH_RETIREMENT_CURRENT = 797500;
-const GROWTH_RETIREMENT_TARGET = 3000000;
-const GROWTH_RETIREMENT_PROGRESS = Math.round((GROWTH_RETIREMENT_CURRENT / GROWTH_RETIREMENT_TARGET) * 100);
-
 const GROWTH_INSIGHTS: DemoInsight[] = [
   {
     type: 'tax',
@@ -93,35 +68,9 @@ const GROWTH_INSIGHTS: DemoInsight[] = [
   },
 ];
 
-const GROWTH_GOALS = [
-  { name: 'Retirement', current: GROWTH_RETIREMENT_CURRENT, target: GROWTH_RETIREMENT_TARGET, icon: '🏖️' },
-  { name: 'Beach House', current: 85000, target: 400000, icon: '🏠' },
-  { name: 'Banks College', current: 28000, target: 200000, icon: '🎓' },
-];
-
 // ============================================================================
-// RETIREE PORTFOLIO DATA (new - conservative, income-focused)
+// RETIREE PORTFOLIO INSIGHTS
 // ============================================================================
-const RETIREE_HOLDINGS: DemoHolding[] = [
-  { symbol: 'BND', name: 'Vanguard Total Bond', value: 427160, change: 0.3, shares: '5,900 shares', sharesNum: 5900, dividendYield: 3.8 },
-  { symbol: 'VTIP', name: 'Vanguard Inflation-Protected', value: 149865, change: 0.1, shares: '3,090 shares', sharesNum: 3090, dividendYield: 5.2 },
-  { symbol: 'VYM', name: 'Vanguard High Dividend', value: 150495, change: 0.9, shares: '1,270 shares', sharesNum: 1270, dividendYield: 2.9 },
-  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 221513, change: 1.2, shares: '825 shares', sharesNum: 825, dividendYield: 1.4 },
-  { symbol: 'SCHD', name: 'Schwab Dividend Equity', value: 142379, change: 0.7, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.4 },
-  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 108644, change: 0.8, shares: '1,730 shares', sharesNum: 1730, dividendYield: 3.1 },
-];
-
-const RETIREE_TARGET_ALLOCATION = {
-  usStocks: 40,
-  intlStocks: 10,
-  bonds: 50,
-  other: 0, // Cash is separate
-};
-
-const RETIREE_RETIREMENT_CURRENT = 1200000;
-const RETIREE_RETIREMENT_TARGET = 1500000;
-const RETIREE_RETIREMENT_PROGRESS = Math.round((RETIREE_RETIREMENT_CURRENT / RETIREE_RETIREMENT_TARGET) * 100);
-
 const RETIREE_INSIGHTS: DemoInsight[] = [
   {
     type: 'milestone',
@@ -165,12 +114,6 @@ const RETIREE_INSIGHTS: DemoInsight[] = [
   },
 ];
 
-const RETIREE_GOALS = [
-  { name: 'Retire at 65', current: RETIREE_RETIREMENT_CURRENT, target: RETIREE_RETIREMENT_TARGET, icon: '🏖️' },
-  { name: 'Grandkids\' Education', current: 35000, target: 100000, icon: '🎓' },
-  { name: 'Travel Fund', current: 22000, target: 50000, icon: '✈️' },
-];
-
 // ============================================================================
 // DEMO PAGE COMPONENT
 // ============================================================================
@@ -196,9 +139,12 @@ export default function DemoPage() {
     setShowTargetAllocation(false);
   };
   
-  // Select data based on variant
+  // Select data based on variant - now imported from demo-profile.ts
   const isRetiree = variant === 'retiree';
-  const BASE_HOLDINGS = isRetiree ? RETIREE_HOLDINGS : GROWTH_HOLDINGS;
+  const BASE_HOLDINGS = getDemoHoldings(variant);
+  const TARGET_ALLOCATION = isRetiree ? RETIREE_TARGET_ALLOCATION : GROWTH_TARGET_ALLOCATION;
+  const DEMO_INSIGHTS = isRetiree ? RETIREE_INSIGHTS : GROWTH_INSIGHTS;
+  const DEMO_GOALS = isRetiree ? RETIREE_GOALS : GROWTH_GOALS;
   
   // Fetch live prices for all holdings
   useEffect(() => {
@@ -207,9 +153,11 @@ export default function DemoPage() {
       
       try {
         // Get all unique tickers from both portfolios
+        const growthHoldings = getDemoHoldings('growth');
+        const retireeHoldings = getDemoHoldings('retiree');
         const allTickers = [...new Set([
-          ...GROWTH_HOLDINGS.map(h => h.symbol.toUpperCase()),
-          ...RETIREE_HOLDINGS.map(h => h.symbol.toUpperCase())
+          ...growthHoldings.map(h => h.symbol.toUpperCase()),
+          ...retireeHoldings.map(h => h.symbol.toUpperCase())
         ])];
         
         const response = await fetch('/api/stock-quote', {
@@ -267,9 +215,6 @@ export default function DemoPage() {
       return h;
     }).sort((a, b) => b.value - a.value);
   }, [BASE_HOLDINGS, livePrices]);
-  const TARGET_ALLOCATION = isRetiree ? RETIREE_TARGET_ALLOCATION : GROWTH_TARGET_ALLOCATION;
-  const DEMO_INSIGHTS = isRetiree ? RETIREE_INSIGHTS : GROWTH_INSIGHTS;
-  const DEMO_GOALS = isRetiree ? RETIREE_GOALS : GROWTH_GOALS;
   
   // Calculate live net worth from holdings
   const liveNetWorth = useMemo(() => {
@@ -542,7 +487,7 @@ export default function DemoPage() {
               </p>
               
               {/* Warning for high concentration (growth portfolio only) */}
-              {!showTargetAllocation && !isRetiree && actualAllocation.cryptoDetail > 50 && (
+              {!showTargetAllocation && !isRetiree && actualAllocation.cryptoDetail > 30 && (
                 <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <p className="text-sm text-amber-200">
                     ⚠️ <strong>High concentration:</strong> {actualAllocation.cryptoDetail}% in crypto (TAO). 
@@ -645,11 +590,11 @@ export default function DemoPage() {
                       <p className="font-medium text-white">${holding.value.toLocaleString()}</p>
                       <div className="flex items-center gap-2 justify-end">
                         <p className={`text-xs ${holding.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {holding.change >= 0 ? '+' : ''}{holding.change}%
+                          {holding.change >= 0 ? '+' : ''}{holding.change.toFixed(1)}%
                         </p>
-                        {isRetiree && 'dividendYield' in holding && (
+                        {isRetiree && holding.dividendYield && (
                           <p className="text-xs text-amber-400">
-                            {(holding as { dividendYield: number }).dividendYield}% yield
+                            {holding.dividendYield}% yield
                           </p>
                         )}
                       </div>

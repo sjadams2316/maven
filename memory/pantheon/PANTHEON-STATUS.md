@@ -2,7 +2,7 @@
 
 *Live status of running agents and file locks. Check before spawning.*
 
-**Last Updated:** 2026-02-09 16:01 EST
+**Last Updated:** 2026-02-09 16:35 EST
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Agent | Task | Files | Started | Status |
 |-------|------|-------|---------|--------|
-| pantheon-performance | Find slow API calls & optimize | API routes | 16:01 EST | 🔄 Running |
-| pantheon-accessibility | Audit a11y: alt text, aria, keyboard | Components | 16:01 EST | 🔄 Running |
-| pantheon-data-consistency | Verify DEMO_PROFILE flows correctly | Tools pages | 16:01 EST | 🔄 Running |
-| pantheon-form-validation | Check all inputs have validation | Form components | 16:01 EST | 🔄 Running |
+| pantheon-demo-unify-v2 | CRITICAL: Unify demo data sources | demo-profile.ts, demo/page.tsx | 16:38 EST | 🔄 Running |
+| pantheon-mobile-qa-v2 | Touch targets, scroll, responsive | Various components | 16:38 EST | 🔄 Running |
+| pantheon-seo-meta-v2 | Page titles, descriptions, OG tags | Layout + pages | 16:38 EST | 🔄 Running |
+| pantheon-security-v2 | Rate limiting, security headers | API routes, middleware | 16:38 EST | 🔄 Running |
 
 ---
 

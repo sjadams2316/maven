@@ -2,6 +2,89 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// ============================================================================
+// SECURITY HEADERS
+// ============================================================================
+const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(self), geolocation=()',
+};
+
+// ============================================================================
+// RATE LIMITING (Simple in-memory for demo - use Redis in production)
+// ============================================================================
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+// In-memory store for rate limiting (resets on server restart)
+// For production: use Redis, Upstash, or Vercel KV
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+// Rate limit configs per route type
+const RATE_LIMITS = {
+  // AI chat is expensive - limit to 30 requests per minute
+  chat: { requests: 30, windowMs: 60 * 1000 },
+  // Stock quotes - more generous, 100 per minute
+  quotes: { requests: 100, windowMs: 60 * 1000 },
+  // Monte Carlo simulations are CPU-intensive - 20 per minute
+  compute: { requests: 20, windowMs: 60 * 1000 },
+  // Default for other API routes
+  default: { requests: 60, windowMs: 60 * 1000 },
+};
+
+function getRateLimitKey(request: NextRequest): string {
+  // Use IP for anonymous users, or combine with a more unique identifier
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+    || request.headers.get('x-real-ip') 
+    || 'unknown';
+  const pathname = request.nextUrl.pathname;
+  return `${ip}:${pathname}`;
+}
+
+function getRateLimitConfig(pathname: string): { requests: number; windowMs: number } {
+  if (pathname.startsWith('/api/chat')) return RATE_LIMITS.chat;
+  if (pathname.startsWith('/api/stock-quote') || pathname.startsWith('/api/crypto-quote')) return RATE_LIMITS.quotes;
+  if (pathname.startsWith('/api/monte-carlo') || pathname.startsWith('/api/fragility')) return RATE_LIMITS.compute;
+  return RATE_LIMITS.default;
+}
+
+function checkRateLimit(request: NextRequest): { allowed: boolean; remaining: number; resetIn: number } {
+  const key = getRateLimitKey(request);
+  const config = getRateLimitConfig(request.nextUrl.pathname);
+  const now = Date.now();
+  
+  let entry = rateLimitStore.get(key);
+  
+  // Clean up expired entries periodically (simple garbage collection)
+  if (rateLimitStore.size > 10000) {
+    for (const [k, v] of rateLimitStore) {
+      if (v.resetTime < now) rateLimitStore.delete(k);
+    }
+  }
+  
+  // Reset if window has passed
+  if (!entry || entry.resetTime < now) {
+    entry = { count: 0, resetTime: now + config.windowMs };
+    rateLimitStore.set(key, entry);
+  }
+  
+  entry.count++;
+  const allowed = entry.count <= config.requests;
+  const remaining = Math.max(0, config.requests - entry.count);
+  const resetIn = Math.ceil((entry.resetTime - now) / 1000);
+  
+  return { allowed, remaining, resetIn };
+}
+
+// ============================================================================
+// ROUTE MATCHERS
+// ============================================================================
+
 // Routes that require authentication
 const isProtectedRoute = createRouteMatcher([
   // Add protected routes here if needed
@@ -19,10 +102,64 @@ const isVoiceAPIRoute = createRouteMatcher([
   '/api/speak',
 ]);
 
+// API routes that should be rate-limited
+const isRateLimitedRoute = createRouteMatcher([
+  '/api/chat',
+  '/api/stock-quote',
+  '/api/crypto-quote',
+  '/api/monte-carlo',
+  '/api/fragility-index',
+  '/api/market-data',
+  '/api/fund-profile',
+  '/api/stock-search',
+  '/api/stock-research',
+  '/api/valuations',
+]);
+
+// ============================================================================
+// MIDDLEWARE
+// ============================================================================
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export default clerkMiddleware(async (auth, request: NextRequest) => {
+  const pathname = request.nextUrl.pathname;
+  
+  // Apply rate limiting to public API routes
+  if (isRateLimitedRoute(request)) {
+    const { allowed, remaining, resetIn } = checkRateLimit(request);
+    
+    if (!allowed) {
+      const response = NextResponse.json({
+        error: 'Too many requests',
+        message: 'Rate limit exceeded. Please slow down.',
+        code: 'RATE_LIMITED',
+        hint: `Try again in ${resetIn} seconds`,
+        retryAfter: resetIn,
+      }, { status: 429 });
+      
+      response.headers.set('Retry-After', String(resetIn));
+      response.headers.set('X-RateLimit-Remaining', '0');
+      response.headers.set('X-RateLimit-Reset', String(resetIn));
+      
+      return addSecurityHeaders(response);
+    }
+    
+    // Continue but add rate limit headers to response later
+    const response = NextResponse.next();
+    response.headers.set('X-RateLimit-Remaining', String(remaining));
+    response.headers.set('X-RateLimit-Reset', String(resetIn));
+    return addSecurityHeaders(response);
+  }
+  
   // Skip Clerk processing for voice APIs - they handle file uploads and shouldn't go through auth
   if (isVoiceAPIRoute(request)) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
   
   const { userId } = await auth();
@@ -33,7 +170,8 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     const onboardingComplete = request.cookies.get('maven_onboarded')?.value;
     
     if (onboardingComplete === 'true') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url));
+      return addSecurityHeaders(redirectResponse);
     }
   }
   
@@ -42,7 +180,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     await auth.protect();
   }
   
-  return NextResponse.next();
+  return addSecurityHeaders(NextResponse.next());
 });
 
 export const config = {

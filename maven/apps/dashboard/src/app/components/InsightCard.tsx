@@ -69,11 +69,12 @@ export default function InsightCard({
   
   return (
     <div className={`bg-gradient-to-br ${config.bgColor} border ${config.borderColor} rounded-xl p-4 relative group`}>
-      {/* Dismiss button */}
+      {/* Dismiss button - 44px touch target for mobile accessibility */}
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs"
+          className="absolute top-1 right-1 w-11 h-11 sm:w-8 sm:h-8 rounded-full bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-sm sm:text-xs"
+          aria-label="Dismiss insight"
         >
           ✕
         </button>
