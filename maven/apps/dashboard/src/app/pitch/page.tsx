@@ -442,9 +442,9 @@ function WhyNowSlide() {
                 3
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white mb-2">We have the unfair advantage</h3>
+                <h3 className="text-xl font-semibold text-white mb-2">We see where the puck is headed</h3>
                 <p className="text-gray-400">
-                  A 20-year advisor ready to go. Real clients day one. Capital Group + fintech background. 
+                  Building a team that deeply understands what advisors and clients actually need — not what vendors think they need.
                   AI development capability (Pantheon) that ships features at 10x speed.
                 </p>
               </div>
