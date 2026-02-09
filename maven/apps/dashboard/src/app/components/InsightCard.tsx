@@ -58,7 +58,7 @@ export default function InsightCard({
   title,
   description,
   impact,
-  actionLabel = 'View Details',
+  actionLabel = 'Take Action',
   actionHref = '#',
   priority = 'medium',
   onDismiss,

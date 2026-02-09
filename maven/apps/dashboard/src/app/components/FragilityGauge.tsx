@@ -208,7 +208,7 @@ export default function FragilityGauge({ compact = false }: { compact?: boolean 
   if (error || !data) {
     return (
       <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800">
-        <div className="text-red-400">{error || 'No data available'}</div>
+        <div className="text-red-400">{error || 'Market data is temporarily unavailable. Check back shortly.'}</div>
       </div>
     );
   }

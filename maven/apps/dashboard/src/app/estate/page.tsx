@@ -125,7 +125,7 @@ export default function EstatePage() {
             <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white">Document Status</h3>
-                <Link href="#" className="text-sm text-indigo-400">View all →</Link>
+                <Link href="/documents" className="text-sm text-indigo-400">View all →</Link>
               </div>
               
               <div className="grid sm:grid-cols-2 gap-3">

@@ -60,7 +60,7 @@ const STATUS_TEXT: Record<OverallStatus, string> = {
   degraded: 'Using backup data sources',
   down: 'Data services unavailable',
   loading: 'Checking data sources...',
-  error: 'Unable to check data sources',
+  error: 'Data sources temporarily unavailable',
 };
 
 // Source display names
@@ -234,10 +234,10 @@ export default function DataHealthIndicator({
           {/* Error state */}
           {status === 'error' && (
             <div className="text-sm text-red-400 mb-3">
-              Unable to check data sources
+              Having trouble reaching data sources. Your existing data is safe.
               {lastFetchError && (
                 <span className="block text-xs text-gray-500 mt-1">
-                  {lastFetchError}
+                  Retry in a few moments
                 </span>
               )}
             </div>

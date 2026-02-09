@@ -15,7 +15,26 @@ export default function LandingPage() {
   useEffect(() => {
     fetch('/api/market-data')
       .then(res => res.json())
-      .then(data => setMarketData(data))
+      .then(data => {
+        // Transform API response to expected format
+        const stocks = data.stocks || [];
+        const crypto = data.crypto || [];
+        
+        // Map stocks array to indices object
+        const spyData = stocks.find((s: { symbol: string }) => s.symbol === 'SPY');
+        
+        // Map crypto array to object
+        const btcData = crypto.find((c: { symbol: string }) => c.symbol === 'BTC');
+        
+        setMarketData({
+          indices: {
+            sp500: spyData ? { price: spyData.price, changePercent: spyData.changePercent } : null,
+          },
+          crypto: {
+            BTC: btcData ? { price: btcData.price, changePercent: btcData.changePercent } : null,
+          },
+        });
+      })
       .catch(() => {});
   }, []);
   

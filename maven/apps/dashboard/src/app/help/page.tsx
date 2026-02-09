@@ -160,10 +160,12 @@ export default function HelpPage() {
           
           {filteredFAQ.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-400">No results found for "{searchQuery}"</p>
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-400 mb-1">We couldn't find anything matching "{searchQuery}"</p>
+              <p className="text-gray-500 text-sm mb-4">Try different keywords or browse our topics below</p>
               <button 
                 onClick={() => setSearchQuery('')}
-                className="text-indigo-400 hover:text-indigo-300 mt-2"
+                className="text-indigo-400 hover:text-indigo-300"
               >
                 Clear search
               </button>

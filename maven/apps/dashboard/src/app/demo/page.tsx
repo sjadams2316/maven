@@ -796,9 +796,9 @@ export default function DemoPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {(isRetiree ? [
               { icon: '🏛️', label: 'Social Security', desc: 'Optimize claiming', href: '/social-security' },
-              { icon: '📋', label: 'RMD Planner', desc: 'Minimize taxes', href: '/rmd-planner' },
-              { icon: '💊', label: 'Healthcare', desc: 'Medicare planning', href: '/healthcare' },
-              { icon: '📊', label: 'Income Planner', desc: 'Sustainable withdrawals', href: '/income-planner' },
+              { icon: '📋', label: 'Retirement Hub', desc: 'RMDs & withdrawals', href: '/retirement' },
+              { icon: '🛡️', label: 'Insurance', desc: 'Coverage review', href: '/insurance' },
+              { icon: '📊', label: 'Income Planner', desc: 'Sustainable income', href: '/income' },
             ] : [
               { icon: '📊', label: 'Portfolio Lab', desc: 'Deep analysis tools', href: '/portfolio-lab' },
               { icon: '🌾', label: 'Tax Harvesting', desc: 'Save on taxes', href: '/tax-harvesting' },
