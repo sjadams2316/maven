@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -9,6 +9,22 @@ import { useUserProfile } from '@/providers/UserProvider';
 // ============================================
 // TYPES
 // ============================================
+
+interface Holding {
+  ticker: string;
+  name: string;
+  shares: number;
+  costBasis: number;
+  currentPrice: number;
+  currentValue: number;
+  allocationPercent?: number;
+}
+
+interface Child {
+  id: string;
+  name: string;
+  dateOfBirth: string;
+}
 
 interface ProfileData {
   // Personal
@@ -19,7 +35,9 @@ interface ProfileData {
   filingStatus: string;
   spouseFirstName: string;
   spouseDateOfBirth: string;
-  dependents: number;
+  
+  // Children (for 529s and family planning)
+  children: Child[];
   
   // Income
   annualIncome: number;
@@ -37,30 +55,44 @@ interface ProfileData {
   has401k: boolean;
   account401kBalance: number;
   account401kEmployer: string;
+  account401kContributionMode: 'percent' | 'dollar';
   account401kContribution: number;
   account401kMatch: number;
+  account401kHoldingsMode: 'value' | 'percentage';
+  account401kHoldings: Holding[];
+  
   hasTraditionalIRA: boolean;
   traditionalIRABalance: number;
+  traditionalIRAHoldings: Holding[];
+  
   hasRothIRA: boolean;
   rothIRABalance: number;
+  rothIRAHoldings: Holding[];
+  
   hasRoth401k: boolean;
   roth401kBalance: number;
+  roth401kHoldings: Holding[];
+  
   hasHSA: boolean;
   hsaBalance: number;
+  hsaHoldings: Holding[];
+  
   hasPension: boolean;
   pensionValue: number;
   
   // Investment Accounts
   hasBrokerage: boolean;
   brokerageBalance: number;
-  has529: boolean;
-  balance529: number;
+  brokerageHoldingsMode: 'value' | 'percentage';
+  brokerageHoldings: Holding[];
   
-  // Holdings (simplified - top holdings)
-  topHoldings: Array<{
-    ticker: string;
-    shares: number;
-    costBasis: number;
+  has529: boolean;
+  accounts529: Array<{
+    id: string;
+    childId: string;
+    childName: string;
+    balance: number;
+    holdings: Holding[];
   }>;
   
   // Other Assets
@@ -101,6 +133,47 @@ const FILING_STATUSES = [
 ];
 
 // ============================================
+// TICKER LOOKUP HOOK
+// ============================================
+
+function useTickerLookup() {
+  const [loading, setLoading] = useState(false);
+  const [cache, setCache] = useState<Record<string, { name: string; price: number }>>({});
+  
+  const lookup = useCallback(async (ticker: string): Promise<{ name: string; price: number } | null> => {
+    const upperTicker = ticker.toUpperCase().trim();
+    if (!upperTicker) return null;
+    
+    // Check cache first
+    if (cache[upperTicker]) {
+      return cache[upperTicker];
+    }
+    
+    setLoading(true);
+    try {
+      // Use Yahoo Finance API via our proxy
+      const res = await fetch(`/api/stock-quote?symbol=${upperTicker}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.price) {
+          const result = { name: data.name || upperTicker, price: data.price };
+          setCache(prev => ({ ...prev, [upperTicker]: result }));
+          return result;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Ticker lookup failed:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [cache]);
+  
+  return { lookup, loading };
+}
+
+// ============================================
 // COMPONENTS
 // ============================================
 
@@ -117,11 +190,19 @@ function CurrencyInput({
 }) {
   const [displayValue, setDisplayValue] = useState(value ? value.toLocaleString() : '');
   
+  useEffect(() => {
+    setDisplayValue(value ? value.toLocaleString() : '');
+  }, [value]);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^0-9]/g, '');
-    const num = parseInt(raw) || 0;
-    setDisplayValue(num ? num.toLocaleString() : '');
+    const raw = e.target.value.replace(/[^0-9.]/g, '');
+    const num = parseFloat(raw) || 0;
+    setDisplayValue(raw);
     onChange(num);
+  };
+  
+  const handleBlur = () => {
+    setDisplayValue(value ? value.toLocaleString() : '');
   };
   
   return (
@@ -131,6 +212,7 @@ function CurrencyInput({
         type="text"
         value={displayValue}
         onChange={handleChange}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className="w-full pl-7 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
       />
@@ -154,6 +236,8 @@ function PercentInput({
       <input
         type="number"
         step="0.1"
+        min="0"
+        max="100"
         value={value || ''}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
         placeholder={placeholder}
@@ -205,6 +289,220 @@ function ToggleCard({
   );
 }
 
+function ModeToggle({
+  mode,
+  onChange,
+  options,
+}: {
+  mode: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="flex bg-white/5 rounded-lg p-1">
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={`flex-1 px-3 py-1.5 text-sm rounded-md transition ${
+            mode === opt.value
+              ? 'bg-indigo-500 text-white'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Holdings Entry Component
+function HoldingsEntry({
+  holdings,
+  onChange,
+  mode,
+  onModeChange,
+  accountBalance,
+  showModeToggle = true,
+}: {
+  holdings: Holding[];
+  onChange: (holdings: Holding[]) => void;
+  mode: 'value' | 'percentage';
+  onModeChange?: (mode: 'value' | 'percentage') => void;
+  accountBalance: number;
+  showModeToggle?: boolean;
+}) {
+  const { lookup, loading } = useTickerLookup();
+  const [newTicker, setNewTicker] = useState('');
+  const [lookupError, setLookupError] = useState('');
+  
+  const addHolding = async () => {
+    if (!newTicker.trim()) return;
+    
+    setLookupError('');
+    const result = await lookup(newTicker);
+    
+    if (result) {
+      const newHolding: Holding = {
+        ticker: newTicker.toUpperCase().trim(),
+        name: result.name,
+        shares: 0,
+        costBasis: 0,
+        currentPrice: result.price,
+        currentValue: 0,
+        allocationPercent: 0,
+      };
+      onChange([...holdings, newHolding]);
+      setNewTicker('');
+    } else {
+      setLookupError('Could not find ticker. Please check the symbol.');
+    }
+  };
+  
+  const updateHolding = (index: number, updates: Partial<Holding>) => {
+    const updated = [...holdings];
+    updated[index] = { ...updated[index], ...updates };
+    
+    // Recalculate value based on mode
+    if (mode === 'value' && updates.shares !== undefined) {
+      updated[index].currentValue = updated[index].shares * updated[index].currentPrice;
+    } else if (mode === 'percentage' && updates.allocationPercent !== undefined) {
+      updated[index].currentValue = (updates.allocationPercent / 100) * accountBalance;
+      updated[index].shares = updated[index].currentValue / updated[index].currentPrice;
+    }
+    
+    onChange(updated);
+  };
+  
+  const removeHolding = (index: number) => {
+    onChange(holdings.filter((_, i) => i !== index));
+  };
+  
+  const totalValue = holdings.reduce((sum, h) => sum + (h.currentValue || 0), 0);
+  const totalPercent = holdings.reduce((sum, h) => sum + (h.allocationPercent || 0), 0);
+  
+  return (
+    <div className="space-y-3">
+      {showModeToggle && onModeChange && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-400">Enter holdings by:</span>
+          <ModeToggle
+            mode={mode}
+            onChange={(v) => onModeChange(v as 'value' | 'percentage')}
+            options={[
+              { value: 'value', label: '$ Value' },
+              { value: 'percentage', label: '% Allocation' },
+            ]}
+          />
+        </div>
+      )}
+      
+      {/* Existing Holdings */}
+      {holdings.length > 0 && (
+        <div className="space-y-2">
+          {holdings.map((holding, i) => (
+            <div key={i} className="flex items-center gap-2 p-3 bg-white/5 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-indigo-400 font-medium">{holding.ticker}</span>
+                  <span className="text-gray-500 text-sm truncate">{holding.name}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  ${holding.currentPrice?.toFixed(2)} per share
+                </div>
+              </div>
+              
+              {mode === 'value' ? (
+                <div className="w-28">
+                  <input
+                    type="number"
+                    value={holding.shares || ''}
+                    onChange={(e) => updateHolding(i, { shares: parseFloat(e.target.value) || 0 })}
+                    placeholder="Shares"
+                    className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none"
+                  />
+                </div>
+              ) : (
+                <div className="w-24">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={holding.allocationPercent || ''}
+                      onChange={(e) => updateHolding(i, { allocationPercent: parseFloat(e.target.value) || 0 })}
+                      placeholder="%"
+                      className="w-full px-2 py-1.5 pr-6 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="w-24 text-right">
+                <span className="text-emerald-400 font-medium">
+                  ${(holding.currentValue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => removeHolding(i)}
+                className="p-1 text-gray-500 hover:text-red-400 transition"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          
+          {/* Total Row */}
+          <div className="flex items-center justify-between px-3 py-2 bg-indigo-500/10 rounded-lg">
+            <span className="text-sm text-indigo-300">Total</span>
+            <div className="flex items-center gap-4">
+              {mode === 'percentage' && (
+                <span className={`text-sm ${totalPercent > 100 ? 'text-red-400' : 'text-gray-400'}`}>
+                  {totalPercent.toFixed(1)}%
+                </span>
+              )}
+              <span className="text-indigo-300 font-medium">
+                ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add New Holding */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={newTicker}
+          onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+          onKeyDown={(e) => e.key === 'Enter' && addHolding()}
+          placeholder="Enter ticker (e.g., VOO, AAPL)"
+          className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none font-mono"
+        />
+        <button
+          type="button"
+          onClick={addHolding}
+          disabled={loading || !newTicker.trim()}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg transition flex items-center gap-2"
+        >
+          {loading ? (
+            <span className="animate-spin">⏳</span>
+          ) : (
+            <>+ Add</>
+          )}
+        </button>
+      </div>
+      
+      {lookupError && (
+        <p className="text-red-400 text-sm">{lookupError}</p>
+      )}
+    </div>
+  );
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -224,7 +522,7 @@ export default function ProfileSetupPage() {
     filingStatus: '',
     spouseFirstName: '',
     spouseDateOfBirth: '',
-    dependents: 0,
+    children: [],
     annualIncome: 0,
     spouseIncome: 0,
     selfEmploymentIncome: 0,
@@ -236,23 +534,31 @@ export default function ProfileSetupPage() {
     has401k: false,
     account401kBalance: 0,
     account401kEmployer: '',
+    account401kContributionMode: 'percent',
     account401kContribution: 0,
     account401kMatch: 0,
+    account401kHoldingsMode: 'value',
+    account401kHoldings: [],
     hasTraditionalIRA: false,
     traditionalIRABalance: 0,
+    traditionalIRAHoldings: [],
     hasRothIRA: false,
     rothIRABalance: 0,
+    rothIRAHoldings: [],
     hasRoth401k: false,
     roth401kBalance: 0,
+    roth401kHoldings: [],
     hasHSA: false,
     hsaBalance: 0,
+    hsaHoldings: [],
     hasPension: false,
     pensionValue: 0,
     hasBrokerage: false,
     brokerageBalance: 0,
+    brokerageHoldingsMode: 'value',
+    brokerageHoldings: [],
     has529: false,
-    balance529: 0,
-    topHoldings: [],
+    accounts529: [],
     realEstateEquity: 0,
     cryptoValue: 0,
     businessEquity: 0,
@@ -280,13 +586,54 @@ export default function ProfileSetupPage() {
     }
   }, [user]);
   
-  const totalSteps = 7;
+  const totalSteps = 8; // Added a step for children/529
   
   const update = (updates: Partial<ProfileData>) => {
     setData(prev => ({ ...prev, ...updates }));
   };
   
   const isMarried = data.filingStatus === 'Married Filing Jointly' || data.filingStatus === 'Married Filing Separately';
+  
+  // Child management
+  const addChild = () => {
+    const newChild: Child = {
+      id: crypto.randomUUID(),
+      name: '',
+      dateOfBirth: '',
+    };
+    update({ children: [...data.children, newChild] });
+  };
+  
+  const updateChild = (id: string, updates: Partial<Child>) => {
+    update({
+      children: data.children.map(c => c.id === id ? { ...c, ...updates } : c),
+    });
+  };
+  
+  const removeChild = (id: string) => {
+    update({
+      children: data.children.filter(c => c.id !== id),
+      accounts529: data.accounts529.filter(a => a.childId !== id),
+    });
+  };
+  
+  // 529 account management
+  const add529ForChild = (child: Child) => {
+    const new529 = {
+      id: crypto.randomUUID(),
+      childId: child.id,
+      childName: child.name,
+      balance: 0,
+      holdings: [],
+    };
+    update({ accounts529: [...data.accounts529, new529] });
+  };
+  
+  const update529 = (id: string, updates: Partial<typeof data.accounts529[0]>) => {
+    update({
+      accounts529: data.accounts529.map(a => a.id === id ? { ...a, ...updates } : a),
+    });
+  };
   
   const handleComplete = async () => {
     setSaving(true);
@@ -331,9 +678,18 @@ export default function ProfileSetupPage() {
           balance: data.account401kBalance,
           type: '401(k)' as const,
           employer: data.account401kEmployer,
-          contributionPercent: data.account401kContribution,
+          contributionPercent: data.account401kContributionMode === 'percent' ? data.account401kContribution : undefined,
+          contributionAmount: data.account401kContributionMode === 'dollar' ? data.account401kContribution : undefined,
           employerMatchPercent: data.account401kMatch,
-          holdings: [],
+          holdingsMode: data.account401kHoldingsMode,
+          holdings: data.account401kHoldings.map(h => ({
+            ticker: h.ticker,
+            name: h.name,
+            shares: h.shares,
+            costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
+          })),
         });
       }
       if (data.hasRoth401k && data.roth401kBalance > 0) {
@@ -343,7 +699,14 @@ export default function ProfileSetupPage() {
           institution: data.account401kEmployer || 'Employer',
           balance: data.roth401kBalance,
           type: 'Roth 401(k)' as const,
-          holdings: [],
+          holdings: data.roth401kHoldings.map(h => ({
+            ticker: h.ticker,
+            name: h.name,
+            shares: h.shares,
+            costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
+          })),
         });
       }
       if (data.hasTraditionalIRA && data.traditionalIRABalance > 0) {
@@ -353,7 +716,14 @@ export default function ProfileSetupPage() {
           institution: 'Brokerage',
           balance: data.traditionalIRABalance,
           type: 'Traditional IRA' as const,
-          holdings: [],
+          holdings: data.traditionalIRAHoldings.map(h => ({
+            ticker: h.ticker,
+            name: h.name,
+            shares: h.shares,
+            costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
+          })),
         });
       }
       if (data.hasRothIRA && data.rothIRABalance > 0) {
@@ -363,7 +733,14 @@ export default function ProfileSetupPage() {
           institution: 'Brokerage',
           balance: data.rothIRABalance,
           type: 'Roth IRA' as const,
-          holdings: [],
+          holdings: data.rothIRAHoldings.map(h => ({
+            ticker: h.ticker,
+            name: h.name,
+            shares: h.shares,
+            costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
+          })),
         });
       }
       if (data.hasHSA && data.hsaBalance > 0) {
@@ -373,7 +750,14 @@ export default function ProfileSetupPage() {
           institution: 'HSA Provider',
           balance: data.hsaBalance,
           type: 'HSA' as const,
-          holdings: [],
+          holdings: data.hsaHoldings.map(h => ({
+            ticker: h.ticker,
+            name: h.name,
+            shares: h.shares,
+            costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
+          })),
         });
       }
       if (data.hasPension && data.pensionValue > 0) {
@@ -395,23 +779,37 @@ export default function ProfileSetupPage() {
           institution: 'Brokerage',
           balance: data.brokerageBalance,
           type: 'Individual' as const,
-          holdings: data.topHoldings.map((h, i) => ({
-            id: `holding-${i}`,
+          holdingsMode: data.brokerageHoldingsMode,
+          holdings: data.brokerageHoldings.map(h => ({
             ticker: h.ticker,
+            name: h.name,
             shares: h.shares,
             costBasis: h.costBasis,
+            currentPrice: h.currentPrice,
+            currentValue: h.currentValue,
           })),
         });
       }
-      if (data.has529 && data.balance529 > 0) {
-        investmentAccounts.push({
-          id: '529-1',
-          name: '529 Plan',
-          institution: '529 Provider',
-          balance: data.balance529,
-          type: '529' as const,
-          holdings: [],
-        });
+      // 529 accounts
+      for (const acc529 of data.accounts529) {
+        if (acc529.balance > 0) {
+          investmentAccounts.push({
+            id: acc529.id,
+            name: `529 Plan - ${acc529.childName}`,
+            institution: '529 Provider',
+            balance: acc529.balance,
+            type: '529' as const,
+            beneficiary: acc529.childName,
+            holdings: acc529.holdings.map(h => ({
+              ticker: h.ticker,
+              name: h.name,
+              shares: h.shares,
+              costBasis: h.costBasis,
+              currentPrice: h.currentPrice,
+              currentValue: h.currentValue,
+            })),
+          });
+        }
       }
       
       const liabilities = [];
@@ -485,6 +883,12 @@ export default function ProfileSetupPage() {
         otherAssets: data.otherAssets,
         liabilities,
         onboardingComplete: true,
+        // Store children for Family tab
+        socialSecurity: {
+          ...profile?.socialSecurity,
+          // @ts-ignore - extending for children data
+          children: data.children,
+        },
       });
       
       router.push('/dashboard');
@@ -632,8 +1036,74 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 2: Income */}
+        {/* Step 2: Children / Family */}
         {step === 2 && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="text-center mb-8">
+              <span className="text-4xl mb-4 block">👨‍👩‍👧‍👦</span>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Your family
+              </h1>
+              <p className="text-gray-400">Add children for 529 planning and family insights</p>
+            </div>
+            
+            <div className="space-y-4">
+              {data.children.map((child, i) => (
+                <div key={child.id} className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white font-medium">Child {i + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeChild(child.id)}
+                      className="text-gray-500 hover:text-red-400 transition text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={child.name}
+                        onChange={(e) => updateChild(child.id, { name: e.target.value })}
+                        placeholder="Child's name"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={child.dateOfBirth}
+                        onChange={(e) => updateChild(child.id, { dateOfBirth: e.target.value })}
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={addChild}
+                className="w-full p-4 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex items-center justify-center gap-2"
+              >
+                <span className="text-xl">+</span>
+                <span>Add Child</span>
+              </button>
+              
+              {data.children.length === 0 && (
+                <p className="text-center text-gray-500 text-sm">
+                  No children added yet. You can skip this step if not applicable.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Step 3: Income */}
+        {step === 3 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">💼</span>
@@ -683,8 +1153,8 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 3: Cash & Savings */}
-        {step === 3 && (
+        {/* Step 4: Cash & Savings */}
+        {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">🏦</span>
@@ -722,18 +1192,19 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 4: Retirement Accounts */}
-        {step === 4 && (
+        {/* Step 5: Retirement Accounts */}
+        {step === 5 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">🏖️</span>
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 Retirement accounts
               </h1>
-              <p className="text-gray-400">Select all that apply and enter balances</p>
+              <p className="text-gray-400">Select accounts and add your holdings</p>
             </div>
             
             <div className="space-y-4">
+              {/* 401(k) */}
               <ToggleCard
                 checked={data.has401k}
                 onChange={(v) => update({ has401k: v })}
@@ -743,49 +1214,64 @@ export default function ProfileSetupPage() {
               />
               
               {data.has401k && (
-                <div className="ml-8 space-y-3 animate-in fade-in duration-200">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                    <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                      <CurrencyInput value={data.account401kBalance} onChange={(v) => update({ account401kBalance: v })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Plan Provider</label>
+                      <input
+                        type="text"
+                        value={data.account401kEmployer}
+                        onChange={(e) => update({ account401kEmployer: e.target.value })}
+                        placeholder="e.g., Fidelity, Vanguard"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
                   </div>
+                  
+                  {/* Contribution with mode toggle */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Employer Name</label>
-                    <input
-                      type="text"
-                      value={data.account401kEmployer}
-                      onChange={(e) => update({ account401kEmployer: e.target.value })}
-                      placeholder="e.g., Fidelity, Vanguard"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-indigo-500 outline-none"
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm text-gray-400">Your Contribution</label>
+                      <ModeToggle
+                        mode={data.account401kContributionMode}
+                        onChange={(v) => update({ account401kContributionMode: v as 'percent' | 'dollar' })}
+                        options={[
+                          { value: 'percent', label: '%' },
+                          { value: 'dollar', label: '$' },
+                        ]}
+                      />
+                    </div>
+                    {data.account401kContributionMode === 'percent' ? (
+                      <PercentInput value={data.account401kContribution} onChange={(v) => update({ account401kContribution: v })} />
+                    ) : (
+                      <CurrencyInput value={data.account401kContribution} onChange={(v) => update({ account401kContribution: v })} placeholder="Annual amount" />
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Employer Match %</label>
+                    <PercentInput value={data.account401kMatch} onChange={(v) => update({ account401kMatch: v })} />
+                  </div>
+                  
+                  {/* Holdings */}
+                  <div className="pt-3 border-t border-white/10">
+                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <HoldingsEntry
+                      holdings={data.account401kHoldings}
+                      onChange={(h) => update({ account401kHoldings: h })}
+                      mode={data.account401kHoldingsMode}
+                      onModeChange={(m) => update({ account401kHoldingsMode: m })}
+                      accountBalance={data.account401kBalance}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Your Contribution %</label>
-                      <PercentInput value={data.account401kContribution} onChange={(v) => update({ account401kContribution: v })} />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Employer Match %</label>
-                      <PercentInput value={data.account401kMatch} onChange={(v) => update({ account401kMatch: v })} />
-                    </div>
-                  </div>
                 </div>
               )}
               
-              <ToggleCard
-                checked={data.hasRoth401k}
-                onChange={(v) => update({ hasRoth401k: v })}
-                icon="📦"
-                title="Roth 401(k)"
-                description="After-tax employer retirement plan"
-              />
-              
-              {data.hasRoth401k && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                  <CurrencyInput value={data.roth401kBalance} onChange={(v) => update({ roth401kBalance: v })} />
-                </div>
-              )}
-              
+              {/* Traditional IRA */}
               <ToggleCard
                 checked={data.hasTraditionalIRA}
                 onChange={(v) => update({ hasTraditionalIRA: v })}
@@ -795,12 +1281,25 @@ export default function ProfileSetupPage() {
               />
               
               {data.hasTraditionalIRA && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                  <CurrencyInput value={data.traditionalIRABalance} onChange={(v) => update({ traditionalIRABalance: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                    <CurrencyInput value={data.traditionalIRABalance} onChange={(v) => update({ traditionalIRABalance: v })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <HoldingsEntry
+                      holdings={data.traditionalIRAHoldings}
+                      onChange={(h) => update({ traditionalIRAHoldings: h })}
+                      mode="value"
+                      accountBalance={data.traditionalIRABalance}
+                      showModeToggle={false}
+                    />
+                  </div>
                 </div>
               )}
               
+              {/* Roth IRA */}
               <ToggleCard
                 checked={data.hasRothIRA}
                 onChange={(v) => update({ hasRothIRA: v })}
@@ -810,12 +1309,25 @@ export default function ProfileSetupPage() {
               />
               
               {data.hasRothIRA && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                  <CurrencyInput value={data.rothIRABalance} onChange={(v) => update({ rothIRABalance: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                    <CurrencyInput value={data.rothIRABalance} onChange={(v) => update({ rothIRABalance: v })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <HoldingsEntry
+                      holdings={data.rothIRAHoldings}
+                      onChange={(h) => update({ rothIRAHoldings: h })}
+                      mode="value"
+                      accountBalance={data.rothIRABalance}
+                      showModeToggle={false}
+                    />
+                  </div>
                 </div>
               )}
               
+              {/* HSA */}
               <ToggleCard
                 checked={data.hasHSA}
                 onChange={(v) => update({ hasHSA: v })}
@@ -825,12 +1337,25 @@ export default function ProfileSetupPage() {
               />
               
               {data.hasHSA && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
-                  <CurrencyInput value={data.hsaBalance} onChange={(v) => update({ hsaBalance: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Balance</label>
+                    <CurrencyInput value={data.hsaBalance} onChange={(v) => update({ hsaBalance: v })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <HoldingsEntry
+                      holdings={data.hsaHoldings}
+                      onChange={(h) => update({ hsaHoldings: h })}
+                      mode="value"
+                      accountBalance={data.hsaBalance}
+                      showModeToggle={false}
+                    />
+                  </div>
                 </div>
               )}
               
+              {/* Pension */}
               <ToggleCard
                 checked={data.hasPension}
                 onChange={(v) => update({ hasPension: v })}
@@ -840,7 +1365,7 @@ export default function ProfileSetupPage() {
               />
               
               {data.hasPension && (
-                <div className="ml-8 animate-in fade-in duration-200">
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 animate-in fade-in duration-200">
                   <label className="block text-sm text-gray-400 mb-1">Estimated Lump Sum Value</label>
                   <CurrencyInput value={data.pensionValue} onChange={(v) => update({ pensionValue: v })} />
                 </div>
@@ -849,18 +1374,19 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 5: Investment Accounts */}
-        {step === 5 && (
+        {/* Step 6: Investment Accounts */}
+        {step === 6 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">📈</span>
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                Investment accounts & other assets
+                Investment accounts
               </h1>
-              <p className="text-gray-400">Taxable brokerage, crypto, real estate, etc.</p>
+              <p className="text-gray-400">Taxable brokerage and 529 plans</p>
             </div>
             
             <div className="space-y-4">
+              {/* Brokerage */}
               <ToggleCard
                 checked={data.hasBrokerage}
                 onChange={(v) => update({ hasBrokerage: v })}
@@ -870,28 +1396,97 @@ export default function ProfileSetupPage() {
               />
               
               {data.hasBrokerage && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Total Value</label>
-                  <CurrencyInput value={data.brokerageBalance} onChange={(v) => update({ brokerageBalance: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Total Value</label>
+                    <CurrencyInput value={data.brokerageBalance} onChange={(v) => update({ brokerageBalance: v })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                    <HoldingsEntry
+                      holdings={data.brokerageHoldings}
+                      onChange={(h) => update({ brokerageHoldings: h })}
+                      mode={data.brokerageHoldingsMode}
+                      onModeChange={(m) => update({ brokerageHoldingsMode: m })}
+                      accountBalance={data.brokerageBalance}
+                    />
+                  </div>
                 </div>
               )}
               
+              {/* 529 Plans */}
               <ToggleCard
                 checked={data.has529}
                 onChange={(v) => update({ has529: v })}
                 icon="🎓"
-                title="529 Plan"
-                description="Education savings plan"
+                title="529 Plans"
+                description="Education savings for your children"
               />
               
               {data.has529 && (
-                <div className="ml-8 animate-in fade-in duration-200">
-                  <label className="block text-sm text-gray-400 mb-1">Total Value</label>
-                  <CurrencyInput value={data.balance529} onChange={(v) => update({ balance529: v })} />
+                <div className="ml-4 pl-4 border-l-2 border-indigo-500/30 space-y-4 animate-in fade-in duration-200">
+                  {data.children.length === 0 ? (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                      <p className="text-amber-300 text-sm">
+                        Add children in the Family step to create 529 accounts for them.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setStep(2)}
+                        className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+                      >
+                        ← Go to Family step
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Show existing 529s */}
+                      {data.accounts529.map((acc, i) => (
+                        <div key={acc.id} className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-white font-medium">529 for {acc.childName}</span>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm text-gray-400 mb-1">Balance</label>
+                              <CurrencyInput 
+                                value={acc.balance} 
+                                onChange={(v) => update529(acc.id, { balance: v })} 
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm text-gray-400 mb-3">Holdings</label>
+                              <HoldingsEntry
+                                holdings={acc.holdings}
+                                onChange={(h) => update529(acc.id, { holdings: h })}
+                                mode="value"
+                                accountBalance={acc.balance}
+                                showModeToggle={false}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Add 529 for children without one */}
+                      {data.children.filter(c => !data.accounts529.some(a => a.childId === c.id)).map(child => (
+                        <button
+                          key={child.id}
+                          type="button"
+                          onClick={() => add529ForChild(child)}
+                          className="w-full p-4 border-2 border-dashed border-white/20 rounded-xl text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition flex items-center justify-center gap-2"
+                        >
+                          <span>+</span>
+                          <span>Add 529 for {child.name || 'Unnamed Child'}</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
               
-              <div className="border-t border-white/10 pt-4 mt-6">
+              {/* Other Assets */}
+              <div className="border-t border-white/10 pt-6 mt-6">
                 <p className="text-gray-400 text-sm mb-4">Other Assets</p>
                 
                 <div className="space-y-4">
@@ -920,8 +1515,8 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 6: Debt */}
-        {step === 6 && (
+        {/* Step 7: Debt */}
+        {step === 7 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">💳</span>
@@ -993,8 +1588,8 @@ export default function ProfileSetupPage() {
           </div>
         )}
         
-        {/* Step 7: Goals */}
-        {step === 7 && (
+        {/* Step 8: Goals */}
+        {step === 8 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="text-center mb-8">
               <span className="text-4xl mb-4 block">🎯</span>
@@ -1034,7 +1629,7 @@ export default function ProfileSetupPage() {
                         data.checkingBalance + data.savingsBalance + data.mmBalance +
                         data.account401kBalance + data.roth401kBalance + data.traditionalIRABalance +
                         data.rothIRABalance + data.hsaBalance + data.pensionValue +
-                        data.brokerageBalance + data.balance529 +
+                        data.brokerageBalance + data.accounts529.reduce((sum, a) => sum + a.balance, 0) +
                         data.realEstateEquity + data.cryptoValue + data.businessEquity + data.otherAssets
                       ).toLocaleString()}
                     </span>
@@ -1052,13 +1647,26 @@ export default function ProfileSetupPage() {
                         data.checkingBalance + data.savingsBalance + data.mmBalance +
                         data.account401kBalance + data.roth401kBalance + data.traditionalIRABalance +
                         data.rothIRABalance + data.hsaBalance + data.pensionValue +
-                        data.brokerageBalance + data.balance529 +
+                        data.brokerageBalance + data.accounts529.reduce((sum, a) => sum + a.balance, 0) +
                         data.realEstateEquity + data.cryptoValue + data.businessEquity + data.otherAssets -
                         data.mortgageBalance - data.studentLoanBalance - data.autoLoanBalance - data.creditCardBalance - data.otherDebtBalance
                       ).toLocaleString()}
                     </span>
                   </div>
                 </div>
+                
+                {data.children.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-sm text-gray-400 mb-2">Family</p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.children.map(child => (
+                        <span key={child.id} className="px-2 py-1 bg-purple-500/20 text-purple-300 text-sm rounded-full">
+                          👶 {child.name || 'Unnamed'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
