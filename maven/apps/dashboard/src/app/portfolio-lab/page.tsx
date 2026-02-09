@@ -305,12 +305,47 @@ export default function PortfolioLab() {
     return age;
   }, [profile?.dateOfBirth]);
   
-  // Get all holdings from profile
+  // Get all holdings from profile, consolidating cash into one line
   const allHoldings = useMemo(() => {
     if (!profile) return [];
-    return [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
+    
+    // Get all raw holdings
+    const rawHoldings = [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
       .flatMap((a: any) => a.holdings || [])
       .filter((h: Holding) => h.currentValue && h.currentValue > 0);
+    
+    // Cash-like tickers to consolidate
+    const CASH_TICKERS = ['CASH', 'USD', 'SPAXX', 'VMFXX', 'SWVXX', 'FDRXX', 'SPRXX', 'FTEXX', 'VMMXX'];
+    
+    // Separate cash and non-cash holdings
+    const cashHoldings = rawHoldings.filter((h: Holding) => 
+      CASH_TICKERS.includes(h.ticker.toUpperCase())
+    );
+    const nonCashHoldings = rawHoldings.filter((h: Holding) => 
+      !CASH_TICKERS.includes(h.ticker.toUpperCase())
+    );
+    
+    // Add cash from cashAccounts (checking, savings, money market)
+    const cashAccountsTotal = (profile.cashAccounts || [])
+      .reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0);
+    
+    // Total cash from holdings + accounts
+    const totalCash = cashHoldings.reduce((sum: number, h: Holding) => sum + (h.currentValue || 0), 0) + cashAccountsTotal;
+    
+    // Create consolidated cash holding if there's any cash
+    const consolidatedHoldings = [...nonCashHoldings];
+    if (totalCash > 0) {
+      consolidatedHoldings.push({
+        ticker: 'CASH',
+        name: 'Cash & Cash Equivalents',
+        shares: totalCash,
+        costBasis: totalCash, // Cash has no gain/loss
+        currentPrice: 1,
+        currentValue: totalCash,
+      });
+    }
+    
+    return consolidatedHoldings;
   }, [profile]);
   
   const totalValue = useMemo(() => 
