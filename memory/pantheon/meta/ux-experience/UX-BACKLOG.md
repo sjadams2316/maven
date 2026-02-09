@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-02-09
 **Total Issues:** 11
-**Open:** 9 | **In Progress:** 0 | **Resolved:** 2
+**Open:** 8 | **In Progress:** 0 | **Resolved:** 3
 
 ---
 
@@ -75,7 +75,7 @@
 
 ---
 
-### DASH-PWR-004: Retirement Goal Math Incorrect
+### DASH-PWR-004: Retirement Goal Math Incorrect ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -86,8 +86,10 @@
 | **Impact** | Data integrity questioned. Could lead to poor planning decisions. |
 | **Fix** | Ensure goal calculation matches visible assets OR explain what's included |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | Data Integrity Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Fixed hardcoded incorrect value in DEMO_INSIGHTS. Created centralized constants (RETIREMENT_CURRENT, RETIREMENT_TARGET, RETIREMENT_PROGRESS) that match net worth ($797.5K). Insight now correctly shows "27% funded" and "$797K toward your $3M goal". Goals widget updated to use same constants for consistency. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
@@ -211,7 +213,7 @@
 
 | Page | P0 | P1 | P2 | P3 | Total Open |
 |------|----|----|----|----|------------|
-| Dashboard | 0 ✅ | 3 | 4 | 3 | 10 |
+| Dashboard | 0 ✅ | 2 | 4 | 3 | 9 |
 | Portfolio Lab | - | - | - | - | 0 |
 | Tax Harvesting | - | - | - | - | 0 |
 | Goals | - | - | - | - | 0 |

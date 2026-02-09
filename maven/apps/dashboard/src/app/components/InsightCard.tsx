@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 
 interface InsightCardProps {
@@ -11,6 +12,7 @@ interface InsightCardProps {
   actionHref?: string;
   priority?: 'high' | 'medium' | 'low';
   onDismiss?: () => void;
+  learnMoreText?: string;
 }
 
 const TYPE_CONFIG = {
@@ -60,8 +62,10 @@ export default function InsightCard({
   actionHref = '#',
   priority = 'medium',
   onDismiss,
+  learnMoreText,
 }: InsightCardProps) {
   const config = TYPE_CONFIG[type];
+  const [showTooltip, setShowTooltip] = useState(false);
   
   return (
     <div className={`bg-gradient-to-br ${config.bgColor} border ${config.borderColor} rounded-xl p-4 relative group`}>
@@ -90,7 +94,34 @@ export default function InsightCard({
             )}
           </div>
           
-          <h3 className="font-semibold text-white mb-1">{title}</h3>
+          <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+            {title}
+            {learnMoreText && (
+              <span className="relative">
+                <button
+                  onClick={() => setShowTooltip(!showTooltip)}
+                  className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white text-xs flex items-center justify-center transition"
+                  aria-label="Learn more"
+                >
+                  ?
+                </button>
+                {showTooltip && (
+                  <div className="absolute left-0 top-7 z-50 w-72 p-3 bg-gray-900 border border-white/20 rounded-xl shadow-xl text-sm text-gray-300 leading-relaxed">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="text-xs font-medium text-indigo-400">💡 What is this?</span>
+                      <button
+                        onClick={() => setShowTooltip(false)}
+                        className="text-gray-500 hover:text-white text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {learnMoreText}
+                  </div>
+                )}
+              </span>
+            )}
+          </h3>
           <p className="text-sm text-gray-400 mb-3">{description}</p>
           
           <div className="flex items-center justify-between">

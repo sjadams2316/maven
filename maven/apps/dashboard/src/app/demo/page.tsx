@@ -19,6 +19,7 @@ const DEMO_HOLDINGS = [
   // Additional holdings to make up the full portfolio
   { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares' },
   { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares' },
+  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', unrealizedLoss: -4200 },
   { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares' },
 ];
 
@@ -30,6 +31,11 @@ const TARGET_ALLOCATION = {
   other: 20, // crypto, REITs, etc.
 };
 
+// Retirement goal constants (centralized for consistency)
+const RETIREMENT_CURRENT = 797500; // Must match net worth
+const RETIREMENT_TARGET = 3000000;
+const RETIREMENT_PROGRESS = Math.round((RETIREMENT_CURRENT / RETIREMENT_TARGET) * 100);
+
 const DEMO_INSIGHTS = [
   {
     type: 'tax' as const,
@@ -38,6 +44,7 @@ const DEMO_INSIGHTS = [
     impact: 'Save $1,050',
     actionHref: '/tax-harvesting',
     priority: 'high' as const,
+    learnMoreText: 'Tax-loss harvesting means selling an investment at a loss, then using that loss to reduce your tax bill. You can offset gains from other investments, or deduct up to $3,000 from regular income. The key: you can immediately buy a similar (but not identical) investment to stay in the market.',
   },
   {
     type: 'rebalance' as const,
@@ -48,8 +55,8 @@ const DEMO_INSIGHTS = [
   },
   {
     type: 'milestone' as const,
-    title: 'Retirement goal 40% funded!',
-    description: 'You\'ve reached $1.2M of your $3M retirement goal. On track for 2038.',
+    title: `Retirement goal ${RETIREMENT_PROGRESS}% funded!`,
+    description: `You've saved $${(RETIREMENT_CURRENT / 1000).toFixed(0)}K toward your $${(RETIREMENT_TARGET / 1000000).toFixed(0)}M retirement goal. Keep it up!`,
     actionHref: '/goals',
   },
 ];
@@ -275,7 +282,12 @@ export default function DemoPage() {
             
             {/* Top Holdings */}
             <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Top Holdings</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Top Holdings</h2>
+                <Link href="/portfolio-lab" className="text-sm text-indigo-400 hover:text-indigo-300">
+                  View all {DEMO_HOLDINGS.length} →
+                </Link>
+              </div>
               
               <div className="space-y-3">
                 {DEMO_HOLDINGS.slice(0, 5).map((holding, idx) => (
@@ -298,6 +310,19 @@ export default function DemoPage() {
                   </div>
                 ))}
               </div>
+              
+              {/* Show additional holdings indicator */}
+              {DEMO_HOLDINGS.length > 5 && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <Link 
+                    href="/portfolio-lab"
+                    className="flex items-center justify-center gap-2 p-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-gray-400 hover:text-white transition"
+                  >
+                    <span>+{DEMO_HOLDINGS.length - 5} more holdings</span>
+                    <span className="text-xs text-gray-500">(including VWO)</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
           
@@ -320,7 +345,7 @@ export default function DemoPage() {
               
               <div className="space-y-4">
                 {[
-                  { name: 'Retirement', current: 797500, target: 3000000, icon: '🏖️' },
+                  { name: 'Retirement', current: RETIREMENT_CURRENT, target: RETIREMENT_TARGET, icon: '🏖️' },
                   { name: 'Beach House', current: 85000, target: 400000, icon: '🏠' },
                   { name: 'Banks College', current: 28000, target: 200000, icon: '🎓' },
                 ].map((goal, idx) => {
