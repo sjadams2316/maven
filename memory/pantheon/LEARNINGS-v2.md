@@ -166,3 +166,31 @@
 *High-confidence: 5*
 *Medium-confidence: 5*
 *Needs validation: 8*
+
+---
+
+## 2026-02-09 — User-Reported Data Bugs
+
+### L019 — Consolidate Same Tickers Across Accounts
+**Tags:** `data`, `ui`, `ux`
+**Confidence:** 3 ⭐⭐⭐
+**Confirmed by:** CIFR duplicate bug, dashboard fix, portfolio-lab fix
+**Insight:** When displaying holdings from multiple accounts, consolidate same tickers into one line. CIFR in Roth + CIFR in Taxable should show as one "CIFR: 12,000 shares" not two separate lines. Pattern: `Map<ticker, consolidatedHolding>` then aggregate shares/value.
+
+### L020 — Always Fetch Live Prices for Simulations
+**Tags:** `api`, `data`, `ux`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** What-If price bug
+**Insight:** For trade simulations, ALWAYS fetch live prices from API. Don't use portfolio prices — they may be stale from demo data or last session. Pattern: `fetchLivePrice(ticker)` first, fallback to portfolio price only if API fails.
+
+### L021 — Verify Math Matches User Expectations
+**Tags:** `testing`, `ux`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** Crypto allocation "bug" (was actually correct)
+**Insight:** When users report "wrong" numbers, first verify the math is actually wrong vs unexpected-but-correct. A 42% crypto allocation looks wrong but is accurate if TAO is $355K of $835K total. Add explanatory UI when numbers are surprising but correct.
+
+### L022 — Test With Real User Behavior
+**Tags:** `testing`, `ux`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** Multiple user-reported bugs that passed automated tests
+**Insight:** Automated tests (200 response, no console errors) miss data correctness bugs. Need human-like testing: "Does CIFR show once or twice?" "Does the price match Yahoo Finance?" "Do the percentages add up?" Add data sanity checks to QA protocol.

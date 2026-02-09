@@ -139,3 +139,32 @@ const price = data?.chart?.result?.[0]?.meta?.price || 0;
 4. Add to appropriate section above
 
 *Every bug is a gift — it teaches us what not to do.*
+
+---
+
+## 2026-02-09 — User-Reported Bugs (Pantheon Missed)
+
+### ❌ Same ticker appearing multiple times in holdings list
+**What happened:** CIFR showed twice — once from Roth IRA, once from Taxable
+**Why Pantheon missed it:** Agents tested "holdings load" but not "holdings consolidated"
+**Why it failed:** `flatMap(accounts)` extracts all holdings without deduping by ticker
+**Do instead:** Consolidate by ticker: `Map<ticker, {shares: sum, value: sum}>`
+
+### ❌ Using stale portfolio prices for simulations
+**What happened:** What-If showed $6.50 for CIFR when live price was $14.73
+**Why Pantheon missed it:** Agents tested "price displays" but not "price is current"
+**Why it failed:** Code prioritized portfolio price over live fetch for "performance"
+**Do instead:** Always fetch live prices for trade simulations. Fallback to portfolio only if API fails.
+
+### ❌ Not explaining surprising-but-correct numbers
+**What happened:** 42% crypto allocation looked like a bug but was mathematically correct
+**Why Pantheon missed it:** No check for "user expectation vs actual math"
+**Why it failed:** TAO is $355K of $835K = 42% — correct but surprising
+**Do instead:** When allocations are extreme (>30% in one category), add explanatory tooltip.
+
+### ❌ QA checks that don't match user behavior
+**What happened:** All pages returned 200, no console errors, but data was wrong
+**Why Pantheon missed it:** Tests check "does it load" not "is the data correct"
+**Why it failed:** Automated tests don't ask "is CIFR showing once or twice?"
+**Do instead:** Add data sanity checks: deduped holdings, prices match external source, percentages sum to 100.
+

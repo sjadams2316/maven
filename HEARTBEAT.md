@@ -14,6 +14,13 @@ Before other checks, verify deploys are working:
 - [ ] **Data consistency spot-check**: Pick a random tool, verify it uses DEMO_PROFILE data
 - [ ] **Click-through test**: Actually click 3-5 buttons/links and verify they go to the right place
 
+### Data Sanity Checks (NEW — catches bugs Pantheon missed)
+- [ ] **Holdings deduped**: Same ticker should appear ONCE (consolidated across accounts)
+- [ ] **Prices current**: What-If simulator prices should match Yahoo/Google Finance
+- [ ] **Percentages sum to 100**: Allocation chart should total ~100% (±1% rounding)
+- [ ] **Extreme allocations explained**: If any category >30%, should have tooltip explaining why
+- [ ] **Demo data matches docs**: Net worth ~$835K, TAO is largest holding (~$355K)
+
 ### Weekly Audits (do one per day)
 - Monday: Mobile responsiveness check (resize browser, test 3 pages)
 - Tuesday: Data consistency audit (check net worth across 5 pages)
