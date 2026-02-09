@@ -85,6 +85,10 @@
 **Task:** Audited and fixed accessibility issues: added descriptive alt text to images, ARIA dialog attributes to CommandPalette modal, screen-reader labels for search inputs, and aria-labels for icon-only close buttons across modals.
 **Insight:** Icon-only buttons (especially close buttons using "✕" or SVG icons) are invisible to screen readers. Always add `aria-label` describing the action. For modals: use `role="dialog"`, `aria-modal="true"`, and `aria-label` on the container. For search inputs without visible labels, use `<label className="sr-only">` or `aria-label`. Decorative icons should have `aria-hidden="true"` to reduce screen reader noise.
 
+### pantheon-data-consistency
+**Task:** Verified DEMO_PROFILE data displays correctly across Maven tools. Fixed /tax page which had hardcoded $720K income instead of using DEMO_PROFILE data ($200K-$500K range).
+**Insight:** When creating demo/sample data pages, always use the central DEMO_PROFILE through `useUserProfile()` hook rather than hardcoding values inline. This ensures consistency: the demo profile lives in one file (`demo-profile.ts`), and all pages reference it via the UserProvider context. For range values like "$200,000 - $500,000", create a parser function that extracts numbers and returns a midpoint. Adding a "Demo Data" badge when `isDemoMode` is true helps users understand they're seeing sample data.
+
 ---
 
 *This file grows with every sprint. Review weekly to promote patterns to PATTERNS.md.*
