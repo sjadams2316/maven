@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { getFMPClient } from '@/lib/fmp-client';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -297,12 +298,13 @@ async function checkFredHealth(): Promise<DataSourceHealth> {
 
 /**
  * Check FMP (Financial Modeling Prep) health
+ * Uses the same FMPClient as stock-research for consistency
  */
 async function checkFmpHealth(): Promise<DataSourceHealth> {
   const startTime = Date.now();
-  const apiKey = process.env.FMP_API_KEY;
   
-  if (!apiKey) {
+  const fmpClient = getFMPClient();
+  if (!fmpClient) {
     return {
       status: 'down',
       latencyMs: 0,
@@ -314,46 +316,18 @@ async function checkFmpHealth(): Promise<DataSourceHealth> {
   }
   
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT);
-    
-    // Fetch AAPL quote as a health check (using stable API, v3 deprecated Aug 2025)
-    const response = await fetch(
-      `https://financialmodelingprep.com/stable/quote?symbol=AAPL&apikey=${apiKey}`,
-      {
-        signal: controller.signal,
-        cache: 'no-store',
-      }
-    );
-    
-    clearTimeout(timeoutId);
+    // Use the same client method that stock-research uses
+    const quote = await fmpClient.getQuote('AAPL');
     const latencyMs = Date.now() - startTime;
     
-    if (!response.ok) {
-      const isRateLimited = response.status === 429;
-      
-      return {
-        status: isRateLimited ? 'degraded' : 'down',
-        latencyMs,
-        lastCheck: new Date().toISOString(),
-        errorCount: 1,
-        lastError: isRateLimited ? 'Rate limited' : `HTTP ${response.status}`,
-        responseValid: false,
-      };
-    }
-    
-    const data = await response.json();
-    
-    // Validate response structure - quote returns array with price data
-    const isValid = Array.isArray(data) && data.length > 0 && data[0].symbol === 'AAPL' && typeof data[0].price === 'number';
-    
-    if (!isValid) {
+    // Check if we got valid data
+    if (!quote || typeof quote.price !== 'number' || quote.price <= 0) {
       return {
         status: 'degraded',
         latencyMs,
         lastCheck: new Date().toISOString(),
         errorCount: 0,
-        lastError: 'Invalid response structure',
+        lastError: quote ? 'Invalid price data' : 'No data returned',
         responseValid: false,
       };
     }
