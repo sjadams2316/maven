@@ -18,6 +18,12 @@ const FALLBACK_PRICES: Record<string, { price: number; change: number; changePer
   IWM: { price: 224.56, change: 1.12, changePercent: 0.50 },
 };
 
+// Crypto fallback prices - used when CoinGecko is unavailable
+const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePercent: number }> = {
+  BTC: { price: 70000, change: -700, changePercent: -1.0 },
+  TAO: { price: 160, change: -3, changePercent: -1.8 },
+};
+
 export async function GET(request: NextRequest) {
   // Get base URL from the request for internal API calls
   const url = new URL(request.url);
@@ -113,45 +119,59 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // Fetch crypto from CoinGecko
+    // Fetch crypto from CoinGecko with fallback
     let cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
+    let cryptoLive = true;
     try {
       const cryptoResponse = await fetch(
         'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,bittensor&vs_currencies=usd&include_24hr_change=true',
         { 
           headers: { 'Accept': 'application/json' },
           cache: 'no-store',
+          signal: AbortSignal.timeout(5000), // 5 second timeout
         }
       );
       
       if (cryptoResponse.ok) {
         const crypto = await cryptoResponse.json();
-        cryptoData = [
-          {
-            symbol: 'BTC',
-            name: 'Bitcoin',
-            price: crypto.bitcoin?.usd || 0,
-            change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
-            changePercent: crypto.bitcoin?.usd_24h_change || 0,
-          },
-          {
-            symbol: 'TAO',
-            name: 'Bittensor',
-            price: crypto.bittensor?.usd || 0,
-            change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
-            changePercent: crypto.bittensor?.usd_24h_change || 0,
-          },
-        ];
+        if (crypto.bitcoin?.usd) {
+          cryptoData = [
+            {
+              symbol: 'BTC',
+              name: 'Bitcoin',
+              price: crypto.bitcoin?.usd || 0,
+              change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
+              changePercent: crypto.bitcoin?.usd_24h_change || 0,
+            },
+            {
+              symbol: 'TAO',
+              name: 'Bittensor',
+              price: crypto.bittensor?.usd || 0,
+              change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
+              changePercent: crypto.bittensor?.usd_24h_change || 0,
+            },
+          ];
+        }
       }
     } catch (err) {
-      console.error('Error fetching crypto:', err);
+      console.error('Error fetching crypto from CoinGecko:', err);
+    }
+    
+    // If CoinGecko failed, use fallback crypto prices
+    if (cryptoData.length === 0 || cryptoData.every(c => c.price === 0)) {
+      console.log('CoinGecko failed, using fallback crypto prices');
+      cryptoLive = false;
+      cryptoData = [
+        { symbol: 'BTC', name: 'Bitcoin', ...CRYPTO_FALLBACK.BTC },
+        { symbol: 'TAO', name: 'Bittensor', ...CRYPTO_FALLBACK.TAO },
+      ];
     }
 
     return NextResponse.json({
       stocks: stockData,
       crypto: cryptoData,
       timestamp: new Date().toISOString(),
-      isLive: isLiveData,
+      isLive: isLiveData && cryptoLive,
     });
   } catch (err) {
     console.error('Market data API error:', err);

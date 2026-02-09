@@ -229,6 +229,13 @@ export default function LandingPage() {
               Free during beta • No credit card • Your data stays private
             </p>
 
+            {/* DEBUG: Show raw marketData state */}
+            {process.env.NODE_ENV === 'development' && marketData && (
+              <div className="text-xs text-left bg-gray-900 p-2 rounded mb-4 max-h-32 overflow-auto">
+                <pre>{JSON.stringify(marketData, null, 2)}</pre>
+              </div>
+            )}
+            
             {/* Live Market Ticker - Yahoo Finance Style */}
             {marketData && (
               <div className="w-full max-w-4xl mx-auto">
