@@ -481,9 +481,15 @@ function HoldingsEntry({
     const updated = [...holdings];
     updated[index] = { ...updated[index], ...updates };
     
-    // Recalculate value based on mode
-    if (mode === 'value' && updates.shares !== undefined) {
-      updated[index].currentValue = updated[index].shares * updated[index].currentPrice;
+    // Recalculate based on what was changed
+    if (mode === 'value') {
+      // If currentValue was explicitly passed (user entered dollar amount), don't recalculate it
+      if (updates.currentValue !== undefined) {
+        // User entered dollar value - shares already calculated in onChange handler
+      } else if (updates.shares !== undefined) {
+        // User entered shares - calculate value
+        updated[index].currentValue = updated[index].shares * updated[index].currentPrice;
+      }
     } else if (mode === 'percentage' && updates.allocationPercent !== undefined) {
       updated[index].currentValue = (updates.allocationPercent / 100) * accountBalance;
       updated[index].shares = updated[index].currentValue / updated[index].currentPrice;
@@ -531,14 +537,33 @@ function HoldingsEntry({
               </div>
               
               {mode === 'value' ? (
-                <div className="w-28">
-                  <input
-                    type="number"
-                    value={holding.shares || ''}
-                    onChange={(e) => updateHolding(i, { shares: parseFloat(e.target.value) || 0 })}
-                    placeholder="Shares"
-                    className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none"
-                  />
+                <div className="flex items-center gap-1">
+                  <div className="w-24">
+                    <input
+                      type="number"
+                      value={holding.shares || ''}
+                      onChange={(e) => updateHolding(i, { shares: parseFloat(e.target.value) || 0 })}
+                      placeholder="Shares"
+                      className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
+                    />
+                  </div>
+                  <span className="text-gray-500 text-xs">or</span>
+                  <div className="w-28">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={holding.currentValue ? Math.round(holding.currentValue) : ''}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          const shares = holding.currentPrice ? value / holding.currentPrice : 0;
+                          updateHolding(i, { shares, currentValue: value });
+                        }}
+                        placeholder="Value"
+                        className="w-full pl-5 pr-2 py-1.5 bg-white/5 border border-white/10 rounded text-white text-sm focus:border-indigo-500 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="w-24">
