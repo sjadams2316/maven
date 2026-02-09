@@ -81,6 +81,10 @@
 **Task:** Audited form inputs across Maven for validation issues. Fixed WhatIfSimulator, SocialSecurityForm, Stress Test, and Retirement Hub pages to prevent negative values and show clear error states.
 **Insight:** HTML5 `min` attributes on number inputs only work with the spinner arrows—users can still type negative values directly. Always combine `min` constraints with `onChange` validation that rejects invalid input AND visual error states (border color + message) so users understand why their input wasn't accepted. The pattern: `onChange={(e) => { const val = Number(e.target.value); if (val >= 0) setValue(val); }}` plus conditional border/message styling.
 
+### pantheon-accessibility
+**Task:** Audited and fixed accessibility issues: added descriptive alt text to images, ARIA dialog attributes to CommandPalette modal, screen-reader labels for search inputs, and aria-labels for icon-only close buttons across modals.
+**Insight:** Icon-only buttons (especially close buttons using "✕" or SVG icons) are invisible to screen readers. Always add `aria-label` describing the action. For modals: use `role="dialog"`, `aria-modal="true"`, and `aria-label` on the container. For search inputs without visible labels, use `<label className="sr-only">` or `aria-label`. Decorative icons should have `aria-hidden="true"` to reduce screen reader noise.
+
 ---
 
 *This file grows with every sprint. Review weekly to promote patterns to PATTERNS.md.*
