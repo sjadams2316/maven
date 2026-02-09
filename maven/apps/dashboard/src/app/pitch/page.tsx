@@ -535,7 +535,7 @@ function CTASlide() {
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <a
-            href="mailto:sam@mavenwealth.ai?subject=Let's%20Talk%20About%20Maven"
+            href="mailto:sjadams2316@gmail.com?subject=Let's%20Talk%20About%20Maven"
             className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-semibold text-lg rounded-xl transition transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-indigo-500/25"
           >
             Get in Touch
@@ -554,9 +554,9 @@ function CTASlide() {
         
         <div className="pt-8 border-t border-white/10">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-lg">
-            <a href="mailto:sam@mavenwealth.ai" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 transition">
+            <a href="mailto:sjadams2316@gmail.com" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 transition">
               <span>📧</span>
-              sam@mavenwealth.ai
+              sjadams2316@gmail.com
             </a>
           </div>
           <p className="mt-6 text-gray-500 text-sm">
