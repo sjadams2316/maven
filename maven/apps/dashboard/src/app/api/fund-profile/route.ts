@@ -395,7 +395,9 @@ export async function GET(request: NextRequest) {
 
   const profiles: Record<string, FundProfile> = {};
   const errors: string[] = [];
+  const tickersNeedingFetch: string[] = [];
 
+  // First pass: resolve cached and special classifications synchronously
   for (const t of tickersToFetch) {
     // Check cache first (unless refresh requested)
     if (!refresh) {
@@ -424,27 +426,57 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    // Fetch from Yahoo Finance
-    const yahooProfile = await fetchYahooFundProfile(t);
-    if (yahooProfile) {
-      profiles[t] = yahooProfile;
-      profileCache.set(t, { data: yahooProfile, timestamp: Date.now() });
-    } else {
-      // Fall back to default
-      const defaultProfile = getDefaultProfile(t);
-      profiles[t] = defaultProfile;
-      profileCache.set(t, { data: defaultProfile, timestamp: Date.now() });
-      errors.push(`Could not fetch data for ${t}, using defaults`);
+    // Mark this ticker for fetch
+    tickersNeedingFetch.push(t);
+  }
+
+  // Second pass: fetch all uncached tickers in PARALLEL (major performance improvement)
+  // Previously this was sequential - 20 tickers × ~300ms = 6 seconds
+  // Now with parallel: 20 tickers = ~300ms total
+  if (tickersNeedingFetch.length > 0) {
+    const fetchResults = await Promise.all(
+      tickersNeedingFetch.map(async (t) => {
+        const yahooProfile = await fetchYahooFundProfile(t);
+        return { ticker: t, profile: yahooProfile };
+      })
+    );
+
+    // Process results
+    for (const { ticker: t, profile: yahooProfile } of fetchResults) {
+      if (yahooProfile) {
+        profiles[t] = yahooProfile;
+        profileCache.set(t, { data: yahooProfile, timestamp: Date.now() });
+      } else {
+        // Fall back to default
+        const defaultProfile = getDefaultProfile(t);
+        profiles[t] = defaultProfile;
+        profileCache.set(t, { data: defaultProfile, timestamp: Date.now() });
+        errors.push(`Could not fetch data for ${t}, using defaults`);
+      }
     }
   }
 
-  return NextResponse.json({
+  // Count how many were served from cache
+  const cachedCount = tickersToFetch.length - tickersNeedingFetch.length;
+
+  // Build response with caching headers
+  // - s-maxage: Vercel edge cache for 5 minutes (fund data doesn't change frequently)
+  // - stale-while-revalidate: serve stale for up to 1 hour while refreshing
+  const response = NextResponse.json({
     profiles,
     count: Object.keys(profiles).length,
-    cached: tickersToFetch.filter(t => {
-      const cached = profileCache.get(t);
-      return cached && Date.now() - cached.timestamp < CACHE_TTL;
-    }).length,
+    cached: cachedCount,
+    fetched: tickersNeedingFetch.length,
     errors: errors.length > 0 ? errors : undefined
   });
+
+  // Add caching headers (only if not refresh request)
+  if (!refresh) {
+    response.headers.set(
+      'Cache-Control',
+      'public, s-maxage=300, stale-while-revalidate=3600'
+    );
+  }
+
+  return response;
 }
