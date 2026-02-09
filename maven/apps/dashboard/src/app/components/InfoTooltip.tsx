@@ -173,6 +173,38 @@ const GLOSSARY: Record<string, { title: string; explanation: string; example?: s
     explanation: 'How closely a fund follows its benchmark index. Lower tracking error = more predictable index-like returns.',
     example: 'Tracking error of 0.1% means returns stay very close to the index.'
   },
+  
+  // Factor exposures
+  'factor-exposure': {
+    title: 'Factor Exposure',
+    explanation: 'How much your portfolio tilts toward specific investment factors that historically drive returns. Think of factors as "ingredients" that explain why investments perform differently.',
+    example: 'High value exposure = your portfolio leans toward cheaper stocks relative to their fundamentals.'
+  },
+  'market-beta': {
+    title: 'Market Beta',
+    explanation: 'Your portfolio\'s sensitivity to overall market movements. Beta of 1.0 = moves with market. Higher = more volatile, lower = more defensive.',
+    example: 'Beta 1.2 means if market drops 10%, expect ~12% drop. Beta 0.8 = ~8% drop.'
+  },
+  'size-factor': {
+    title: 'Size Factor (SMB)',
+    explanation: '"Small Minus Big" — exposure to smaller companies. Historically, small caps have higher returns but more risk. Positive = tilted toward small caps.',
+    example: 'Positive size exposure = more small-cap stocks than the market average.'
+  },
+  'value-factor': {
+    title: 'Value Factor (HML)',
+    explanation: '"High Minus Low" — exposure to value stocks (cheap relative to fundamentals). Positive = value tilt, negative = growth tilt.',
+    example: 'Positive value = more "cheap" stocks like banks. Negative = more "expensive" growth like tech.'
+  },
+  'momentum-factor': {
+    title: 'Momentum Factor',
+    explanation: 'Exposure to stocks with strong recent performance. Momentum investors believe recent winners tend to keep winning short-term.',
+    example: 'High momentum exposure = holding stocks that have outperformed recently.'
+  },
+  'quality-factor': {
+    title: 'Quality Factor',
+    explanation: 'Exposure to financially healthy companies with strong profitability, low debt, and stable earnings. Quality stocks tend to be more resilient.',
+    example: 'High quality = companies like Microsoft with steady profits and strong balance sheets.'
+  },
 };
 
 export default function InfoTooltip({ term, children, position = 'top' }: InfoTooltipProps) {
