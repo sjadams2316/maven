@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const STOCK_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
 
@@ -9,7 +9,11 @@ const STOCK_NAMES: Record<string, string> = {
   IWM: 'Russell 2000',
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Get base URL from the request for internal API calls
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  
   try {
     // Fetch stocks using FMP (Financial Modeling Prep) - works reliably
     const FMP_API_KEY = process.env.FMP_API_KEY;
@@ -53,15 +57,10 @@ export async function GET() {
     
     // If FMP failed, fall back to internal stock-quote API calls
     if (stockData.length === 0 || stockData.every(s => s.price === 0)) {
-      console.log('FMP failed, trying internal stock-quote API...');
+      console.log('FMP failed, trying internal stock-quote API at:', baseUrl);
       stockData = await Promise.all(
         STOCK_SYMBOLS.map(async (symbol) => {
           try {
-            // Use absolute URL for internal API call in production
-            const baseUrl = process.env.VERCEL_URL 
-              ? `https://${process.env.VERCEL_URL}` 
-              : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-            
             const response = await fetch(`${baseUrl}/api/stock-quote?symbol=${symbol}`, {
               cache: 'no-store',
             });
