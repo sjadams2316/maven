@@ -133,6 +133,44 @@ Make Portfolio Lab the best portfolio analysis tool in existence — institution
 - >25% of portfolio: High concentration
 - >50% of portfolio: Critical concentration
 
+**Concentration Detection Implementation (2026-02-09)**
+
+Location: `apps/dashboard/src/app/components/ConcentrationWarning.tsx`
+
+```typescript
+// Detection helper function
+export function detectConcentratedPositions(
+  holdings: Array<{ ticker: string; currentValue?: number }>,
+  totalPortfolioValue: number,
+  threshold: number = 25  // Default 25%
+): ConcentratedPosition[] {
+  if (totalPortfolioValue <= 0) return [];
+  
+  return holdings
+    .filter(h => h.currentValue && h.currentValue > 0)
+    .map(h => ({
+      ticker: h.ticker,
+      value: h.currentValue!,
+      percentage: (h.currentValue! / totalPortfolioValue) * 100,
+    }))
+    .filter(p => p.percentage > threshold)
+    .sort((a, b) => b.percentage - a.percentage);
+}
+```
+
+**Severity Levels:**
+- **HIGH** (25-50%): Position exceeds recommended limit
+- **CRITICAL** (50-75%): More than half portfolio in single position
+- **EXTREME** (>75%): Catastrophic concentration risk
+
+**Dashboard Integration:**
+- Appears ABOVE all other insights when triggered
+- Red/critical styling (distinct from amber "risk" insights)
+- Shows specific positions with percentages and values
+- Risk explanation: "If {ticker} drops 50%, you lose ${amount}"
+- CTA: "Explore Diversification Options" → Portfolio Lab
+- Dismissible but returns next session (safety feature)
+
 **Sector Concentration**
 - Technology heavy is common (FAANG effect)
 - 2000 taught: Tech can drop 80%
