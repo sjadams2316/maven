@@ -6,7 +6,9 @@
 
 | Agent | Task | Files Touching | Started | Status |
 |-------|------|----------------|---------|--------|
-| pantheon-realtime-market-data | Fix real-time prices + "as of" timestamp | dashboard, watchlist, hooks | 10:07 | 🔄 Running |
+| pantheon-fix-demo-prices | Fix demo page live prices | demo/page.tsx | 10:14 | 🔄 Running |
+| pantheon-fund-xray | Fund look-through for global funds | portfolio-utils.ts | 10:16 | 🔄 Running |
+| pantheon-fix-auth-prices | Fix prices for authenticated users | dashboard/page.tsx | 10:16 | 🔄 Running |
 
 ## Recently Completed (Last 24h)
 

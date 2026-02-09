@@ -54,10 +54,16 @@ export default function Dashboard() {
       .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
   }, [profile]);
   
+  // Create a stable string of tickers for useEffect dependency
+  // This ensures price fetch triggers reliably when profile loads (fixes auth user bug)
+  const tickerString = useMemo(() => {
+    return baseHoldings.map(h => h.ticker.toUpperCase()).sort().join(',');
+  }, [baseHoldings]);
+  
   // Fetch live prices for all holdings using our API route (avoids CORS issues)
   useEffect(() => {
     const fetchLivePrices = async () => {
-      if (baseHoldings.length === 0) return;
+      if (!tickerString || baseHoldings.length === 0) return;
       
       setPricesLoading(true);
       

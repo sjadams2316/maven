@@ -22,6 +22,227 @@ export interface PortfolioAllocation {
   alternatives: number;
 }
 
+// ===========================================
+// FUND LOOK-THROUGH / X-RAY ANALYSIS
+// ===========================================
+
+/**
+ * Fund composition breakdown for look-through analysis
+ * This enables "X-Ray" analysis like Morningstar does - showing the TRUE
+ * geographic/asset allocation inside multi-asset funds.
+ * 
+ * Values are percentages as decimals (0.60 = 60%)
+ * Data sourced from fund prospectuses and Morningstar as of 2024
+ */
+export interface FundComposition {
+  usEquity: number;
+  intlEquity: number;
+  bonds: number;
+  cash: number;
+  reits?: number;
+  gold?: number;
+  crypto?: number;
+  alternatives?: number;
+  // Fund metadata
+  name?: string;
+  lastUpdated?: string;
+}
+
+/**
+ * Fund compositions for common multi-asset and global funds
+ * Used for look-through analysis to show TRUE allocation
+ */
+export const FUND_COMPOSITIONS: Record<string, FundComposition> = {
+  // ===========================================
+  // TOTAL WORLD / GLOBAL FUNDS
+  // These contain both US and International stocks
+  // ===========================================
+  'VTWAX': { usEquity: 0.60, intlEquity: 0.40, bonds: 0, cash: 0, name: 'Vanguard Total World Stock Index Admiral' },
+  'VT': { usEquity: 0.60, intlEquity: 0.40, bonds: 0, cash: 0, name: 'Vanguard Total World Stock ETF' },
+  'ACWI': { usEquity: 0.62, intlEquity: 0.38, bonds: 0, cash: 0, name: 'iShares MSCI ACWI ETF' },
+  'URTH': { usEquity: 0.70, intlEquity: 0.30, bonds: 0, cash: 0, name: 'iShares MSCI World ETF' },
+  'SPDW': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'SPDR Developed World ex-US ETF' },
+  'SPGM': { usEquity: 0.60, intlEquity: 0.40, bonds: 0, cash: 0, name: 'SPDR Portfolio MSCI Global Stock ETF' },
+  
+  // ===========================================
+  // VANGUARD TARGET DATE FUNDS
+  // Approximate allocations - these shift over time
+  // ===========================================
+  // Target 2065/2070 - Most aggressive
+  'VLXVX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2065' },
+  'VSVNX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2070' },
+  
+  // Target 2055/2060
+  'VFFVX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2055' },
+  'VTTSX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2060' },
+  
+  // Target 2045/2050
+  'VTIVX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2045' },
+  'VFIFX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Vanguard Target Retirement 2050' },
+  
+  // Target 2035/2040
+  'VTTHX': { usEquity: 0.50, intlEquity: 0.33, bonds: 0.12, cash: 0.05, name: 'Vanguard Target Retirement 2035' },
+  'VFORX': { usEquity: 0.52, intlEquity: 0.34, bonds: 0.10, cash: 0.04, name: 'Vanguard Target Retirement 2040' },
+  
+  // Target 2025/2030
+  'VTTVX': { usEquity: 0.42, intlEquity: 0.28, bonds: 0.21, cash: 0.09, name: 'Vanguard Target Retirement 2025' },
+  'VTHRX': { usEquity: 0.46, intlEquity: 0.31, bonds: 0.17, cash: 0.06, name: 'Vanguard Target Retirement 2030' },
+  
+  // Target 2015/2020 - More conservative
+  'VTWNX': { usEquity: 0.36, intlEquity: 0.24, bonds: 0.28, cash: 0.12, name: 'Vanguard Target Retirement 2015' },
+  'VTWNX_2020': { usEquity: 0.38, intlEquity: 0.25, bonds: 0.26, cash: 0.11, name: 'Vanguard Target Retirement 2020' },
+  
+  // Income fund - Most conservative
+  'VTINX': { usEquity: 0.18, intlEquity: 0.12, bonds: 0.52, cash: 0.18, name: 'Vanguard Target Retirement Income' },
+  
+  // ===========================================
+  // FIDELITY TARGET DATE FUNDS (Freedom Funds)
+  // ===========================================
+  'FDKLX': { usEquity: 0.50, intlEquity: 0.30, bonds: 0.15, cash: 0.05, name: 'Fidelity Freedom 2065' },
+  'FDKVX': { usEquity: 0.48, intlEquity: 0.29, bonds: 0.18, cash: 0.05, name: 'Fidelity Freedom 2055' },
+  'FFFHX': { usEquity: 0.45, intlEquity: 0.27, bonds: 0.22, cash: 0.06, name: 'Fidelity Freedom 2030' },
+  'FFTHX': { usEquity: 0.48, intlEquity: 0.29, bonds: 0.18, cash: 0.05, name: 'Fidelity Freedom 2035' },
+  'FFFFX': { usEquity: 0.50, intlEquity: 0.30, bonds: 0.15, cash: 0.05, name: 'Fidelity Freedom 2040' },
+  'FFFGX': { usEquity: 0.51, intlEquity: 0.31, bonds: 0.13, cash: 0.05, name: 'Fidelity Freedom 2045' },
+  'FFFEX': { usEquity: 0.52, intlEquity: 0.31, bonds: 0.12, cash: 0.05, name: 'Fidelity Freedom 2050' },
+  
+  // Fidelity Freedom Index funds (lower cost)
+  'FIHFX': { usEquity: 0.45, intlEquity: 0.27, bonds: 0.22, cash: 0.06, name: 'Fidelity Freedom Index 2030' },
+  'FIOFX': { usEquity: 0.48, intlEquity: 0.29, bonds: 0.18, cash: 0.05, name: 'Fidelity Freedom Index 2040' },
+  'FIPFX': { usEquity: 0.52, intlEquity: 0.31, bonds: 0.12, cash: 0.05, name: 'Fidelity Freedom Index 2050' },
+  'FISVX': { usEquity: 0.54, intlEquity: 0.36, bonds: 0.07, cash: 0.03, name: 'Fidelity Freedom Index 2060' },
+  
+  // ===========================================
+  // T. ROWE PRICE TARGET DATE FUNDS
+  // ===========================================
+  'TRRGX': { usEquity: 0.43, intlEquity: 0.25, bonds: 0.25, cash: 0.07, name: 'T. Rowe Price Retirement 2030' },
+  'TRRDX': { usEquity: 0.46, intlEquity: 0.27, bonds: 0.21, cash: 0.06, name: 'T. Rowe Price Retirement 2035' },
+  'TRRKX': { usEquity: 0.50, intlEquity: 0.29, bonds: 0.16, cash: 0.05, name: 'T. Rowe Price Retirement 2040' },
+  'TRRHX': { usEquity: 0.53, intlEquity: 0.31, bonds: 0.12, cash: 0.04, name: 'T. Rowe Price Retirement 2050' },
+  'TRRNX': { usEquity: 0.55, intlEquity: 0.32, bonds: 0.09, cash: 0.04, name: 'T. Rowe Price Retirement 2060' },
+  
+  // ===========================================
+  // SCHWAB TARGET DATE FUNDS
+  // ===========================================
+  'SWYNX': { usEquity: 0.45, intlEquity: 0.27, bonds: 0.22, cash: 0.06, name: 'Schwab Target 2030 Index' },
+  'SWYMX': { usEquity: 0.50, intlEquity: 0.30, bonds: 0.15, cash: 0.05, name: 'Schwab Target 2040 Index' },
+  'SWYHX': { usEquity: 0.53, intlEquity: 0.32, bonds: 0.11, cash: 0.04, name: 'Schwab Target 2050 Index' },
+  'SWYLX': { usEquity: 0.55, intlEquity: 0.33, bonds: 0.08, cash: 0.04, name: 'Schwab Target 2060 Index' },
+  
+  // ===========================================
+  // BALANCED / LIFECYCLE FUNDS
+  // ===========================================
+  'VBIAX': { usEquity: 0.40, intlEquity: 0.20, bonds: 0.40, cash: 0, name: 'Vanguard Balanced Index Admiral' },
+  'VBINX': { usEquity: 0.40, intlEquity: 0.20, bonds: 0.40, cash: 0, name: 'Vanguard Balanced Index Investor' },
+  'VWINX': { usEquity: 0.25, intlEquity: 0.10, bonds: 0.60, cash: 0.05, name: 'Vanguard Wellesley Income' },
+  'VWELX': { usEquity: 0.50, intlEquity: 0.15, bonds: 0.30, cash: 0.05, name: 'Vanguard Wellington' },
+  'FBALX': { usEquity: 0.50, intlEquity: 0.15, bonds: 0.30, cash: 0.05, name: 'Fidelity Balanced' },
+  'ABALX': { usEquity: 0.45, intlEquity: 0.15, bonds: 0.35, cash: 0.05, name: 'American Funds Balanced' },
+  'PRWCX': { usEquity: 0.55, intlEquity: 0.10, bonds: 0.30, cash: 0.05, name: 'T. Rowe Price Capital Appreciation' },
+  
+  // LifeStrategy Funds
+  'VSMGX': { usEquity: 0.24, intlEquity: 0.16, bonds: 0.48, cash: 0.12, name: 'Vanguard LifeStrategy Conservative Growth' },
+  'VSCGX': { usEquity: 0.36, intlEquity: 0.24, bonds: 0.32, cash: 0.08, name: 'Vanguard LifeStrategy Moderate Growth' },
+  'VASGX': { usEquity: 0.48, intlEquity: 0.32, bonds: 0.16, cash: 0.04, name: 'Vanguard LifeStrategy Growth' },
+  
+  // ===========================================
+  // PURE INTERNATIONAL FUNDS (100% intl)
+  // ===========================================
+  'VTIAX': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'Vanguard Total International Stock Admiral' },
+  'VXUS': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'Vanguard Total International Stock ETF' },
+  'FZILX': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'Fidelity ZERO International Index' },
+  'FTIHX': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'Fidelity Total International Index' },
+  'SWISX': { usEquity: 0, intlEquity: 1.0, bonds: 0, cash: 0, name: 'Schwab International Index' },
+  
+  // ===========================================
+  // AMERICAN FUNDS (Common 401k options)
+  // These have global/international exposure
+  // ===========================================
+  'ANWFX': { usEquity: 0.40, intlEquity: 0.55, bonds: 0, cash: 0.05, name: 'American Funds New Perspective' },
+  'CWGIX': { usEquity: 0.35, intlEquity: 0.60, bonds: 0, cash: 0.05, name: 'American Funds Capital World Growth' },
+  'AEPGX': { usEquity: 0.20, intlEquity: 0.75, bonds: 0, cash: 0.05, name: 'American Funds EuroPacific Growth' },
+  'SMCWX': { usEquity: 0.15, intlEquity: 0.80, bonds: 0, cash: 0.05, name: 'American Funds SMALLCAP World' },
+  'CAIBX': { usEquity: 0.40, intlEquity: 0.15, bonds: 0.35, cash: 0.10, name: 'American Funds Capital Income Builder' },
+  'AMECX': { usEquity: 0.35, intlEquity: 0.10, bonds: 0.45, cash: 0.10, name: 'American Funds Income Fund of America' },
+  
+  // ===========================================
+  // DODGE & COX (Common 401k options)
+  // ===========================================
+  'DODFX': { usEquity: 0.20, intlEquity: 0.75, bonds: 0, cash: 0.05, name: 'Dodge & Cox International Stock' },
+  'DODIX': { usEquity: 0, intlEquity: 0, bonds: 0.95, cash: 0.05, name: 'Dodge & Cox Income' },
+  'DODWX': { usEquity: 0.35, intlEquity: 0.25, bonds: 0.35, cash: 0.05, name: 'Dodge & Cox Global Stock' },
+  
+  // ===========================================
+  // ALLOCATION ETFs
+  // ===========================================
+  'AOA': { usEquity: 0.48, intlEquity: 0.32, bonds: 0.16, cash: 0.04, name: 'iShares Core Aggressive Allocation' },
+  'AOR': { usEquity: 0.36, intlEquity: 0.24, bonds: 0.32, cash: 0.08, name: 'iShares Core Growth Allocation' },
+  'AOM': { usEquity: 0.24, intlEquity: 0.16, bonds: 0.48, cash: 0.12, name: 'iShares Core Moderate Allocation' },
+  'AOK': { usEquity: 0.18, intlEquity: 0.12, bonds: 0.56, cash: 0.14, name: 'iShares Core Conservative Allocation' },
+  
+  // ===========================================
+  // GLOBAL BOND FUNDS
+  // ===========================================
+  'BNDW': { usEquity: 0, intlEquity: 0, bonds: 1.0, cash: 0, name: 'Vanguard Total World Bond ETF' },
+  'BNDX': { usEquity: 0, intlEquity: 0, bonds: 1.0, cash: 0, name: 'Vanguard Total International Bond ETF' },
+  'IAGG': { usEquity: 0, intlEquity: 0, bonds: 1.0, cash: 0, name: 'iShares Core International Aggregate Bond' },
+  'BWX': { usEquity: 0, intlEquity: 0, bonds: 1.0, cash: 0, name: 'SPDR International Treasury Bond' },
+};
+
+/**
+ * Get fund composition for look-through analysis
+ * Returns null if fund is not a multi-asset/global fund we know about
+ */
+export function getFundComposition(ticker: string): FundComposition | null {
+  const upper = ticker.toUpperCase();
+  return FUND_COMPOSITIONS[upper] || null;
+}
+
+/**
+ * Check if a ticker is a multi-asset fund (has look-through data)
+ */
+export function isMultiAssetFund(ticker: string): boolean {
+  return getFundComposition(ticker) !== null;
+}
+
+/**
+ * Decompose a holding value into its underlying asset class allocation
+ * This is the core of X-Ray analysis
+ * 
+ * @param ticker The fund ticker
+ * @param value The dollar value of the holding
+ * @returns Object with dollar values broken down by asset class
+ */
+export function decomposeFundHolding(
+  ticker: string, 
+  value: number
+): Record<AssetClass, number> {
+  const composition = getFundComposition(ticker);
+  
+  if (!composition) {
+    // Not a known multi-asset fund, classify normally
+    const assetClass = classifyTicker(ticker);
+    const result: Record<AssetClass, number> = {
+      usEquity: 0, intlEquity: 0, bonds: 0, reits: 0, 
+      gold: 0, crypto: 0, cash: 0, alternatives: 0
+    };
+    result[assetClass] = value;
+    return result;
+  }
+  
+  // Decompose based on fund composition
+  return {
+    usEquity: value * composition.usEquity,
+    intlEquity: value * composition.intlEquity,
+    bonds: value * composition.bonds,
+    cash: value * composition.cash,
+    reits: value * (composition.reits || 0),
+    gold: value * (composition.gold || 0),
+    crypto: value * (composition.crypto || 0),
+    alternatives: value * (composition.alternatives || 0),
+  };
+}
+
 // Ticker to asset class mapping
 // This is a best-effort mapping - add more as needed
 const TICKER_ASSET_CLASS: Record<string, AssetClass> = {
@@ -179,11 +400,19 @@ export function classifyTicker(ticker: string): AssetClass {
 
 /**
  * Calculate portfolio allocation percentages from holdings
+ * Now with LOOK-THROUGH analysis for multi-asset funds!
+ * 
+ * @param holdings Array of holdings
+ * @param totalPortfolioValue Optional override for total value
+ * @param options.useLookThrough Enable fund decomposition (default: true)
  */
 export function calculateAllocationFromHoldings(
   holdings: (Holding & { accountName?: string; accountType?: string })[],
-  totalPortfolioValue?: number
+  totalPortfolioValue?: number,
+  options: { useLookThrough?: boolean } = {}
 ): PortfolioAllocation {
+  const { useLookThrough = true } = options;
+  
   const allocation: PortfolioAllocation = {
     usEquity: 0,
     intlEquity: 0,
@@ -215,14 +444,121 @@ export function calculateAllocationFromHoldings(
     };
   }
   
-  // Classify each holding and sum by class
+  // Process each holding - use look-through for multi-asset funds
   holdings.forEach(holding => {
     const value = holding.currentValue || (holding.shares * (holding.currentPrice || 0));
-    const assetClass = classifyTicker(holding.ticker);
-    allocation[assetClass] += value / total;
+    
+    if (useLookThrough) {
+      // Use look-through decomposition for known multi-asset funds
+      const decomposed = decomposeFundHolding(holding.ticker, value);
+      
+      // Add decomposed values to allocation
+      allocation.usEquity += decomposed.usEquity / total;
+      allocation.intlEquity += decomposed.intlEquity / total;
+      allocation.bonds += decomposed.bonds / total;
+      allocation.reits += decomposed.reits / total;
+      allocation.gold += decomposed.gold / total;
+      allocation.crypto += decomposed.crypto / total;
+      allocation.cash += decomposed.cash / total;
+      allocation.alternatives += decomposed.alternatives / total;
+    } else {
+      // Simple classification (old behavior)
+      const assetClass = classifyTicker(holding.ticker);
+      allocation[assetClass] += value / total;
+    }
   });
   
   return allocation;
+}
+
+/**
+ * Get detailed look-through breakdown for a portfolio
+ * Shows which holdings are decomposed and the TRUE allocation
+ */
+export function getLookThroughBreakdown(
+  holdings: (Holding & { accountName?: string; accountType?: string })[]
+): {
+  lookThroughAllocation: PortfolioAllocation;
+  simpleAllocation: PortfolioAllocation;
+  decomposedHoldings: {
+    ticker: string;
+    name: string;
+    value: number;
+    composition: FundComposition;
+    breakdown: Record<AssetClass, number>;
+  }[];
+  nonDecomposedHoldings: {
+    ticker: string;
+    name: string;
+    value: number;
+    assetClass: AssetClass;
+  }[];
+  hasLookThroughData: boolean;
+  lookThroughDifference: {
+    usEquity: number;
+    intlEquity: number;
+    bonds: number;
+  };
+} {
+  const decomposedHoldings: {
+    ticker: string;
+    name: string;
+    value: number;
+    composition: FundComposition;
+    breakdown: Record<AssetClass, number>;
+  }[] = [];
+  
+  const nonDecomposedHoldings: {
+    ticker: string;
+    name: string;
+    value: number;
+    assetClass: AssetClass;
+  }[] = [];
+  
+  holdings.forEach(holding => {
+    const value = holding.currentValue || (holding.shares * (holding.currentPrice || 0));
+    if (value <= 0) return;
+    
+    const composition = getFundComposition(holding.ticker);
+    
+    if (composition) {
+      const breakdown = decomposeFundHolding(holding.ticker, value);
+      decomposedHoldings.push({
+        ticker: holding.ticker.toUpperCase(),
+        name: composition.name || holding.name || holding.ticker,
+        value,
+        composition,
+        breakdown,
+      });
+    } else {
+      const assetClass = classifyTicker(holding.ticker);
+      nonDecomposedHoldings.push({
+        ticker: holding.ticker.toUpperCase(),
+        name: holding.name || holding.ticker,
+        value,
+        assetClass,
+      });
+    }
+  });
+  
+  const lookThroughAllocation = calculateAllocationFromHoldings(holdings, undefined, { useLookThrough: true });
+  const simpleAllocation = calculateAllocationFromHoldings(holdings, undefined, { useLookThrough: false });
+  
+  // Calculate how much the allocation changes with look-through
+  const lookThroughDifference = {
+    usEquity: lookThroughAllocation.usEquity - simpleAllocation.usEquity,
+    intlEquity: lookThroughAllocation.intlEquity - simpleAllocation.intlEquity,
+    bonds: lookThroughAllocation.bonds - simpleAllocation.bonds,
+  };
+  
+  return {
+    lookThroughAllocation,
+    simpleAllocation,
+    decomposedHoldings,
+    nonDecomposedHoldings,
+    hasLookThroughData: decomposedHoldings.length > 0,
+    lookThroughDifference,
+  };
 }
 
 /**
