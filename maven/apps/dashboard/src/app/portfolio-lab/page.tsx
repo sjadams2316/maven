@@ -559,19 +559,19 @@ export default function PortfolioLab() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-8 p-1 bg-white/5 rounded-xl">
+        {/* Tab Navigation - Mobile-optimized with larger touch targets */}
+        <div className="flex gap-1.5 sm:gap-2 mb-8 p-1.5 bg-white/5 rounded-xl overflow-x-auto scrollbar-hide">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition ${
+              className={`flex items-center justify-center gap-2 min-w-[48px] sm:min-w-0 px-3 sm:px-4 py-3 sm:py-2.5 rounded-lg font-medium text-sm transition flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'bg-indigo-500 text-white'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>{tab.icon}</span>
+              <span className="text-lg sm:text-base">{tab.icon}</span>
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}

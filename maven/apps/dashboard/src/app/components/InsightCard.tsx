@@ -94,24 +94,24 @@ export default function InsightCard({
             )}
           </div>
           
-          <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
-            {title}
+          <h3 className="font-semibold text-white mb-1 flex items-center gap-2 flex-wrap">
+            <span className="break-words">{title}</span>
             {learnMoreText && (
               <span className="relative">
                 <button
                   onClick={() => setShowTooltip(!showTooltip)}
-                  className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white text-xs flex items-center justify-center transition"
+                  className="w-6 h-6 sm:w-5 sm:h-5 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white text-xs flex items-center justify-center transition flex-shrink-0"
                   aria-label="Learn more"
                 >
                   ?
                 </button>
                 {showTooltip && (
-                  <div className="absolute left-0 top-7 z-50 w-72 p-3 bg-gray-900 border border-white/20 rounded-xl shadow-xl text-sm text-gray-300 leading-relaxed">
+                  <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:left-0 top-auto sm:top-7 bottom-4 sm:bottom-auto z-50 w-auto sm:w-72 max-w-[calc(100vw-2rem)] p-4 sm:p-3 bg-gray-900 border border-white/20 rounded-xl shadow-xl text-sm text-gray-300 leading-relaxed">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <span className="text-xs font-medium text-indigo-400">💡 What is this?</span>
                       <button
                         onClick={() => setShowTooltip(false)}
-                        className="text-gray-500 hover:text-white text-xs"
+                        className="w-8 h-8 sm:w-auto sm:h-auto text-gray-500 hover:text-white text-sm sm:text-xs flex items-center justify-center"
                       >
                         ✕
                       </button>

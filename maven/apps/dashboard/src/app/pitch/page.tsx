@@ -12,27 +12,27 @@ interface Slide {
 // Individual slide components
 function TitleSlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+    <div className="flex flex-col items-center justify-center h-full text-center px-4 sm:px-6">
       <div className="animate-fade-in">
-        <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-6xl font-bold mx-auto mb-10 shadow-2xl shadow-purple-500/30 animate-glow">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-4xl sm:text-6xl font-bold mx-auto mb-6 sm:mb-10 shadow-2xl shadow-purple-500/30 animate-glow">
           M
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6">
           <span className="bg-gradient-to-r from-white via-indigo-200 to-purple-200 text-transparent bg-clip-text">
             Maven
           </span>
         </h1>
-        <p className="text-2xl md:text-4xl text-gray-300 mb-4 font-light tracking-wide">
+        <p className="text-lg sm:text-2xl md:text-4xl text-gray-300 mb-4 font-light tracking-wide px-4">
           The Intelligence Layer for Wealth
         </p>
-        <div className="mt-8 flex items-center justify-center gap-3">
+        <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-gray-500 text-lg">Live and learning</span>
+          <span className="text-gray-500 text-sm sm:text-lg">Live and learning</span>
         </div>
       </div>
-      <div className="absolute bottom-24 animate-bounce text-gray-500">
-        <p className="text-sm mb-2">Press → or tap to continue</p>
-        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="absolute bottom-16 sm:bottom-24 animate-bounce text-gray-500">
+        <p className="text-xs sm:text-sm mb-2">Tap or swipe to continue</p>
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
@@ -42,43 +42,43 @@ function TitleSlide() {
 
 function ProblemSlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
+    <div className="flex flex-col items-center justify-center h-full px-4 sm:px-6 md:px-12 overflow-y-auto py-8">
       <div className="max-w-4xl w-full animate-fade-in">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-white">
           Wealth management needs an <span className="text-indigo-400">operating system</span>.
         </h2>
         
-        <div className="space-y-8 mb-10">
+        <div className="space-y-4 sm:space-y-8 mb-6 sm:mb-10">
           <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <p className="text-2xl text-gray-300 leading-relaxed">
+            <p className="text-base sm:text-2xl text-gray-300 leading-relaxed">
               Advisors juggle <span className="text-amber-400">dozens of tools</span> — portfolio analytics, tax software, 
               planning tools, research platforms, CRMs. None of them talk to each other.
             </p>
           </div>
           
           <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <p className="text-2xl text-gray-300 leading-relaxed">
+            <p className="text-base sm:text-2xl text-gray-300 leading-relaxed">
               Clients get <span className="text-red-400">fragmented experiences</span> — logging into 5 different portals, 
               no unified view, no proactive guidance.
             </p>
           </div>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-            <div className="text-3xl font-bold text-red-400 mb-1">8+</div>
-            <p className="text-sm text-gray-400">Tools the avg advisor uses</p>
-            <p className="text-xs text-gray-500 mt-1">None truly integrated</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 text-center">
+            <div className="text-xl sm:text-3xl font-bold text-red-400 mb-1">8+</div>
+            <p className="text-xs sm:text-sm text-gray-400">Tools avg advisor uses</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-1 hidden sm:block">None truly integrated</p>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-            <div className="text-3xl font-bold text-amber-400 mb-1">70%</div>
-            <p className="text-sm text-gray-400">Time on non-client work</p>
-            <p className="text-xs text-gray-500 mt-1">Admin, data entry, prep</p>
+          <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 text-center">
+            <div className="text-xl sm:text-3xl font-bold text-amber-400 mb-1">70%</div>
+            <p className="text-xs sm:text-sm text-gray-400">Time on admin</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-1 hidden sm:block">Admin, data entry, prep</p>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-            <div className="text-3xl font-bold text-purple-400 mb-1">$0</div>
-            <p className="text-sm text-gray-400">Learns from interactions</p>
-            <p className="text-xs text-gray-500 mt-1">Every tool starts from zero</p>
+          <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 text-center">
+            <div className="text-xl sm:text-3xl font-bold text-purple-400 mb-1">$0</div>
+            <p className="text-xs sm:text-sm text-gray-400">Learns from use</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-1 hidden sm:block">Every tool starts from zero</p>
           </div>
         </div>
       </div>
@@ -164,54 +164,54 @@ function MavenPartnersSlide() {
 
 function ToolsSlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
+    <div className="flex flex-col items-center justify-center h-full px-4 sm:px-6 md:px-12 overflow-y-auto py-8">
       <div className="max-w-5xl w-full animate-fade-in">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white text-center">The Arsenal</h2>
-        <p className="text-xl text-gray-400 text-center mb-10">Tools that give our advisors superpowers</p>
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4 text-white text-center">The Arsenal</h2>
+        <p className="text-sm sm:text-xl text-gray-400 text-center mb-6 sm:mb-10">Tools that give our advisors superpowers</p>
         
-        <div className="grid md:grid-cols-2 gap-5">
-          <div className="group bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 rounded-2xl p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">
+        <div className="grid grid-cols-2 gap-2 sm:gap-5">
+          <div className="group bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 mb-2 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-amber-500/30 flex-shrink-0">
                 ⚡
               </div>
-              <h3 className="text-xl font-semibold text-white">Fragility Index™</h3>
+              <h3 className="text-sm sm:text-xl font-semibold text-white text-center sm:text-left">Fragility Index™</h3>
             </div>
-            <p className="text-gray-300 mb-3">Real-time market stress detection across 8 pillars. Know when to be defensive <em>before</em> the crowd panics.</p>
-            <p className="text-sm text-amber-400/80">Proprietary. No competitor has this.</p>
+            <p className="text-gray-300 mb-2 sm:mb-3 text-xs sm:text-base text-center sm:text-left">Real-time market stress detection across 8 pillars.</p>
+            <p className="text-[10px] sm:text-sm text-amber-400/80 text-center sm:text-left">Proprietary</p>
           </div>
           
-          <div className="group bg-gradient-to-br from-purple-500/20 to-pink-600/10 border border-purple-500/30 rounded-2xl p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.15s' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl shadow-lg shadow-purple-500/30">
+          <div className="group bg-gradient-to-br from-purple-500/20 to-pink-600/10 border border-purple-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.15s' }}>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 mb-2 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-purple-500/30 flex-shrink-0">
                 🔮
               </div>
-              <h3 className="text-xl font-semibold text-white">What-If Engine</h3>
+              <h3 className="text-sm sm:text-xl font-semibold text-white text-center sm:text-left">What-If Engine</h3>
             </div>
-            <p className="text-gray-300 mb-3">Model any scenario in seconds. Show clients the impact of decisions before they make them. Gamified grades (A+ to F).</p>
-            <p className="text-sm text-purple-400/80">Monte Carlo meets intuitive UX.</p>
+            <p className="text-gray-300 mb-2 sm:mb-3 text-xs sm:text-base text-center sm:text-left">Model scenarios in seconds with gamified grades.</p>
+            <p className="text-[10px] sm:text-sm text-purple-400/80 text-center sm:text-left">Monte Carlo UX</p>
           </div>
           
-          <div className="group bg-gradient-to-br from-emerald-500/20 to-teal-600/10 border border-emerald-500/30 rounded-2xl p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">
+          <div className="group bg-gradient-to-br from-emerald-500/20 to-teal-600/10 border border-emerald-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 mb-2 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-emerald-500/30 flex-shrink-0">
                 🌾
               </div>
-              <h3 className="text-xl font-semibold text-white">Tax Intelligence</h3>
+              <h3 className="text-sm sm:text-xl font-semibold text-white text-center sm:text-left">Tax Intelligence</h3>
             </div>
-            <p className="text-gray-300 mb-3">Automated tax-loss harvesting detection, wash sale protection, Roth conversion analysis. Finds alpha others miss.</p>
-            <p className="text-sm text-emerald-400/80">Thousands saved per client annually.</p>
+            <p className="text-gray-300 mb-2 sm:mb-3 text-xs sm:text-base text-center sm:text-left">Tax-loss harvesting & wash sale protection.</p>
+            <p className="text-[10px] sm:text-sm text-emerald-400/80 text-center sm:text-left">$1000s saved yearly</p>
           </div>
           
-          <div className="group bg-gradient-to-br from-blue-500/20 to-cyan-600/10 border border-blue-500/30 rounded-2xl p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.25s' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30">
+          <div className="group bg-gradient-to-br from-blue-500/20 to-cyan-600/10 border border-blue-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:scale-[1.02] transition-transform animate-slide-up" style={{ animationDelay: '0.25s' }}>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 mb-2 sm:mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-blue-500/30 flex-shrink-0">
                 🤖
               </div>
-              <h3 className="text-xl font-semibold text-white">Oracle AI</h3>
+              <h3 className="text-sm sm:text-xl font-semibold text-white text-center sm:text-left">Oracle AI</h3>
             </div>
-            <p className="text-gray-300 mb-3">AI assistant that knows the client's full picture. Generates meeting agendas, answers questions, explains complex concepts.</p>
-            <p className="text-sm text-blue-400/80">Always available. Always current.</p>
+            <p className="text-gray-300 mb-2 sm:mb-3 text-xs sm:text-base text-center sm:text-left">AI that knows the client's full picture.</p>
+            <p className="text-[10px] sm:text-sm text-blue-400/80 text-center sm:text-left">Always current</p>
           </div>
         </div>
       </div>
@@ -221,59 +221,59 @@ function ToolsSlide() {
 
 function HumanPlusAISlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
+    <div className="flex flex-col items-center justify-center h-full px-4 sm:px-6 md:px-12 overflow-y-auto py-8">
       <div className="max-w-4xl w-full animate-fade-in">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white text-center">Human + AI</h2>
-        <p className="text-xl text-gray-400 text-center mb-10">The planners we hire aren't typical. That's the point.</p>
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4 text-white text-center">Human + AI</h2>
+        <p className="text-sm sm:text-xl text-gray-400 text-center mb-6 sm:mb-10">The planners we hire aren't typical. That's the point.</p>
         
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-600/10 border border-blue-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-blue-500/30">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10">
+          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-600/10 border border-blue-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 sm:mb-4 shadow-lg shadow-blue-500/30">
               📊
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Planning Expertise</h3>
-            <p className="text-gray-400 text-sm">Deep knowledge of tax, retirement, estate, and investment strategies. The technical foundation.</p>
+            <h3 className="text-base sm:text-xl font-semibold text-white mb-1 sm:mb-2">Planning Expertise</h3>
+            <p className="text-gray-400 text-xs sm:text-sm">Deep knowledge of tax, retirement, estate strategies.</p>
           </div>
           
-          <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/10 border border-purple-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-purple-500/30">
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/10 border border-purple-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 sm:mb-4 shadow-lg shadow-purple-500/30">
               🔧
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Technology Fluency</h3>
-            <p className="text-gray-400 text-sm">Native comfort with AI tools. They don't just use Maven — they push it, question it, improve it.</p>
+            <h3 className="text-base sm:text-xl font-semibold text-white mb-1 sm:mb-2">Technology Fluency</h3>
+            <p className="text-gray-400 text-xs sm:text-sm">Native comfort with AI tools. They push Maven forward.</p>
           </div>
           
-          <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 rounded-2xl p-6 text-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-amber-500/30">
+          <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 sm:mb-4 shadow-lg shadow-amber-500/30">
               🧠
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Behavioral Psychology</h3>
-            <p className="text-gray-400 text-sm">Understanding that most financial mistakes are emotional, not technical. Fear, greed, loss aversion.</p>
+            <h3 className="text-base sm:text-xl font-semibold text-white mb-1 sm:mb-2">Behavioral Psychology</h3>
+            <p className="text-gray-400 text-xs sm:text-sm">Most financial mistakes are emotional. We understand that.</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-center gap-8 mb-4">
+        <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-center gap-2 sm:gap-8 mb-3 sm:mb-4 flex-wrap sm:flex-nowrap">
             <div className="text-center">
-              <div className="text-4xl mb-2">🤖</div>
-              <p className="text-sm text-gray-400">AI handles</p>
-              <p className="text-indigo-300 font-medium">Analysis & Optimization</p>
+              <div className="text-2xl sm:text-4xl mb-1 sm:mb-2">🤖</div>
+              <p className="text-[10px] sm:text-sm text-gray-400">AI handles</p>
+              <p className="text-indigo-300 font-medium text-xs sm:text-base">Analysis</p>
             </div>
-            <div className="text-3xl text-gray-600">+</div>
+            <div className="text-xl sm:text-3xl text-gray-600">+</div>
             <div className="text-center">
-              <div className="text-4xl mb-2">👤</div>
-              <p className="text-sm text-gray-400">Human handles</p>
-              <p className="text-indigo-300 font-medium">Behavior & Coaching</p>
+              <div className="text-2xl sm:text-4xl mb-1 sm:mb-2">👤</div>
+              <p className="text-[10px] sm:text-sm text-gray-400">Human handles</p>
+              <p className="text-indigo-300 font-medium text-xs sm:text-base">Coaching</p>
             </div>
-            <div className="text-3xl text-gray-600">=</div>
+            <div className="text-xl sm:text-3xl text-gray-600">=</div>
             <div className="text-center">
-              <div className="text-4xl mb-2">✨</div>
-              <p className="text-sm text-gray-400">Together create</p>
-              <p className="text-emerald-300 font-medium">Superhuman Advisor</p>
+              <div className="text-2xl sm:text-4xl mb-1 sm:mb-2">✨</div>
+              <p className="text-[10px] sm:text-sm text-gray-400">Together</p>
+              <p className="text-emerald-300 font-medium text-xs sm:text-base">Superhuman</p>
             </div>
           </div>
-          <p className="text-center text-gray-400 text-sm">
-            This combination is rare. That's the moat. We're building a network of planners who can do what neither AI nor typical advisors can do alone.
+          <p className="text-center text-gray-400 text-xs sm:text-sm">
+            This combination is rare. That's the moat.
           </p>
         </div>
       </div>
@@ -519,48 +519,45 @@ function WhereWeAreSlide() {
 
 function CTASlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 md:px-12">
+    <div className="flex flex-col items-center justify-center h-full px-4 sm:px-6 md:px-12 overflow-y-auto py-8">
       <div className="max-w-3xl w-full animate-fade-in text-center">
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-5xl font-bold mx-auto mb-8 shadow-2xl shadow-purple-500/30 animate-glow">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-3xl sm:text-5xl font-bold mx-auto mb-6 sm:mb-8 shadow-2xl shadow-purple-500/30 animate-glow">
           M
         </div>
         
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+        <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-white">
           Let's Talk
         </h2>
-        <p className="text-xl text-gray-400 mb-10 max-w-xl mx-auto">
-          Whether you're an advisor curious about the platform, an investor interested in the vision, 
-          or someone who wants family-office intelligence for yourself — I'd love to connect.
+        <p className="text-sm sm:text-xl text-gray-400 mb-6 sm:mb-10 max-w-xl mx-auto px-2">
+          Whether you're an advisor, investor, or someone who wants family-office intelligence — I'd love to connect.
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-8 sm:mb-12 px-4 sm:px-0">
           <a
             href="mailto:sjadams2316@gmail.com?subject=Let's%20Talk%20About%20Maven"
-            className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-semibold text-lg rounded-xl transition transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-indigo-500/25"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-semibold text-base sm:text-lg rounded-xl transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 min-h-[48px]"
           >
             Get in Touch
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </a>
           <Link
             href="/demo"
-            className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-lg rounded-xl transition flex items-center gap-2"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-base sm:text-lg rounded-xl transition flex items-center justify-center gap-2 min-h-[48px]"
           >
             <span>See the Platform</span>
             <span className="text-xs text-gray-400">(live demo)</span>
           </Link>
         </div>
         
-        <div className="pt-8 border-t border-white/10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-lg">
-            <a href="mailto:sjadams2316@gmail.com" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 transition">
-              <span>📧</span>
-              sjadams2316@gmail.com
-            </a>
-          </div>
-          <p className="mt-6 text-gray-500 text-sm">
-            Maven Wealth · Building the intelligence layer for wealth management · 2026
+        <div className="pt-6 sm:pt-8 border-t border-white/10">
+          <a href="mailto:sjadams2316@gmail.com" className="text-indigo-400 hover:text-indigo-300 flex items-center justify-center gap-2 transition text-sm sm:text-lg">
+            <span>📧</span>
+            <span className="break-all">sjadams2316@gmail.com</span>
+          </a>
+          <p className="mt-4 sm:mt-6 text-gray-500 text-xs sm:text-sm">
+            Maven Wealth · 2026
           </p>
         </div>
       </div>
@@ -672,8 +669,8 @@ export default function PitchPage() {
         {slides[currentSlide].content}
       </div>
 
-      {/* Navigation dots */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      {/* Navigation dots - larger touch targets on mobile */}
+      <div className="fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-2">
         {slides.map((_, index) => (
           <button
             key={index}
@@ -681,18 +678,20 @@ export default function PitchPage() {
               e.stopPropagation();
               goToSlide(index);
             }}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentSlide 
-                ? 'bg-indigo-500 w-6' 
-                : 'bg-white/20 hover:bg-white/40'
-            }`}
+            className={`min-w-[24px] min-h-[24px] sm:min-w-[16px] sm:min-h-[16px] flex items-center justify-center transition-all duration-300`}
             aria-label={`Go to slide ${index + 1}`}
-          />
+          >
+            <span className={`rounded-full transition-all duration-300 ${
+              index === currentSlide 
+                ? 'bg-indigo-500 w-5 sm:w-6 h-2' 
+                : 'bg-white/20 hover:bg-white/40 w-2 h-2'
+            }`} />
+          </button>
         ))}
       </div>
 
       {/* Slide counter */}
-      <div className="fixed bottom-8 right-8 text-sm text-gray-500">
+      <div className="fixed bottom-6 sm:bottom-8 right-4 sm:right-8 text-xs sm:text-sm text-gray-500">
         {currentSlide + 1} / {slides.length}
       </div>
 
