@@ -243,18 +243,42 @@ export default function RetirementHubPage() {
                     <input
                       type="number"
                       value={currentAge}
-                      onChange={(e) => setCurrentAge(Number(e.target.value))}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val >= 18 && val <= 100) setCurrentAge(val);
+                      }}
+                      min={18}
+                      max={100}
+                      className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                        currentAge < 18 || currentAge > 100
+                          ? 'border-red-500/50'
+                          : 'border-slate-600'
+                      }`}
                     />
+                    {(currentAge < 18 || currentAge > 100) && (
+                      <p className="text-xs text-red-400 mt-1">Age must be 18-100</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-slate-400 mb-1">Retire At</label>
                     <input
                       type="number"
                       value={retirementAge}
-                      onChange={(e) => setRetirementAge(Number(e.target.value))}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val >= currentAge && val <= 100) setRetirementAge(val);
+                      }}
+                      min={currentAge}
+                      max={100}
+                      className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                        retirementAge < currentAge
+                          ? 'border-red-500/50'
+                          : 'border-slate-600'
+                      }`}
                     />
+                    {retirementAge < currentAge && (
+                      <p className="text-xs text-red-400 mt-1">Must be after current age</p>
+                    )}
                   </div>
                 </div>
                 
@@ -277,9 +301,21 @@ export default function RetirementHubPage() {
                   <input
                     type="number"
                     value={portfolioValue}
-                    onChange={(e) => setPortfolioValue(Number(e.target.value))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 0) setPortfolioValue(val);
+                    }}
+                    min={0}
+                    step={1000}
+                    className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                      portfolioValue < 0
+                        ? 'border-red-500/50'
+                        : 'border-slate-600'
+                    }`}
                   />
+                  {portfolioValue < 0 && (
+                    <p className="text-xs text-red-400 mt-1">⚠️ Portfolio value cannot be negative</p>
+                  )}
                 </div>
                 
                 <div>
@@ -287,9 +323,21 @@ export default function RetirementHubPage() {
                   <input
                     type="number"
                     value={annualContribution}
-                    onChange={(e) => setAnnualContribution(Number(e.target.value))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 0) setAnnualContribution(val);
+                    }}
+                    min={0}
+                    step={1000}
+                    className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                      annualContribution < 0
+                        ? 'border-red-500/50'
+                        : 'border-slate-600'
+                    }`}
                   />
+                  {annualContribution < 0 && (
+                    <p className="text-xs text-red-400 mt-1">⚠️ Contributions cannot be negative</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -303,9 +351,21 @@ export default function RetirementHubPage() {
                   <input
                     type="number"
                     value={desiredIncome}
-                    onChange={(e) => setDesiredIncome(Number(e.target.value))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 0) setDesiredIncome(val);
+                    }}
+                    min={0}
+                    step={1000}
+                    className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                      desiredIncome <= 0
+                        ? 'border-yellow-500/50'
+                        : 'border-slate-600'
+                    }`}
                   />
+                  {desiredIncome <= 0 && (
+                    <p className="text-xs text-yellow-400 mt-1">⚠️ Enter your target retirement income</p>
+                  )}
                 </div>
                 
                 <div>
@@ -313,9 +373,21 @@ export default function RetirementHubPage() {
                   <input
                     type="number"
                     value={socialSecurity}
-                    onChange={(e) => setSocialSecurity(Number(e.target.value))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2"
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 0) setSocialSecurity(val);
+                    }}
+                    min={0}
+                    step={1000}
+                    className={`w-full bg-slate-700 border rounded-lg px-3 py-2 ${
+                      socialSecurity < 0
+                        ? 'border-red-500/50'
+                        : 'border-slate-600'
+                    }`}
                   />
+                  {socialSecurity < 0 && (
+                    <p className="text-xs text-red-400 mt-1">⚠️ Social Security cannot be negative</p>
+                  )}
                 </div>
                 
                 <div>

@@ -142,9 +142,22 @@ export default function StressTestPage() {
                 <input
                   type="number"
                   value={portfolioValue}
-                  onChange={(e) => setPortfolioValue(Number(e.target.value))}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2"
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    // Only accept positive values
+                    if (val >= 0) setPortfolioValue(val);
+                  }}
+                  min={0}
+                  step={1000}
+                  className={`w-full bg-slate-700 border rounded-lg px-4 py-2 ${
+                    portfolioValue <= 0 
+                      ? 'border-red-500/50 focus:border-red-500' 
+                      : 'border-slate-600 focus:border-purple-500'
+                  }`}
                 />
+                {portfolioValue <= 0 && (
+                  <p className="text-xs text-red-400 mt-1">⚠️ Enter a positive portfolio value</p>
+                )}
               </div>
               
               <div className="space-y-3">

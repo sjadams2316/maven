@@ -868,13 +868,26 @@ export default function WhatIfSimulator({ holdings, totalValue }: WhatIfSimulato
               type="number"
               value={quantity}
               onChange={(e) => {
-                setQuantity(e.target.value ? Number(e.target.value) : '');
+                const val = e.target.value;
+                // Prevent negative values
+                if (val && Number(val) < 0) return;
+                setQuantity(val ? Number(val) : '');
                 setSimulationApplied(false);
               }}
               placeholder={inputMode === 'shares' ? 'e.g., 100' : 'e.g., 10000'}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
-              min={0}
+              className={`w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none ${
+                quantity !== '' && Number(quantity) <= 0 
+                  ? 'border-red-500/50 focus:border-red-500' 
+                  : 'border-white/10 focus:border-indigo-500'
+              }`}
+              min={1}
+              step={inputMode === 'shares' ? 1 : 100}
             />
+            {quantity !== '' && Number(quantity) <= 0 && (
+              <p className="text-xs text-red-400 mt-1">
+                ⚠️ Enter a positive {inputMode === 'shares' ? 'number of shares' : 'dollar amount'}
+              </p>
+            )}
             {tradeType === 'sell' && maxSellShares > 0 && (
               <p className="text-xs text-gray-500 mt-1">
                 Max: {maxSellShares.toLocaleString()} shares (${maxSellValue.toLocaleString()})

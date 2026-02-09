@@ -237,10 +237,20 @@ export default function SocialSecurityForm({ onComplete, initialData }: SocialSe
               value={formData.benefitAt62 || ''}
               onChange={handleChange}
               placeholder="1,800"
-              className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+              min={0}
+              max={10000}
+              className={`w-full pl-8 pr-4 py-3 bg-white/5 border rounded-xl text-white focus:outline-none ${
+                formData.benefitAt62 !== undefined && formData.benefitAt62 < 0
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : 'border-white/10 focus:border-indigo-500'
+              }`}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1">Earliest claiming age</p>
+          {formData.benefitAt62 !== undefined && formData.benefitAt62 < 0 ? (
+            <p className="text-xs text-red-400 mt-1">⚠️ Benefit cannot be negative</p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1">Earliest claiming age</p>
+          )}
         </div>
 
         <div>
@@ -255,10 +265,20 @@ export default function SocialSecurityForm({ onComplete, initialData }: SocialSe
               value={formData.benefitAtFRA || ''}
               onChange={handleChange}
               placeholder="2,500"
-              className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+              min={0}
+              max={10000}
+              className={`w-full pl-8 pr-4 py-3 bg-white/5 border rounded-xl text-white focus:outline-none ${
+                formData.benefitAtFRA !== undefined && formData.benefitAtFRA < 0
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : 'border-white/10 focus:border-indigo-500'
+              }`}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1">Full retirement age ({fra.years})</p>
+          {formData.benefitAtFRA !== undefined && formData.benefitAtFRA < 0 ? (
+            <p className="text-xs text-red-400 mt-1">⚠️ Benefit cannot be negative</p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1">Full retirement age ({fra.years})</p>
+          )}
         </div>
 
         <div>
@@ -273,10 +293,20 @@ export default function SocialSecurityForm({ onComplete, initialData }: SocialSe
               value={formData.benefitAt70 || ''}
               onChange={handleChange}
               placeholder="3,100"
-              className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500"
+              min={0}
+              max={10000}
+              className={`w-full pl-8 pr-4 py-3 bg-white/5 border rounded-xl text-white focus:outline-none ${
+                formData.benefitAt70 !== undefined && formData.benefitAt70 < 0
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : 'border-white/10 focus:border-indigo-500'
+              }`}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1">Maximum benefit age</p>
+          {formData.benefitAt70 !== undefined && formData.benefitAt70 < 0 ? (
+            <p className="text-xs text-red-400 mt-1">⚠️ Benefit cannot be negative</p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1">Maximum benefit age</p>
+          )}
         </div>
       </div>
 
