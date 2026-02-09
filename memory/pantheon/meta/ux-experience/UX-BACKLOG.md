@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-02-09
 **Total Issues:** 11
-**Open:** 8 | **In Progress:** 0 | **Resolved:** 3
+**Open:** 6 | **In Progress:** 0 | **Resolved:** 5
 
 ---
 
@@ -95,7 +95,7 @@
 
 ## P2 - Medium (Fix Next Sprint)
 
-### DASH-PWR-005: VWO Missing from Top Holdings
+### DASH-PWR-005: VWO Missing from Top Holdings ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -106,12 +106,14 @@
 | **Impact** | User can't see asset they're advised about. Insight loses credibility. |
 | **Fix** | 1) Show all holdings OR 2) Add "Show all" link OR 3) Link to VWO from insight |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Added VWO to DEMO_HOLDINGS with -16% change and $4,200 unrealized loss. Added "View all X holdings" link header in Top Holdings section. Added expandable "+N more holdings (including VWO)" footer when holdings exceed visible 5. Users can now see/access VWO referenced in tax insight. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
-### DASH-NEW-006: Tax Harvest Jargon Unexplained
+### DASH-NEW-006: Tax Harvest Jargon Unexplained ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -122,8 +124,10 @@
 | **Impact** | Less sophisticated users confused. Feature value lost. |
 | **Fix** | 1) Add info tooltip 2) "Learn more" link 3) A/B test simpler copy |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Added `learnMoreText` prop to InsightCard component with expandable "?" tooltip. Tax insight now includes plain-English explanation: "Tax-loss harvesting means selling an investment at a loss, then using that loss to reduce your tax bill. You can offset gains from other investments, or deduct up to $3,000 from regular income. The key: you can immediately buy a similar (but not identical) investment to stay in the market." Tooltip is dismissable and styled consistently. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
