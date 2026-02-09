@@ -36,6 +36,10 @@
 **Task:** Add helpful tooltips to financial terms in Portfolio Lab (Volatility, Market Cap, P/E Ratio, Dividend Yield)
 **Insight:** When adding tooltips to financial terms, the Term component + glossary pattern in InfoTooltip.tsx is powerful. Add new terms to the GLOSSARY object with title, explanation, and example. The example field using real-world numbers (e.g., "S&P 500 average: ~20-25") makes definitions actionable rather than abstract.
 
+### pantheon-copy-review
+**Task:** Review and improve copy consistency across demo, dashboard, and help pages
+**Insight:** When improving UX copy: (1) Action-oriented CTAs like "Take Action" outperform generic "View Details" — users know exactly what clicking will do. (2) Empty states need 3 parts: empathy (icon/emoji), explanation (what happened), and guidance (what to do next). (3) Error messages should reassure first ("Your data is safe"), explain second, and avoid technical jargon. The pattern "X is temporarily unavailable. Check back shortly." is friendly without being condescending.
+
 ---
 
 ## Learning Categories
