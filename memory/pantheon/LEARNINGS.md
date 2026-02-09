@@ -40,6 +40,10 @@
 **Task:** Review and improve copy consistency across demo, dashboard, and help pages
 **Insight:** When improving UX copy: (1) Action-oriented CTAs like "Take Action" outperform generic "View Details" — users know exactly what clicking will do. (2) Empty states need 3 parts: empathy (icon/emoji), explanation (what happened), and guidance (what to do next). (3) Error messages should reassure first ("Your data is safe"), explain second, and avoid technical jargon. The pattern "X is temporarily unavailable. Check back shortly." is friendly without being condescending.
 
+### pantheon-dead-links
+**Task:** Audit navigation links across demo page, dashboard, QuickActions, and insight cards for dead links
+**Insight:** When adding features with hrefs (especially insight cards, feature tours, or quick actions), always verify the destination page exists with `ls` or check against `find . -name "page.tsx"` output. Common dead link patterns: (1) future pages referenced before they're built (`/rmd-planner`, `/healthcare-planning`), (2) `href="#"` placeholder links that never get updated, (3) inconsistent naming (`/income-planner` vs `/income`). Fix strategy: map to closest existing page, or change link to non-navigating button if no destination makes sense.
+
 ---
 
 ## Learning Categories
