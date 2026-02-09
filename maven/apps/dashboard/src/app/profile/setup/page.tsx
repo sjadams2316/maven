@@ -762,6 +762,59 @@ function HoldingsEntry({
           </button>
         </div>
         
+        {/* Rest is Cash - auto-fills remaining balance/percentage */}
+        {holdings.length > 0 && !holdings.some(h => h.ticker === 'CASH') && (
+          <button
+            type="button"
+            onClick={() => {
+              if (mode === 'percentage') {
+                const remainingPercent = Math.max(0, 100 - totalPercent);
+                if (remainingPercent > 0) {
+                  const cashValue = (remainingPercent / 100) * accountBalance;
+                  const cashHolding: Holding = {
+                    ticker: 'CASH',
+                    name: 'Cash',
+                    shares: cashValue,
+                    costBasis: 0,
+                    currentPrice: 1,
+                    currentValue: cashValue,
+                    allocationPercent: remainingPercent,
+                  };
+                  onChange([...holdings, cashHolding]);
+                }
+              } else {
+                const remainingValue = Math.max(0, accountBalance - totalValue);
+                if (remainingValue > 0) {
+                  const cashHolding: Holding = {
+                    ticker: 'CASH',
+                    name: 'Cash',
+                    shares: remainingValue,
+                    costBasis: 0,
+                    currentPrice: 1,
+                    currentValue: remainingValue,
+                    allocationPercent: accountBalance > 0 ? (remainingValue / accountBalance) * 100 : 0,
+                  };
+                  onChange([...holdings, cashHolding]);
+                }
+              }
+            }}
+            disabled={
+              (mode === 'percentage' && totalPercent >= 100) || 
+              (mode === 'value' && totalValue >= accountBalance)
+            }
+            className="w-full mt-2 px-4 py-2 bg-amber-600/10 hover:bg-amber-600/20 disabled:opacity-40 disabled:cursor-not-allowed text-amber-400 border border-amber-500/20 rounded-xl transition text-sm flex items-center justify-center gap-2"
+          >
+            <span>✨</span>
+            <span>
+              Rest is Cash 
+              {mode === 'percentage' 
+                ? ` (${Math.max(0, 100 - totalPercent).toFixed(1)}%)` 
+                : ` ($${Math.max(0, accountBalance - totalValue).toLocaleString(undefined, { maximumFractionDigits: 0 })})`
+              }
+            </span>
+          </button>
+        )}
+        
         {/* Search Results Dropdown */}
         {showDropdown && searchResults.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
