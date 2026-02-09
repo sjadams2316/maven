@@ -131,7 +131,7 @@
 
 ---
 
-### DASH-ALL-007: Net Worth Chart Uninformative
+### DASH-ALL-007: Net Worth Chart Uninformative ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -142,8 +142,10 @@
 | **Impact** | Visual provides little value. Users can't gauge trajectory. |
 | **Fix** | 1) Add Y-axis labels 2) Auto-scale for variation 3) Add hover values |
 | **Effort** | Medium |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Completely rewrote NetWorthCard chart visualization: (1) Added Y-axis labels showing dollar amounts ($750K, $775K, $800K format), (2) Auto-scales chart based on actual data range with 10% padding for meaningful variation, (3) Added hover tooltips showing exact value and date for each bar, (4) Added period change indicator showing % gain/loss for selected timeframe, (5) Added X-axis date labels (first, middle, last), (6) Generated realistic historical data based on period selection. Chart now clearly shows trends and allows users to inspect exact values. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
@@ -201,7 +203,7 @@
 
 ---
 
-### DASH-ALL-011: Goals Missing Absolute Numbers
+### DASH-ALL-011: Goals Missing Absolute Numbers ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -212,8 +214,10 @@
 | **Impact** | Less informative at a glance. |
 | **Fix** | Add "$X of $Y" below percentage |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Added absolute values below each goal's progress bar. Now shows "$X of $Y" format (e.g., "$798K of $3M" for retirement, "$85K of $400K" for beach house). Uses smart formatting that shows K for thousands and M for millions. Users can now understand goal progress at a glance without navigating away. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
