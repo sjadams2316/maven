@@ -6,9 +6,10 @@
 
 | Agent | Task | Files Touching | Started | Status |
 |-------|------|----------------|---------|--------|
-| pantheon-fix-demo-prices | Fix demo page live prices | demo/page.tsx | 10:14 | 🔄 Running |
-| pantheon-fund-xray | Fund look-through for global funds | portfolio-utils.ts | 10:16 | 🔄 Running |
-| pantheon-fix-auth-prices | Fix prices for authenticated users | dashboard/page.tsx | 10:16 | 🔄 Running |
+| pantheon-market-debug | Fix Markets widget "—" prices | api/market-data/route.ts | 10:40 | 🔄 Running |
+| pantheon-benchmark-compare | Benchmark comparison component | BenchmarkComparison.tsx | 10:40 | 🔄 Running |
+| pantheon-income-analysis | Dividend/income analysis | IncomeAnalysis.tsx, portfolio-utils.ts | 10:40 | 🔄 Running |
+| pantheon-fragility-holdings | Connect fragility to holdings | fragility/page.tsx | 10:40 | 🔄 Running |
 
 ## Recently Completed (Last 24h)
 

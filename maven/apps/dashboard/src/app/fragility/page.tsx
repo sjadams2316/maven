@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import FragilityGauge from '../components/FragilityGauge';
 import { useUserProfile } from '@/providers/UserProvider';
+import { calculateAllocationFromFinancials, classifyTicker } from '@/lib/portfolio-utils';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
 
@@ -601,22 +602,303 @@ function OptimizationPanel({ fragilityData }: { fragilityData: FragilityData | n
   );
 }
 
+// Calculate vulnerability multiplier based on allocation vs. fragility zone
+function calculateVulnerabilityMultiplier(
+  equityPercent: number,
+  cryptoPercent: number,
+  fragilityScore: number
+): { multiplier: number; description: string } {
+  // Base vulnerability from equity allocation
+  // Higher equity = more vulnerable to market stress
+  const equityFactor = equityPercent / 60; // 60% is "normal"
+  
+  // Crypto amplifies volatility significantly
+  const cryptoFactor = 1 + (cryptoPercent * 2); // Crypto is ~2x more volatile
+  
+  // Fragility score amplifies the impact
+  const fragilityFactor = fragilityScore > 50 ? (fragilityScore / 50) : 1;
+  
+  const multiplier = Math.round((equityFactor * cryptoFactor * fragilityFactor) * 10) / 10;
+  
+  let description = '';
+  if (multiplier < 1) {
+    description = 'Your defensive allocation reduces potential impact';
+  } else if (multiplier < 1.5) {
+    description = 'Your portfolio has moderate exposure to market stress';
+  } else if (multiplier < 2.5) {
+    description = 'Your portfolio is significantly exposed to market volatility';
+  } else {
+    description = 'High-risk allocation amplifies potential drawdowns';
+  }
+  
+  return { multiplier: Math.max(0.5, Math.min(5, multiplier)), description };
+}
+
+// Identify most vulnerable positions in a portfolio
+function getVulnerablePositions(
+  holdings: { ticker: string; name?: string; currentValue?: number; shares: number; costBasis: number }[],
+  fragilityScore: number
+): { ticker: string; name: string; value: number; vulnerability: 'critical' | 'high' | 'moderate'; reason: string }[] {
+  const vulnerableList: { ticker: string; name: string; value: number; vulnerability: 'critical' | 'high' | 'moderate'; reason: string }[] = [];
+  
+  // High-beta / speculative assets are most vulnerable in fragile markets
+  const highVulnerabilityTickers = new Set(['BTC', 'ETH', 'SOL', 'TAO', 'AVAX', 'ARKK', 'TSLA', 'COIN', 'MARA', 'RIOT', 'CIFR', 'IREN']);
+  const moderateVulnerabilityTickers = new Set(['QQQ', 'SMH', 'SOXX', 'VGT', 'NVDA', 'AMD', 'META', 'NFLX']);
+  
+  holdings.forEach(h => {
+    const ticker = h.ticker.toUpperCase();
+    const value = h.currentValue || (h.shares * (h.costBasis / h.shares || 0));
+    if (value < 1000) return; // Skip small positions
+    
+    const assetClass = classifyTicker(ticker);
+    
+    if (assetClass === 'crypto' || highVulnerabilityTickers.has(ticker)) {
+      vulnerableList.push({
+        ticker,
+        name: h.name || ticker,
+        value,
+        vulnerability: 'critical',
+        reason: assetClass === 'crypto' ? 'Crypto assets can drop 50-80% in market stress' : 'High-beta speculative asset'
+      });
+    } else if (moderateVulnerabilityTickers.has(ticker)) {
+      vulnerableList.push({
+        ticker,
+        name: h.name || ticker,
+        value,
+        vulnerability: fragilityScore > 65 ? 'high' : 'moderate',
+        reason: 'Growth/tech concentration amplifies downside'
+      });
+    }
+  });
+  
+  return vulnerableList.sort((a, b) => b.value - a.value).slice(0, 5);
+}
+
+// Estimate dollar impact based on fragility zone
+function estimateDollarImpact(
+  portfolioValue: number,
+  equityPercent: number,
+  cryptoPercent: number,
+  fragilityZone: string
+): { mild: number; moderate: number; severe: number } {
+  // Stress scenario drawdowns by asset class
+  const scenarios = {
+    equity: { mild: -0.10, moderate: -0.25, severe: -0.45 },
+    crypto: { mild: -0.30, moderate: -0.50, severe: -0.80 },
+    bonds: { mild: -0.02, moderate: -0.05, severe: -0.10 },
+    cash: { mild: 0, moderate: 0, severe: 0 }
+  };
+  
+  const equityValue = portfolioValue * (equityPercent / 100);
+  const cryptoValue = portfolioValue * (cryptoPercent / 100);
+  const bondValue = portfolioValue * ((100 - equityPercent - cryptoPercent) / 100) * 0.7; // Assume 70% of remainder is bonds
+  const cashValue = portfolioValue * ((100 - equityPercent - cryptoPercent) / 100) * 0.3;
+  
+  // Zone multiplier - higher fragility means scenarios are more likely/severe
+  const zoneMult = fragilityZone === 'critical' ? 1.2 : fragilityZone === 'fragile' ? 1.1 : 1.0;
+  
+  return {
+    mild: Math.round((equityValue * scenarios.equity.mild + cryptoValue * scenarios.crypto.mild + bondValue * scenarios.bonds.mild) * zoneMult),
+    moderate: Math.round((equityValue * scenarios.equity.moderate + cryptoValue * scenarios.crypto.moderate + bondValue * scenarios.bonds.moderate) * zoneMult),
+    severe: Math.round((equityValue * scenarios.equity.severe + cryptoValue * scenarios.crypto.severe + bondValue * scenarios.bonds.severe) * zoneMult)
+  };
+}
+
+// Portfolio Impact Section Component
+function PortfolioImpactSection({ 
+  fragilityData,
+  financials,
+  allocation
+}: { 
+  fragilityData: FragilityData | null;
+  financials: { netWorth: number; allHoldings: { ticker: string; name?: string; currentValue?: number; shares: number; costBasis: number; accountName: string; accountType: string }[] } | null;
+  allocation: { usEquity: number; intlEquity: number; bonds: number; crypto: number; cash: number } | null;
+}) {
+  if (!fragilityData || !financials || !allocation || financials.netWorth <= 0) {
+    return null;
+  }
+  
+  const equityPercent = Math.round((allocation.usEquity + allocation.intlEquity) * 100);
+  const cryptoPercent = Math.round(allocation.crypto * 100);
+  const bondPercent = Math.round(allocation.bonds * 100);
+  const cashPercent = Math.round(allocation.cash * 100);
+  
+  const { multiplier, description } = calculateVulnerabilityMultiplier(
+    equityPercent, 
+    cryptoPercent, 
+    fragilityData.compositeScore
+  );
+  
+  const vulnerablePositions = getVulnerablePositions(financials.allHoldings, fragilityData.compositeScore);
+  const dollarImpact = estimateDollarImpact(financials.netWorth, equityPercent, cryptoPercent, fragilityData.zone);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gradient-to-br from-indigo-950/40 to-purple-950/40 rounded-xl border border-indigo-800/50 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="p-6 border-b border-indigo-800/30">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-3xl">🎯</span>
+          <h2 className="text-xl font-bold text-white">Your Portfolio Impact</h2>
+        </div>
+        <p className="text-gray-400 text-sm">
+          How the current fragility level affects <span className="text-white font-medium">your</span> specific holdings
+        </p>
+      </div>
+      
+      {/* Main Content */}
+      <div className="p-6 space-y-6">
+        {/* Vulnerability Multiplier */}
+        <div className="flex items-center gap-6">
+          <div className={`text-5xl font-bold ${
+            multiplier < 1.2 ? 'text-emerald-400' :
+            multiplier < 2 ? 'text-yellow-400' :
+            multiplier < 3 ? 'text-orange-400' : 'text-red-400'
+          }`}>
+            {multiplier}x
+          </div>
+          <div>
+            <p className="text-white font-medium">Vulnerability Multiplier</p>
+            <p className="text-sm text-gray-400">{description}</p>
+            <p className="text-xs text-indigo-300 mt-1">
+              Your {equityPercent}% equity + {cryptoPercent}% crypto allocation
+              {cryptoPercent > 10 ? ' amplifies' : equityPercent > 70 ? ' increases' : ' affects'} fragility impact
+            </p>
+          </div>
+        </div>
+        
+        {/* Dollar Impact Scenarios */}
+        <div className="bg-black/20 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">Estimated Impact on Your ${(financials.netWorth / 1000).toFixed(0)}K Portfolio</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 rounded-lg bg-yellow-950/30 border border-yellow-800/30">
+              <p className="text-xs text-yellow-400 mb-1">10% Correction</p>
+              <p className="text-lg font-bold text-yellow-300">${Math.abs(dollarImpact.mild).toLocaleString()}</p>
+              <p className="text-xs text-gray-500">potential loss</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-orange-950/30 border border-orange-800/30">
+              <p className="text-xs text-orange-400 mb-1">25% Bear Market</p>
+              <p className="text-lg font-bold text-orange-300">${Math.abs(dollarImpact.moderate).toLocaleString()}</p>
+              <p className="text-xs text-gray-500">potential loss</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-red-950/30 border border-red-800/30">
+              <p className="text-xs text-red-400 mb-1">2008-Style Crash</p>
+              <p className="text-lg font-bold text-red-300">${Math.abs(dollarImpact.severe).toLocaleString()}</p>
+              <p className="text-xs text-gray-500">potential loss</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Most Vulnerable Positions */}
+        {vulnerablePositions.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-300 mb-3">Your Most Vulnerable Positions</h3>
+            <div className="space-y-2">
+              {vulnerablePositions.map((pos, i) => (
+                <div 
+                  key={i}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    pos.vulnerability === 'critical' ? 'bg-red-950/30 border-red-800/30' :
+                    pos.vulnerability === 'high' ? 'bg-orange-950/30 border-orange-800/30' :
+                    'bg-yellow-950/30 border-yellow-800/30'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      pos.vulnerability === 'critical' ? 'bg-red-600/30 text-red-300' :
+                      pos.vulnerability === 'high' ? 'bg-orange-600/30 text-orange-300' :
+                      'bg-yellow-600/30 text-yellow-300'
+                    }`}>
+                      {pos.ticker.slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-white font-medium text-sm">{pos.ticker}</p>
+                      <p className="text-xs text-gray-500">{pos.reason}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white font-medium">${pos.value.toLocaleString()}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      pos.vulnerability === 'critical' ? 'bg-red-600/30 text-red-300' :
+                      pos.vulnerability === 'high' ? 'bg-orange-600/30 text-orange-300' :
+                      'bg-yellow-600/30 text-yellow-300'
+                    }`}>
+                      {pos.vulnerability}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Personalized Insight */}
+        <div className={`p-4 rounded-xl ${
+          fragilityData.zone === 'critical' || fragilityData.zone === 'fragile' 
+            ? 'bg-red-950/30 border border-red-800/30' 
+            : 'bg-indigo-950/30 border border-indigo-800/30'
+        }`}>
+          <p className="text-sm">
+            {cryptoPercent > 20 ? (
+              <span className="text-orange-300">
+                ⚠️ Your {cryptoPercent}% crypto allocation amplifies fragility impact by ~{(cryptoPercent / 10).toFixed(1)}x.
+                In the current {fragilityData.zone} zone, consider reducing exposure or setting stop-losses.
+              </span>
+            ) : equityPercent > 80 ? (
+              <span className="text-yellow-300">
+                📊 Your {equityPercent}% equity allocation is aggressive for current conditions.
+                The {fragilityData.zone} fragility zone suggests holding 10-15% more in cash or bonds.
+              </span>
+            ) : equityPercent < 50 ? (
+              <span className="text-emerald-300">
+                ✓ Your defensive {equityPercent}% equity allocation is well-positioned for elevated fragility.
+                You're protected against moderate downturns.
+              </span>
+            ) : (
+              <span className="text-blue-300">
+                💡 Your balanced allocation ({equityPercent}% stocks, {bondPercent}% bonds, {cashPercent}% cash) 
+                provides reasonable protection in the current {fragilityData.zone} zone.
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function FragilityPage() {
   const router = useRouter();
-  const { profile } = useUserProfile();
+  const { profile, financials, isLoading } = useUserProfile();
   const [fragilityData, setFragilityData] = useState<FragilityData | null>(null);
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
   const [showAllRisks, setShowAllRisks] = useState(false);
   
-  // Calculate user's current allocation from their holdings
-  const userAllocation = {
-    equity: 72, // Default, would calculate from actual holdings
-    bonds: 18,
-    cash: 10,
-  };
+  // Calculate user's current allocation from their actual holdings
+  const allocation = useMemo(() => {
+    if (!financials) return null;
+    return calculateAllocationFromFinancials(financials);
+  }, [financials]);
   
-  // If we have user profile with holdings, calculate real allocation
-  // TODO: Integrate with UserProvider holdings data
+  // Convert to simple percentages for PortfolioComparison
+  const userAllocation = useMemo(() => {
+    if (!allocation) {
+      return { equity: 70, bonds: 25, cash: 5 }; // Default if no user data
+    }
+    const equityPercent = Math.round((allocation.usEquity + allocation.intlEquity) * 100);
+    const bondsPercent = Math.round(allocation.bonds * 100);
+    const cashPercent = Math.round(allocation.cash * 100);
+    // Redistribute any rounding errors or other assets
+    const remaining = 100 - equityPercent - bondsPercent - cashPercent;
+    return {
+      equity: equityPercent,
+      bonds: bondsPercent,
+      cash: cashPercent + remaining
+    };
+  }, [allocation]);
   
   useEffect(() => {
     async function fetchData() {
@@ -698,6 +980,17 @@ export default function FragilityPage() {
         <div className="mb-8">
           <PortfolioComparison fragilityData={fragilityData} userAllocation={userAllocation} />
         </div>
+        
+        {/* Your Portfolio Impact - Personalized Section */}
+        {financials && financials.netWorth > 0 && (
+          <div className="mb-8">
+            <PortfolioImpactSection 
+              fragilityData={fragilityData}
+              financials={financials}
+              allocation={allocation}
+            />
+          </div>
+        )}
         
         {/* Key Risks & Strengths - Clickable Deep Dives */}
         {fragilityData && (fragilityData.keyRisks.length > 0 || fragilityData.keyStrengths.length > 0) && (

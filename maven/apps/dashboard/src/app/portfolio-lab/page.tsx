@@ -13,6 +13,7 @@ import FeeAnalyzer from '@/app/components/FeeAnalyzer';
 import OverlapDetection from '@/app/components/OverlapDetection';
 import RebalancingPreview from '@/app/components/RebalancingPreview';
 import WhatIfSimulator from '@/app/components/WhatIfSimulator';
+import BenchmarkComparison from '@/app/components/BenchmarkComparison';
 
 // Types
 interface Holding {
@@ -741,6 +742,9 @@ export default function PortfolioLab() {
             
             {/* Holdings Overlap Detection */}
             <OverlapDetection holdings={allHoldings} />
+            
+            {/* Benchmark Comparison */}
+            <BenchmarkComparison holdings={allHoldings} userAge={userAge} />
           </div>
         )}
 

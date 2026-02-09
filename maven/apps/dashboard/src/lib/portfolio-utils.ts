@@ -2859,6 +2859,357 @@ export function createWashSaleTimeline(
   return { days, windowRanges };
 }
 
+// ===========================================
+// DIVIDEND / INCOME ANALYSIS
+// ===========================================
+
+/**
+ * Dividend yield data for common ETFs and stocks
+ * Values are annual dividend yields as decimals (0.0145 = 1.45%)
+ * Data sourced from fund prospectuses and market data as of 2024
+ */
+export const DIVIDEND_YIELDS: Record<string, number> = {
+  // US Total Market / S&P 500 (low yield)
+  'VTI': 0.0145,    // 1.45%
+  'VOO': 0.0135,    // 1.35%
+  'SPY': 0.0130,    // 1.30%
+  'IVV': 0.0135,    // 1.35%
+  'ITOT': 0.0140,   // 1.40%
+  'SCHB': 0.0145,   // 1.45%
+  'FZROX': 0.0140,  // 1.40%
+  'FXAIX': 0.0135,  // 1.35%
+  'VFIAX': 0.0135,  // 1.35%
+  'VTSAX': 0.0145,  // 1.45%
+  
+  // Growth ETFs (low/no yield)
+  'QQQ': 0.0055,    // 0.55%
+  'VUG': 0.0050,    // 0.50%
+  'VGT': 0.0050,    // 0.50%
+  'IWF': 0.0065,    // 0.65%
+  'SCHG': 0.0045,   // 0.45%
+  'ARKK': 0.0000,   // 0% (no dividend)
+  
+  // Dividend / Value ETFs (high yield)
+  'SCHD': 0.0340,   // 3.40% - Popular dividend growth
+  'VYM': 0.0280,    // 2.80%
+  'VIG': 0.0175,    // 1.75% - Dividend aristocrats
+  'DGRO': 0.0220,   // 2.20%
+  'DVY': 0.0350,    // 3.50%
+  'HDV': 0.0380,    // 3.80%
+  'SPYD': 0.0440,   // 4.40%
+  'VTV': 0.0240,    // 2.40%
+  
+  // Bond ETFs (interest income)
+  'BND': 0.0420,    // 4.20%
+  'AGG': 0.0410,    // 4.10%
+  'TLT': 0.0400,    // 4.00%
+  'IEF': 0.0380,    // 3.80%
+  'SHY': 0.0450,    // 4.50%
+  'VCIT': 0.0480,   // 4.80%
+  'LQD': 0.0510,    // 5.10%
+  'HYG': 0.0590,    // 5.90%
+  'VBTLX': 0.0420,  // 4.20%
+  'FXNAX': 0.0420,  // 4.20%
+  'TIP': 0.0400,    // 4.00%
+  'MUB': 0.0320,    // 3.20%
+  
+  // REIT ETFs (high yield)
+  'VNQ': 0.0380,    // 3.80%
+  'SCHH': 0.0360,   // 3.60%
+  'IYR': 0.0340,    // 3.40%
+  'XLRE': 0.0350,   // 3.50%
+  
+  // International ETFs
+  'VXUS': 0.0290,   // 2.90%
+  'VEA': 0.0320,    // 3.20%
+  'VWO': 0.0320,    // 3.20%
+  'IEFA': 0.0280,   // 2.80%
+  'EFA': 0.0290,    // 2.90%
+  'EEM': 0.0250,    // 2.50%
+  'SCHF': 0.0300,   // 3.00%
+  'VYMI': 0.0450,   // 4.50% - Intl high dividend
+  
+  // Gold / Commodities (no yield)
+  'GLD': 0.0000,    // 0%
+  'IAU': 0.0000,    // 0%
+  'GDX': 0.0160,    // 1.60% (miners pay dividends)
+  
+  // Crypto ETFs (no yield)
+  'IBIT': 0.0000,   // 0%
+  'FBTC': 0.0000,   // 0%
+  'GBTC': 0.0000,   // 0%
+  'BITO': 0.0000,   // 0%
+  
+  // Individual stocks - Tech (low/no yield)
+  'AAPL': 0.0050,   // 0.50%
+  'MSFT': 0.0070,   // 0.70%
+  'GOOGL': 0.0000,  // 0%
+  'GOOG': 0.0000,   // 0%
+  'AMZN': 0.0000,   // 0%
+  'NVDA': 0.0003,   // 0.03%
+  'TSLA': 0.0000,   // 0%
+  'META': 0.0040,   // 0.40%
+  'NFLX': 0.0000,   // 0%
+  'AMD': 0.0000,    // 0%
+  'INTC': 0.0130,   // 1.30%
+  'CRM': 0.0000,    // 0%
+  'ADBE': 0.0000,   // 0%
+  
+  // Individual stocks - Dividend payers
+  'JPM': 0.0230,    // 2.30%
+  'BAC': 0.0260,    // 2.60%
+  'WFC': 0.0280,    // 2.80%
+  'GS': 0.0240,     // 2.40%
+  'JNJ': 0.0300,    // 3.00%
+  'PG': 0.0240,     // 2.40%
+  'KO': 0.0310,     // 3.10%
+  'PEP': 0.0280,    // 2.80%
+  'WMT': 0.0130,    // 1.30%
+  'XOM': 0.0340,    // 3.40%
+  'CVX': 0.0420,    // 4.20%
+  'VZ': 0.0660,     // 6.60%
+  'T': 0.0610,      // 6.10%
+  'O': 0.0540,      // 5.40% - Monthly dividend REIT
+  'ABBV': 0.0360,   // 3.60%
+  'MRK': 0.0280,    // 2.80%
+  'PFE': 0.0590,    // 5.90%
+  
+  // Crypto miners (no dividends)
+  'MARA': 0.0000,
+  'RIOT': 0.0000,
+  'CLSK': 0.0000,
+  'CIFR': 0.0000,
+  'IREN': 0.0000,
+  
+  // Direct crypto (no yield - unless staked)
+  'BTC': 0.0000,
+  'ETH': 0.0000,
+  'SOL': 0.0000,
+  'TAO': 0.0000,
+  
+  // Money market / Cash
+  'SPAXX': 0.0485,  // ~4.85% money market
+  'VMFXX': 0.0500,  // ~5.00%
+  'SWVXX': 0.0495,  // ~4.95%
+  'FDRXX': 0.0485,  // ~4.85%
+  
+  // Small Cap
+  'VB': 0.0140,     // 1.40%
+  'IJR': 0.0130,    // 1.30%
+  'IWM': 0.0120,    // 1.20%
+  'SCHA': 0.0130,   // 1.30%
+};
+
+/**
+ * ETFs known as "dividend aristocrats" or dividend growth focused
+ * These typically hold companies with 25+ years of dividend growth
+ */
+export const DIVIDEND_ARISTOCRAT_ETFS = ['VIG', 'NOBL', 'SDY', 'DGRO', 'SCHD'];
+
+/**
+ * Get dividend yield for a ticker
+ * Returns null if unknown
+ */
+export function getDividendYield(ticker: string): number | null {
+  const upper = ticker.toUpperCase();
+  return DIVIDEND_YIELDS[upper] ?? null;
+}
+
+/**
+ * Estimate dividend yield for unknown tickers based on asset class
+ */
+export function estimateDividendYield(ticker: string): number {
+  const upper = ticker.toUpperCase();
+  
+  // Check known data first
+  const known = DIVIDEND_YIELDS[upper];
+  if (known !== undefined) return known;
+  
+  // Use asset class heuristics
+  const assetClass = classifyTicker(ticker);
+  
+  switch (assetClass) {
+    case 'bonds': return 0.04;       // ~4% for bonds
+    case 'reits': return 0.035;      // ~3.5% for REITs
+    case 'usEquity': return 0.015;   // ~1.5% for US stocks
+    case 'intlEquity': return 0.028; // ~2.8% for international
+    case 'gold': return 0;           // Gold doesn't pay dividends
+    case 'crypto': return 0;         // Crypto doesn't pay dividends
+    case 'cash': return 0.045;       // ~4.5% for money market
+    case 'alternatives': return 0.01; // ~1% for alternatives
+    default: return 0.015;
+  }
+}
+
+/**
+ * Income analysis result for a single holding
+ */
+export interface HoldingIncomeAnalysis {
+  ticker: string;
+  name: string;
+  value: number;
+  dividendYield: number;
+  annualIncome: number;
+  quarterlyIncome: number;
+  monthlyIncome: number;
+  isDividendAristocrat: boolean;
+  yieldCategory: 'none' | 'low' | 'moderate' | 'high' | 'very-high';
+}
+
+/**
+ * Quarterly income breakdown for visualization
+ */
+export interface QuarterlyIncomeBreakdown {
+  q1: number;
+  q2: number;
+  q3: number;
+  q4: number;
+  // Most dividends are paid quarterly, but some are monthly
+  monthlyPayers: { ticker: string; monthlyAmount: number }[];
+}
+
+/**
+ * Portfolio-wide income analysis
+ */
+export interface PortfolioIncomeAnalysis {
+  totalValue: number;
+  totalAnnualIncome: number;
+  weightedYield: number;
+  monthlyIncome: number;
+  quarterlyIncome: QuarterlyIncomeBreakdown;
+  holdingsByIncome: HoldingIncomeAnalysis[];
+  topIncomeHoldings: HoldingIncomeAnalysis[];
+  // Dividend growth info
+  hasDividendAristocrats: boolean;
+  dividendAristocratValue: number;
+  dividendAristocratPercent: number;
+  // Summary stats
+  yieldGrade: { grade: string; label: string; color: string };
+  incomeGrowthPotential: 'low' | 'moderate' | 'high';
+}
+
+/**
+ * Get yield category for a dividend yield
+ */
+export function getYieldCategory(yield_: number): HoldingIncomeAnalysis['yieldCategory'] {
+  if (yield_ === 0) return 'none';
+  if (yield_ < 0.015) return 'low';
+  if (yield_ < 0.03) return 'moderate';
+  if (yield_ < 0.05) return 'high';
+  return 'very-high';
+}
+
+/**
+ * Get a grade for portfolio yield
+ */
+export function getYieldGrade(weightedYield: number): { grade: string; label: string; color: string } {
+  if (weightedYield >= 0.04) return { grade: 'A', label: 'Excellent', color: 'text-emerald-400' };
+  if (weightedYield >= 0.03) return { grade: 'B', label: 'Good', color: 'text-green-400' };
+  if (weightedYield >= 0.02) return { grade: 'C', label: 'Moderate', color: 'text-yellow-400' };
+  if (weightedYield >= 0.01) return { grade: 'D', label: 'Low', color: 'text-orange-400' };
+  return { grade: 'F', label: 'Minimal', color: 'text-red-400' };
+}
+
+/**
+ * Analyze portfolio income from dividends and interest
+ */
+export function analyzePortfolioIncome(
+  holdings: (Holding & { accountName?: string; accountType?: string })[]
+): PortfolioIncomeAnalysis {
+  const holdingAnalyses: HoldingIncomeAnalysis[] = [];
+  let totalValue = 0;
+  let totalWeightedYield = 0;
+  let totalAnnualIncome = 0;
+  let dividendAristocratValue = 0;
+  
+  // Known monthly dividend payers
+  const MONTHLY_PAYERS = ['O', 'MAIN', 'STAG', 'AGNC', 'GAIN', 'LTC'];
+  const monthlyPayers: { ticker: string; monthlyAmount: number }[] = [];
+  
+  holdings.forEach(h => {
+    const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+    if (value <= 0) return;
+    
+    totalValue += value;
+    
+    const dividendYield = getDividendYield(h.ticker) ?? estimateDividendYield(h.ticker);
+    const annualIncome = value * dividendYield;
+    const quarterlyIncome = annualIncome / 4;
+    const monthlyIncome = annualIncome / 12;
+    
+    totalWeightedYield += dividendYield * value;
+    totalAnnualIncome += annualIncome;
+    
+    const isDividendAristocrat = DIVIDEND_ARISTOCRAT_ETFS.includes(h.ticker.toUpperCase());
+    if (isDividendAristocrat) {
+      dividendAristocratValue += value;
+    }
+    
+    // Track monthly payers
+    if (MONTHLY_PAYERS.includes(h.ticker.toUpperCase()) && monthlyIncome > 0) {
+      monthlyPayers.push({ ticker: h.ticker.toUpperCase(), monthlyAmount: monthlyIncome });
+    }
+    
+    holdingAnalyses.push({
+      ticker: h.ticker.toUpperCase(),
+      name: h.name || h.ticker,
+      value,
+      dividendYield,
+      annualIncome,
+      quarterlyIncome,
+      monthlyIncome,
+      isDividendAristocrat,
+      yieldCategory: getYieldCategory(dividendYield),
+    });
+  });
+  
+  // Sort by annual income descending
+  holdingAnalyses.sort((a, b) => b.annualIncome - a.annualIncome);
+  
+  const weightedYield = totalValue > 0 ? totalWeightedYield / totalValue : 0;
+  const quarterlyTotal = totalAnnualIncome / 4;
+  
+  // Quarterly breakdown (simplified - most pay quarterly in different months)
+  const quarterlyIncome: QuarterlyIncomeBreakdown = {
+    q1: quarterlyTotal,
+    q2: quarterlyTotal,
+    q3: quarterlyTotal,
+    q4: quarterlyTotal,
+    monthlyPayers,
+  };
+  
+  // Determine income growth potential based on holdings
+  let incomeGrowthPotential: PortfolioIncomeAnalysis['incomeGrowthPotential'] = 'low';
+  const aristocratPercent = totalValue > 0 ? (dividendAristocratValue / totalValue) * 100 : 0;
+  if (aristocratPercent > 20) {
+    incomeGrowthPotential = 'high';
+  } else if (aristocratPercent > 5 || weightedYield > 0.025) {
+    incomeGrowthPotential = 'moderate';
+  }
+  
+  return {
+    totalValue,
+    totalAnnualIncome,
+    weightedYield,
+    monthlyIncome: totalAnnualIncome / 12,
+    quarterlyIncome,
+    holdingsByIncome: holdingAnalyses,
+    topIncomeHoldings: holdingAnalyses.filter(h => h.annualIncome > 0).slice(0, 5),
+    hasDividendAristocrats: dividendAristocratValue > 0,
+    dividendAristocratValue,
+    dividendAristocratPercent: aristocratPercent,
+    yieldGrade: getYieldGrade(weightedYield),
+    incomeGrowthPotential,
+  };
+}
+
+/**
+ * Format dividend yield for display
+ */
+export function formatDividendYield(yield_: number): string {
+  return `${(yield_ * 100).toFixed(2)}%`;
+}
+
 /**
  * Generate summary text for trade list
  */
