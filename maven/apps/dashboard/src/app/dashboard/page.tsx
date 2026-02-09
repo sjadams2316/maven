@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import NetWorthCard from '../components/NetWorthCard';
 import InsightCard from '../components/InsightCard';
+import ConcentrationWarning, { detectConcentratedPositions } from '../components/ConcentrationWarning';
 import MarketOverview from '../components/MarketOverview';
 import QuickActions from '../components/QuickActions';
 import { useUserProfile } from '@/providers/UserProvider';
@@ -38,6 +39,7 @@ const CRYPTO_TO_COINGECKO: Record<string, string> = {
 export default function Dashboard() {
   const { profile, financials, isLoading } = useUserProfile();
   const [dismissedInsights, setDismissedInsights] = useState<number[]>([]);
+  const [concentrationDismissed, setConcentrationDismissed] = useState(false);
   const [showAllHoldings, setShowAllHoldings] = useState(false);
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -173,6 +175,12 @@ export default function Dashboard() {
     return calculateAllocationFromFinancials(financials);
   }, [financials]);
   
+  // Detect concentrated positions (>25% of portfolio = warning threshold)
+  const concentratedPositions = useMemo(() => {
+    if (!financials || financials.netWorth <= 0) return [];
+    return detectConcentratedPositions(allHoldings, financials.netWorth, 25);
+  }, [allHoldings, financials]);
+  
   // Generate dynamic insights based on portfolio
   const insights = useMemo((): Insight[] => {
     const result: Insight[] = [];
@@ -201,20 +209,9 @@ export default function Dashboard() {
       });
     }
     
-    // Check for concentration risk
-    const topHolding = holdings[0];
-    if (topHolding && financials.netWorth > 0) {
-      const concentration = ((topHolding.currentValue || 0) / financials.netWorth) * 100;
-      if (concentration > 25) {
-        result.push({
-          type: 'risk',
-          title: 'Concentration detected',
-          description: `${topHolding.ticker} represents ${concentration.toFixed(0)}% of your portfolio. Consider diversifying to reduce risk.`,
-          actionHref: '/portfolio-lab',
-          priority: 'medium',
-        });
-      }
-    }
+    // NOTE: Concentration risk is now handled by the dedicated ConcentrationWarning component
+    // which provides more prominent P0/critical styling for this safety-critical alert.
+    // See ConcentrationWarning.tsx for implementation.
     
     // Portfolio drift check (simplified)
     if (allocation) {
@@ -309,6 +306,24 @@ export default function Dashboard() {
               change={netWorth * 0.0108} // Placeholder - would come from historical data
               changePercent={1.08}
             />
+            
+            {/* Critical Concentration Warning - Always appears first when triggered */}
+            {concentratedPositions.length > 0 && !concentrationDismissed && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    Critical Alert
+                  </h2>
+                </div>
+                <ConcentrationWarning
+                  positions={concentratedPositions}
+                  portfolioValue={financials?.netWorth || 0}
+                  threshold={25}
+                  onDismiss={() => setConcentrationDismissed(true)}
+                />
+              </div>
+            )}
             
             {/* Insights */}
             {visibleInsights.length > 0 && (

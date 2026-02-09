@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-02-09
 **Total Issues:** 11
-**Open:** 11 | **In Progress:** 0 | **Resolved:** 0
+**Open:** 9 | **In Progress:** 0 | **Resolved:** 2
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## P0 - Critical (Fix Immediately)
 
-### DASH-HNW-001: Missing Concentration Warning
+### DASH-HNW-001: Missing Concentration Warning ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -32,14 +32,16 @@
 | **Impact** | Users unaware of catastrophic risk. Potential fiduciary/advisory liability. |
 | **Fix** | Add concentration detection: any position >25% triggers P0 insight with diversification CTA |
 | **Effort** | Medium |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | Risk Analysis Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Created `ConcentrationWarning.tsx` component with critical P0 red styling. Triggers when ANY single position >25% of portfolio. Shows above all other insights with pulsing alert, severity levels (HIGH/CRITICAL/EXTREME), specific position list, risk explanation with dollar impact, and CTA to Portfolio Lab. Integrated into dashboard page. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
 ## P1 - High (Fix This Sprint)
 
-### DASH-ALL-002: Portfolio Allocation Shows Target, Not Actual
+### DASH-ALL-002: Portfolio Allocation Shows Target, Not Actual ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -50,8 +52,10 @@
 | **Impact** | Users deceived about actual risk exposure. Trust undermined if noticed. |
 | **Fix** | 1) Show ACTUAL allocation 2) Add toggle for Current vs Target 3) Clear labels |
 | **Effort** | Medium |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | Data Integrity Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Updated `/demo/page.tsx` to calculate actual allocation from holdings using `classifyTicker()` from portfolio-utils. Added Current/Target toggle buttons defaulting to Current. Added clear labels explaining what's shown ("Based on your actual holdings" vs "Your target allocation goal"). Added concentration warning when crypto >50%. Shows drift comparison vs target. Hover tooltip on "Other" shows crypto/REIT breakdown. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
@@ -205,13 +209,15 @@
 
 ## Summary by Page
 
-| Page | P0 | P1 | P2 | P3 | Total |
-|------|----|----|----|----|-------|
-| Dashboard | 1 | 3 | 4 | 3 | 11 |
+| Page | P0 | P1 | P2 | P3 | Total Open |
+|------|----|----|----|----|------------|
+| Dashboard | 0 ✅ | 3 | 4 | 3 | 10 |
 | Portfolio Lab | - | - | - | - | 0 |
 | Tax Harvesting | - | - | - | - | 0 |
 | Goals | - | - | - | - | 0 |
 | Other | - | - | - | - | 0 |
+
+*Note: DASH-HNW-001 (P0) resolved 2026-02-09*
 
 ---
 
@@ -219,7 +225,7 @@
 
 These can be done quickly and improve UX significantly:
 
-1. ✅ **Add concentration warning** - Simple threshold check, huge safety win
+1. ✅ **Add concentration warning** - ✅ DONE (2026-02-09) - ConcentrationWarning.tsx with P0 critical styling
 2. ✅ **Link VWO from insight** - Easy link, supports insight with data
 3. ✅ **Add tax harvest tooltip** - Small copy change, helps new users
 4. ✅ **Show "Current" label on allocation** - Clarify what's being shown
