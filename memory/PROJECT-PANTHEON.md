@@ -30,6 +30,33 @@ Maven becomes a **self-improving intelligence network** — not a tool that wait
 
 ---
 
+## Operational Safeguards
+
+### Credit-Conscious Spawning
+
+To prevent work loss from API credit exhaustion:
+
+**Policy:**
+1. **Check before spawning** — Before launching new agents, assess cumulative cost of running tasks
+2. **Atomic commits** — Agents commit incrementally so partial work is saved
+3. **Priority gating** — When credits are constrained:
+   - P0 (critical bugs, safety issues): Always spawn
+   - P1 (high-impact features): Spawn if reasonable headroom
+   - P2/P3 (polish, exploration): Defer until credits replenished
+4. **Sequential over parallel** — When uncertain, run agents one at a time instead of 3-5 parallel
+
+**Cost Tracking:**
+- Average agent run: ~$0.05-0.10 (simple task) to ~$0.20-0.50 (complex build)
+- Complex sprints with multiple files: ~$0.30-0.70
+- Full feature builds: ~$0.50-1.00
+
+**Recovery:**
+- Git provides instant rollback for half-finished work
+- Knowledge bases persist regardless of agent completion
+- Agents can resume from KNOWLEDGE.md context if restarted
+
+---
+
 ## Architecture
 
 ### Hierarchy
