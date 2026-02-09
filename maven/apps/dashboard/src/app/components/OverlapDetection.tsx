@@ -96,7 +96,7 @@ export default function OverlapDetection({ holdings, compact = false }: OverlapD
   }
 
   return (
-    <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
+    <div id="overlap-detection-section" data-testid="overlap-detection" className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
