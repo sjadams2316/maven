@@ -1,12 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface NetWorthCardProps {
   netWorth: number;
   change: number;
   changePercent: number;
   period?: '1D' | '1W' | '1M' | '3M' | 'YTD' | '1Y';
+}
+
+// Generate realistic historical data based on current net worth and period
+function generateHistoricalData(currentValue: number, period: string): { value: number; date: string }[] {
+  const now = new Date();
+  const points: { value: number; date: string }[] = [];
+  
+  // Define how far back and how many points based on period
+  const config: Record<string, { days: number; points: number; volatility: number }> = {
+    '1D': { days: 1, points: 24, volatility: 0.003 },
+    '1W': { days: 7, points: 14, volatility: 0.008 },
+    '1M': { days: 30, points: 20, volatility: 0.015 },
+    '3M': { days: 90, points: 20, volatility: 0.04 },
+    'YTD': { days: Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24)), points: 20, volatility: 0.07 },
+    '1Y': { days: 365, points: 20, volatility: 0.15 },
+  };
+  
+  const { days, points: numPoints, volatility } = config[period] || config['1M'];
+  
+  // Start from an earlier value and grow towards current
+  // Add some randomness for realistic variation
+  const startValue = currentValue * (1 - volatility * (0.5 + Math.random() * 0.5));
+  
+  for (let i = 0; i < numPoints; i++) {
+    const progress = i / (numPoints - 1);
+    const daysAgo = Math.floor(days * (1 - progress));
+    const date = new Date(now);
+    date.setDate(date.getDate() - daysAgo);
+    
+    // Interpolate with some noise
+    const trend = startValue + (currentValue - startValue) * progress;
+    const noise = trend * (Math.random() - 0.5) * volatility * 0.3;
+    const value = Math.round(trend + noise);
+    
+    points.push({
+      value,
+      date: formatDate(date, period),
+    });
+  }
+  
+  // Ensure last point is exactly current value
+  points[points.length - 1].value = currentValue;
+  
+  return points;
+}
+
+function formatDate(date: Date, period: string): string {
+  if (period === '1D') {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+  if (period === '1W' || period === '1M') {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+}
+
+function formatDollar(value: number): string {
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(0)}K`;
+  }
+  return `$${value.toLocaleString()}`;
 }
 
 export default function NetWorthCard({ 
@@ -17,8 +81,7 @@ export default function NetWorthCard({
 }: NetWorthCardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [showBreakdown, setShowBreakdown] = useState(false);
-  
-  const isPositive = change >= 0;
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   
   // Mock data for different periods
   const periodData: Record<string, { change: number; percent: number }> = {
@@ -32,6 +95,51 @@ export default function NetWorthCard({
   
   const currentData = periodData[selectedPeriod];
   const currentIsPositive = currentData.change >= 0;
+  
+  // Generate historical data for chart
+  const chartData = useMemo(() => 
+    generateHistoricalData(netWorth, selectedPeriod),
+    [netWorth, selectedPeriod]
+  );
+  
+  // Calculate chart scaling for meaningful variation
+  const { minValue, maxValue, yAxisLabels, barHeights } = useMemo(() => {
+    const values = chartData.map(d => d.value);
+    const dataMin = Math.min(...values);
+    const dataMax = Math.max(...values);
+    
+    // Add padding for visual clarity (10% above and below)
+    const range = dataMax - dataMin;
+    const padding = Math.max(range * 0.1, dataMax * 0.02); // At least 2% of max for very flat data
+    
+    const min = Math.floor((dataMin - padding) / 1000) * 1000;
+    const max = Math.ceil((dataMax + padding) / 1000) * 1000;
+    
+    // Generate 3 Y-axis labels (bottom, middle, top)
+    const labels = [
+      min,
+      Math.round((min + max) / 2 / 1000) * 1000,
+      max,
+    ];
+    
+    // Calculate bar heights as percentage of chart area
+    const heights = chartData.map(d => {
+      const normalized = (d.value - min) / (max - min);
+      return Math.max(5, normalized * 100); // Minimum 5% height for visibility
+    });
+    
+    return {
+      minValue: min,
+      maxValue: max,
+      yAxisLabels: labels,
+      barHeights: heights,
+    };
+  }, [chartData]);
+  
+  // Calculate period change for indicator
+  const periodChangePercent = chartData.length > 1 
+    ? ((chartData[chartData.length - 1].value - chartData[0].value) / chartData[0].value * 100)
+    : 0;
   
   // Mock breakdown
   const breakdown = [
@@ -108,17 +216,63 @@ export default function NetWorthCard({
           </div>
         )}
         
-        {/* Mini Chart (visual only) */}
-        <div className="mt-4 h-16 flex items-end gap-0.5">
-          {[40, 45, 42, 48, 52, 49, 55, 58, 54, 60, 62, 65, 63, 68, 72, 70, 75, 78, 82, 80].map((h, i) => (
-            <div
-              key={i}
-              className={`flex-1 rounded-t transition-all ${
-                i === 19 ? 'bg-indigo-400' : 'bg-indigo-600/50 hover:bg-indigo-500/50'
-              }`}
-              style={{ height: `${h}%` }}
-            />
-          ))}
+        {/* Enhanced Chart with Y-axis labels */}
+        <div className="mt-4">
+          {/* Period change indicator */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-500">Net Worth Over Time</span>
+            <span className={`text-xs font-medium ${periodChangePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {periodChangePercent >= 0 ? '↑' : '↓'} {Math.abs(periodChangePercent).toFixed(1)}% this {selectedPeriod === 'YTD' ? 'year' : 'period'}
+            </span>
+          </div>
+          
+          <div className="flex gap-2">
+            {/* Y-axis labels */}
+            <div className="flex flex-col justify-between h-20 text-right pr-2 py-1">
+              <span className="text-[10px] text-gray-500">{formatDollar(yAxisLabels[2])}</span>
+              <span className="text-[10px] text-gray-500">{formatDollar(yAxisLabels[1])}</span>
+              <span className="text-[10px] text-gray-500">{formatDollar(yAxisLabels[0])}</span>
+            </div>
+            
+            {/* Chart bars */}
+            <div className="flex-1 h-20 flex items-end gap-0.5 relative">
+              {chartData.map((point, i) => (
+                <div
+                  key={i}
+                  className="flex-1 relative group"
+                  onMouseEnter={() => setHoveredBar(i)}
+                  onMouseLeave={() => setHoveredBar(null)}
+                >
+                  {/* Bar */}
+                  <div
+                    className={`w-full rounded-t transition-all cursor-pointer ${
+                      i === chartData.length - 1 
+                        ? 'bg-indigo-400' 
+                        : hoveredBar === i 
+                          ? 'bg-indigo-400/80' 
+                          : 'bg-indigo-600/50 hover:bg-indigo-500/60'
+                    }`}
+                    style={{ height: `${barHeights[i]}%` }}
+                  />
+                  
+                  {/* Hover tooltip */}
+                  {hoveredBar === i && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-10 whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+                      <p className="text-xs font-medium text-white">${point.value.toLocaleString()}</p>
+                      <p className="text-[10px] text-gray-400">{point.date}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* X-axis labels (first, middle, last) */}
+          <div className="flex justify-between mt-1 ml-12 text-[10px] text-gray-500">
+            <span>{chartData[0]?.date}</span>
+            <span>{chartData[Math.floor(chartData.length / 2)]?.date}</span>
+            <span>{chartData[chartData.length - 1]?.date}</span>
+          </div>
         </div>
       </div>
     </div>

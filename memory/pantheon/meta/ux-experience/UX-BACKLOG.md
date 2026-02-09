@@ -4,7 +4,7 @@
 
 **Last Updated:** 2026-02-09
 **Total Issues:** 11
-**Open:** 6 | **In Progress:** 0 | **Resolved:** 5
+**Open:** 4 | **In Progress:** 0 | **Resolved:** 7
 
 ---
 
@@ -165,7 +165,7 @@
 
 ## P3 - Low (Backlog)
 
-### DASH-NEW-009: Generic Welcome Message
+### DASH-NEW-009: Generic Welcome Message ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -176,12 +176,14 @@
 | **Impact** | Missed opportunity to hook new users. |
 | **Fix** | Add value prop subheading |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Added value prop subheading "Your AI-powered wealth partner — see your complete financial picture in one place." below the welcome heading. Demo mode info now appears as smaller secondary text. Clear first impression for new users. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 
-### DASH-ALL-010: Quick Actions Hidden Behind "+2 more"
+### DASH-ALL-010: Quick Actions Hidden Behind "+2 more" ✅ RESOLVED
 
 | Field | Value |
 |-------|-------|
@@ -192,8 +194,10 @@
 | **Impact** | Reduced feature discovery. |
 | **Fix** | Show all actions on desktop; collapse on mobile only |
 | **Effort** | Low |
-| **Owner** | Unassigned |
-| **Status** | 🔴 Open |
+| **Owner** | UX Agent |
+| **Status** | ✅ Resolved |
+| **Resolution** | Implemented responsive Quick Actions: Desktop (sm+) shows all 6 actions in a 3-column grid, always visible. Mobile shows 4 actions with "+2 more" expand button. Uses Tailwind's `sm:hidden` and `hidden sm:grid` for clean responsive behavior. All actions now discoverable on desktop while preserving compact mobile experience. |
+| **Resolved Date** | 2026-02-09 |
 
 ---
 

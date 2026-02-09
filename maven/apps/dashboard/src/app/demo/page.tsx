@@ -143,7 +143,10 @@ export default function DemoPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
             Welcome to Maven 👋
           </h1>
-          <p className="text-gray-400">
+          <p className="text-lg text-gray-300 mb-2">
+            Your AI-powered wealth partner — see your complete financial picture in one place.
+          </p>
+          <p className="text-sm text-gray-500">
             This is a demo with sample data. Everything you see is fully interactive.
           </p>
         </div>
@@ -350,6 +353,12 @@ export default function DemoPage() {
                   { name: 'Banks College', current: 28000, target: 200000, icon: '🎓' },
                 ].map((goal, idx) => {
                   const progress = (goal.current / goal.target) * 100;
+                  // Format dollar amounts for display
+                  const formatAmount = (val: number) => {
+                    if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
+                    if (val >= 1000) return `$${(val / 1000).toFixed(0)}K`;
+                    return `$${val.toLocaleString()}`;
+                  };
                   return (
                     <div key={idx}>
                       <div className="flex items-center justify-between mb-1">
@@ -357,13 +366,17 @@ export default function DemoPage() {
                           <span>{goal.icon}</span>
                           {goal.name}
                         </span>
-                        <span className="text-sm text-white">{progress.toFixed(0)}%</span>
+                        <span className="text-sm text-white font-medium">{progress.toFixed(0)}%</span>
                       </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-1">
                         <div 
                           className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
                           style={{ width: `${Math.min(100, progress)}%` }}
                         />
+                      </div>
+                      {/* Absolute values: $X of $Y */}
+                      <div className="text-xs text-gray-500 text-right">
+                        {formatAmount(goal.current)} of {formatAmount(goal.target)}
                       </div>
                     </div>
                   );
