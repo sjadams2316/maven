@@ -57,7 +57,7 @@ const STATUS_RING_COLORS: Record<OverallStatus, string> = {
 
 const STATUS_TEXT: Record<OverallStatus, string> = {
   healthy: 'All data sources operational',
-  degraded: 'Some data may be delayed',
+  degraded: 'Using backup data sources',
   down: 'Data services unavailable',
   loading: 'Checking data sources...',
   error: 'Unable to check data sources',
@@ -185,13 +185,11 @@ export default function DataHealthIndicator({
           `}
         />
         
-        {/* Status text (non-compact mode) */}
-        {!compact && status !== 'healthy' && (
+        {/* Status text (non-compact mode) - only show for down/error states */}
+        {!compact && (status === 'down' || status === 'error') && (
           <span className="text-xs text-gray-400 whitespace-nowrap">
-            {status === 'degraded' && 'Data may be delayed'}
             {status === 'down' && 'Data unavailable'}
             {status === 'error' && 'Check failed'}
-            {status === 'loading' && 'Checking...'}
           </span>
         )}
       </button>

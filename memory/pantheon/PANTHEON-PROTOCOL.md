@@ -1,0 +1,131 @@
+# Pantheon Protocol v2.0
+
+*How to run effective Pantheon sprints. Read before spawning agents.*
+
+---
+
+## Pre-Sprint Checklist
+
+### 1. Review Context
+- [ ] Check `PANTHEON-STATUS.md` for running agents
+- [ ] Check `PATTERNS.md` for common fixes
+- [ ] Review relevant backlogs for prioritized tasks
+- [ ] Estimate credits (rule of thumb: ~$1-3 per agent)
+
+### 2. Task Sizing
+**Ideal task:** 1-2 files, <200 lines changed, 2-5 min runtime
+
+❌ Too big: "Rebuild the dashboard"
+✅ Just right: "Fix data-health indicator showing FMP as down"
+
+### 3. File Lock Check
+Before spawning, verify no other agent is touching the same files.
+Check `PANTHEON-STATUS.md` → Active Agents → Files.
+
+---
+
+## Agent Spawn Template
+
+```
+Task: [One-line description]
+
+Context:
+- File(s) to modify: [list specific files]
+- Related patterns: [reference PATTERNS.md sections]
+- Acceptance criteria: [how to verify it works]
+
+Constraints:
+- Do NOT modify: [protected files]
+- Must pass: npm run build
+- Must verify: [specific checks]
+
+On completion:
+1. Run build
+2. Commit with conventional message
+3. Push to GitHub
+4. Reply with: files changed, what was done, verification status
+```
+
+---
+
+## Mandatory Agent Instructions
+
+**Include in EVERY agent spawn:**
+
+```
+IMPORTANT — Read before starting:
+1. Read memory/pantheon/PATTERNS.md for common fixes
+2. Check memory/pantheon/PANTHEON-STATUS.md for file locks
+3. After changes: run `npm run build` and fix any errors
+4. Commit message format: type(scope): description
+5. After push: verify deploy succeeded (may take 1-2 min)
+```
+
+---
+
+## Post-Deploy Verification
+
+**Every agent must verify their change is live:**
+
+```bash
+# Wait for Vercel deploy (usually 30-60 seconds)
+sleep 60
+
+# Verify the route works
+curl -s -o /dev/null -w "%{http_code}" https://mavenwealth.ai/[route]
+# Should return 200
+
+# For API changes, test the endpoint
+curl -s "https://mavenwealth.ai/api/[endpoint]" | jq '.status // .error'
+```
+
+**Don't announce "shipped" until verified on production.**
+
+---
+
+## Sprint Themes
+
+Run themed sprints for coherence:
+
+| Theme | Focus | Example Tasks |
+|-------|-------|---------------|
+| **Polish** | UX fixes, copy, mobile | Button alignment, error messages |
+| **Data** | APIs, accuracy, validation | Fix FMP indicator, price validation |
+| **Features** | New capabilities | What-If simulator, new chart |
+| **Tech Debt** | Refactor, cleanup | Extract components, fix types |
+| **QA** | Testing, verification | Browser test features, find bugs |
+
+---
+
+## Cost Management
+
+| Agent Type | Typical Cost | Runtime |
+|------------|--------------|---------|
+| Small fix | $0.50-1.00 | 1-2 min |
+| Component | $1.00-2.00 | 3-5 min |
+| Feature | $2.00-4.00 | 5-10 min |
+| Complex | $4.00-8.00 | 10-20 min |
+
+**Daily budget guidance:**
+- Light day: $10-20 (5-10 agents)
+- Heavy sprint: $30-50 (15-25 agents)
+- Max sustainable: $50/day
+
+---
+
+## File Ownership
+
+Some files are high-risk. Extra care required:
+
+| File | Risk | Notes |
+|------|------|-------|
+| `layout.tsx` | HIGH | Breaks entire app if wrong |
+| `providers/*.tsx` | HIGH | Context/state for whole app |
+| `page.tsx` (any) | MEDIUM | User-facing, visible bugs |
+| `api/*.ts` | MEDIUM | Can break data flow |
+| `components/*.tsx` | LOW | Isolated, easy to test |
+| `lib/*.ts` | LOW | Utilities, usually safe |
+
+---
+
+*Update this protocol as we learn. The goal: consistent, high-quality, fast iteration.*

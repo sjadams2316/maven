@@ -1,54 +1,66 @@
-# Pantheon Status — Live Agent Tracker
+# Pantheon Status Tracker
 
-*Auto-updated by Eli when spawning/completing agents*
+*Live status of running agents and file locks. Check before spawning.*
 
-## Currently Running
-
-| Agent | Task | Files Touching | Started | Status |
-|-------|------|----------------|---------|--------|
-| pantheon-qa-markets | QA: Markets widget prices | — (browser test) | 11:22 | 🔄 Running |
-| pantheon-qa-benchmark | QA: Benchmark comparison | — (browser test) | 11:22 | 🔄 Running |
-| pantheon-qa-income | QA: Income analysis | — (browser test) | 11:22 | 🔄 Running |
-| pantheon-pitch-deck | Build /pitch presentation | pitch/page.tsx | 11:22 | 🔄 Running |
-
-## Recently Completed (Last 24h)
-
-| Agent | Task | Duration | Result |
-|-------|------|----------|--------|
-| pantheon-market-debug | Fix Markets widget Yahoo rate limiting | 2m | ✅ 482d325 |
-| pantheon-benchmark-compare | Benchmark comparison (S&P/60-40/age) | 3m | ✅ c5220da |
-| pantheon-fragility-holdings | Personalized fragility impact | 3m | ✅ c5220da |
-| pantheon-income-analysis | Dividend/income analysis | 4m | ✅ 78eb77c |
-| pantheon-rebalancing-preview | Rebalancing Preview component | 5m | ✅ Committed |
-| pantheon-competitive-intel | Competitive landscape research | 4m | ✅ Research complete |
-| pantheon-overlap-detection | Holdings overlap detection | 7m | ✅ Committed |
-| pantheon-retiree-demo | Retiree demo variant | 6m | ✅ Committed |
-| pantheon-welcome-quickactions | Welcome msg + quick actions | 1m | ✅ Committed |
-| pantheon-chart-improvements | Net worth chart + goals | 3m | ✅ Committed |
-| pantheon-holdings-visibility | VWO + tax tooltip | 3m | ✅ Committed |
-| pantheon-goal-math-fix | Fix $1.2M→$797K | 2m | ✅ Committed |
-| pantheon-allocation-fix | Actual vs target allocation | 3m | ✅ Committed |
-| pantheon-concentration-warning | P0 concentration alert | 4m | ✅ Committed |
-
-## File Lock Registry
-
-*Prevents parallel agents from editing same files*
-
-| File | Locked By | Since |
-|------|-----------|-------|
-| — | — | — |
-
-## Usage
-
-**Before spawning an agent:**
-1. Check "Currently Running" — is similar work in flight?
-2. Check "File Lock Registry" — will this touch locked files?
-3. Add entry to both when spawning
-
-**After agent completes:**
-1. Move from "Currently Running" to "Recently Completed"
-2. Release file locks
+**Last Updated:** 2026-02-09 15:13 EST
 
 ---
 
-*Last updated: 2026-02-09 09:44 EST*
+## Active Agents
+
+| Agent | Task | Files | Started | Status |
+|-------|------|-------|---------|--------|
+| pantheon-data-health | Fix FMP false positive | api/data-health/route.ts | 15:14 EST | 🔄 Running |
+| pantheon-dashboard-polish | Clean up data source message | components/DataHealth*.tsx | 15:14 EST | 🔄 Running |
+| pantheon-mobile | Mobile responsiveness fixes | Various components | 15:14 EST | 🔄 Running |
+| pantheon-ux-polish | Fix 3 open UX issues | Various | 15:14 EST | 🔄 Running |
+
+---
+
+## File Locks
+
+*Files currently being modified. Do NOT spawn agents touching these.*
+
+| File | Locked By | Since |
+|------|-----------|-------|
+| — | — | No locks |
+
+---
+
+## Recently Completed
+
+| Agent | Task | Result | Completed |
+|-------|------|--------|-----------|
+| eli-main | market-data fix | ✅ Deployed | 15:01 EST |
+| eli-main | pitch deck tweaks | ✅ Deployed | 14:57 EST |
+
+---
+
+## Sprint Queue
+
+*Next tasks to run (update as sprint progresses)*
+
+| Priority | Task | Target Files | Assigned |
+|----------|------|--------------|----------|
+| P0 | Fix data-health FMP indicator | api/data-health/route.ts | pending |
+| P1 | Dashboard data source message | dashboard/page.tsx or components | pending |
+| P1 | Mobile responsiveness fixes | Various components | pending |
+| P2 | UX polish (3 open items) | Various | pending |
+
+---
+
+## How to Update
+
+When spawning an agent:
+1. Add row to "Active Agents" with files it will touch
+2. Add file locks
+3. On completion: move to "Recently Completed", remove locks
+
+---
+
+## Coordination Rules
+
+1. **One agent per file** — Never two agents editing same file
+2. **Check before spawn** — Always check this file first
+3. **Update on start** — Add your agent before spawning
+4. **Update on finish** — Clear locks immediately after completion

@@ -145,4 +145,68 @@ Before starting, identify:
 
 ---
 
+---
+
+## Deploy Verification (MANDATORY)
+
+**Every change must be verified on production before announcing "shipped".**
+
+```bash
+# After git push, wait for Vercel
+sleep 60
+
+# Check route returns 200
+curl -s -o /dev/null -w "%{http_code}" https://mavenwealth.ai/[route]
+
+# For API changes, test the response
+curl -s "https://mavenwealth.ai/api/[endpoint]" | jq '.'
+```
+
+**If deploy fails:**
+1. Check Vercel dashboard for build errors
+2. Check GitHub status (outages happen)
+3. Try manual deploy: `cd maven && vercel --prod`
+
+---
+
+## Data Health Patterns
+
+### API Status Checks
+The data-health API tests each provider. Common issues:
+
+- **FMP 403** — Usually means testing wrong endpoint or rate limit
+- **Yahoo blocked** — Vercel IPs sometimes blocked, use fallback
+- **CoinGecko rate limit** — Free tier limits, add caching
+
+### Price Validation Ranges
+```typescript
+const VALID_RANGES = {
+  stock: { min: 0.01, max: 50000 },
+  crypto: { min: 0.0001, max: 1000000 },
+  index: { min: 1, max: 100000 },
+};
+```
+
+---
+
+## UserProvider Patterns
+
+### Accessing User Data
+```typescript
+import { useUserProfile } from '@/providers/UserProvider';
+
+const { profile, financials, holdings, isDemoMode, isLoading } = useUserProfile();
+```
+
+### Demo Mode Check
+```typescript
+if (isDemoMode) {
+  // Use demo data
+} else {
+  // Use real user data
+}
+```
+
+---
+
 *Add new patterns as you discover them. This file saves future agents hours of debugging.*

@@ -1,94 +1,58 @@
 # Portfolio Lab — Backlog
 
-*Last Updated: 2026-02-09*
-
----
-
-## Current Sprint
-
-### In Progress
-- None currently
-
-### Ready
-1. **Overlap Detection** — P0
-   - Identify overlapping holdings ("VTI and VOO are 99% overlapping")
-   - Suggest consolidation opportunities
-
-2. **Tax Efficiency Score** — P0
-   - Combine fee analysis with tax-efficient location suggestions
+*Last Updated: 2026-02-09 15:13 EST*
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 — Do Next
-- [x] Fee analyzer ✅
-- [ ] Overlap detection ("VTI and VOO are 99% overlapping")
-- [ ] Tax efficiency score
-- [ ] Factor loading accuracy improvements (real data integration)
+- [x] Fee analyzer ✅ (2026-02-09)
+- [x] Overlap detection ✅ (2026-02-09)
+- [x] What-If Trade Simulator ✅ (2026-02-09)
+- [ ] Factor loading accuracy (real Morningstar data when available)
 
-### P1 — Important
-- [ ] Benchmark comparison (vs. 60/40, vs. age-based)
-- [ ] Income analysis (dividend yield, projected income)
+### P1 — Important  
+- [x] Benchmark comparison (vs S&P 500, 60/40) ✅ (2026-02-09)
+- [x] Income analysis (dividend yield, projected income) ✅ (2026-02-09)
+- [x] Rebalancing preview with tax-aware trades ✅ (2026-02-09)
+- [x] Wash sale tracker ✅ (2026-02-09)
 - [ ] Correlation matrix visualization
 - [ ] Historical performance backtest
 
 ### P2 — Nice to Have
-- [ ] Peer comparison
-- [ ] Risk capacity questionnaire
-- [ ] What-if scenarios
+- [ ] Peer comparison (vs similar portfolios)
+- [ ] Risk capacity questionnaire integration
 - [ ] Export/share PDF reports
+- [ ] Multi-account view (aggregate across accounts)
 
 ### P3 — Future
 - [ ] Real-time streaming prices
-- [ ] Morningstar X-ray integration
+- [ ] Morningstar X-ray integration (when licensed)
 - [ ] AI-generated portfolio review reports
-- [ ] Automated rebalancing recommendations
+- [ ] Automated rebalancing execution
 
 ---
 
-## Completed
+## Completed This Sprint (2026-02-09)
 
-### 2026-02-09
-- [x] **Fee Analyzer** — Full implementation
-  - Expense ratio data for 100+ common ETFs/mutual funds
-  - Annual fees displayed in real dollars
-  - 30-year fee drag calculations
-  - "Switch & Save" recommendations with cheaper alternatives
-  - Grading system (A-F) for expense ratios
-  - Integrated into Portfolio Lab Analysis tab
-  - Code: `FeeAnalyzer.tsx` + fee utilities in `portfolio-utils.ts`
-- [x] **Factor Exposure Analysis** — Full implementation
-  - Market Beta, Size, Value, Momentum, Quality factors
-  - Visual bar representation with benchmark comparison
-  - Plain-English interpretations with risk assessment
-  - Tooltips explaining each factor
-  - Works with user holdings from UserProvider
-- [x] Mobile responsiveness fixes
-- [x] Data consistency (use calculateAllocationFromFinancials)
+| Feature | Lines | Notes |
+|---------|-------|-------|
+| WhatIfSimulator | 1,340 | Full gamification, A+ to F grades |
+| OverlapDetection | 481 | VTI/VOO overlap detection, consolidation suggestions |
+| BenchmarkComparison | 476 | vs S&P 500, 60/40, age-based |
+| FeeAnalyzer | ~300 | Real $ fees, switch recommendations |
+| IncomeAnalysis | ~250 | Dividend yield, projected annual income |
+| RebalancingPreview | ~400 | Tax-aware trade list |
+| WashSaleTracker | ~300 | 61-day window visualization |
 
-### 2026-02-08
-- [x] Asset classification mapping (200+ Morningstar categories)
-- [x] Portfolio-utils.ts centralized functions
-
-### 2026-02-07
-- [x] Full 5-tab experience built
-- [x] Stress test scenarios (6 historical events)
-- [x] Monte Carlo projections
-
----
-
-## Bug Fixes Needed
-- [ ] Cost basis $0 display issue
-- [ ] Stress test percentages rounding
+**Total: ~3,500 lines of new functionality in one day**
 
 ---
 
 ## Tech Debt
-- [ ] Extract stress test logic into separate utility
-- [ ] Add TypeScript strict mode compliance
-- [ ] Unit tests for portfolio calculations
 
----
-
-*Update this file when picking up or completing work.*
+- [ ] portfolio-lab/page.tsx is 2,900+ lines — needs component extraction
+- [ ] Some duplicate code between demo and dashboard
+- [ ] Missing loading states on some sections
+- [ ] Error boundaries needed for component isolation
