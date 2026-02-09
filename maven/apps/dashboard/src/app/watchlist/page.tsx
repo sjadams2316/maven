@@ -248,7 +248,7 @@ export default function WatchlistPage() {
           <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white">Add to Watchlist</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/10 rounded-lg">✕</button>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/10 rounded-lg" aria-label="Close add to watchlist modal">✕</button>
             </div>
             
             <div className="space-y-4">

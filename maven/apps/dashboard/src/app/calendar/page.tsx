@@ -287,7 +287,7 @@ export default function CalendarPage() {
                   </p>
                 </div>
               </div>
-              <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-white/10 rounded-lg">✕</button>
+              <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-white/10 rounded-lg" aria-label="Close event details">✕</button>
             </div>
             
             <div className="space-y-4">

@@ -2,7 +2,7 @@
 
 *Live status of running agents and file locks. Check before spawning.*
 
-**Last Updated:** 2026-02-09 15:49 EST
+**Last Updated:** 2026-02-09 16:01 EST
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Agent | Task | Files | Started | Status |
 |-------|------|-------|---------|--------|
-| pantheon-console-errors | Find & fix JS console errors | Various | 15:49 EST | 🔄 Running |
-| pantheon-dead-links | Audit all navigation links | Various pages | 15:49 EST | 🔄 Running |
-| pantheon-copy-review | Consistent language & clarity | Various | 15:49 EST | 🔄 Running |
-| pantheon-edge-cases | Graceful error handling | API routes | 15:49 EST | 🔄 Running |
+| pantheon-performance | Find slow API calls & optimize | API routes | 16:01 EST | 🔄 Running |
+| pantheon-accessibility | Audit a11y: alt text, aria, keyboard | Components | 16:01 EST | 🔄 Running |
+| pantheon-data-consistency | Verify DEMO_PROFILE flows correctly | Tools pages | 16:01 EST | 🔄 Running |
+| pantheon-form-validation | Check all inputs have validation | Form components | 16:01 EST | 🔄 Running |
 
 ---
 

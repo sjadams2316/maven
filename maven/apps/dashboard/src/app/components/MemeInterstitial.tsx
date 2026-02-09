@@ -67,7 +67,7 @@ export default function MemeInterstitial({ destination, trigger, onClose }: Meme
       <div className="max-w-md mx-auto text-center px-4">
         <img 
           src={meme.url} 
-          alt="meme" 
+          alt={`Animated meme: ${meme.caption}`}
           className="rounded-2xl shadow-2xl mb-6 max-h-[50vh] mx-auto"
         />
         <p className="text-2xl sm:text-3xl font-bold text-white mb-4">{meme.caption}</p>

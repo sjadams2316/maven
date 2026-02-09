@@ -1,15 +1,38 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
 import ProgressRing from '../components/ProgressRing';
+import { useUserProfile } from '@/providers/UserProvider';
 
 interface TaxScenario {
   name: string;
   savings: number;
   description: string;
   difficulty: 'easy' | 'medium' | 'complex';
+}
+
+/**
+ * Parse householdIncome string to a usable number
+ * Examples: "$200,000 - $500,000" → 350000, "$100,000 - $200,000" → 150000
+ */
+function parseIncomeRange(incomeString: string): number {
+  if (!incomeString) return 250000; // Default
+  
+  // Extract numbers from the string
+  const numbers = incomeString.match(/[\d,]+/g);
+  if (!numbers || numbers.length === 0) return 250000;
+  
+  // Parse numbers (remove commas)
+  const parsedNumbers = numbers.map(n => parseInt(n.replace(/,/g, ''), 10));
+  
+  // If it's a range, return the midpoint
+  if (parsedNumbers.length >= 2) {
+    return Math.round((parsedNumbers[0] + parsedNumbers[1]) / 2);
+  }
+  
+  return parsedNumbers[0] || 250000;
 }
 
 const TAX_SCENARIOS: TaxScenario[] = [
@@ -86,9 +109,36 @@ function getMarginalRate(taxableIncome: number): number {
 }
 
 export default function TaxPage() {
-  const [grossIncome, setGrossIncome] = useState(720000);
-  const [deductions, setDeductions] = useState(45000);
+  const { profile, financials, isLoading, isDemoMode } = useUserProfile();
+  
+  // Initialize with defaults, will be updated from profile
+  const [grossIncome, setGrossIncome] = useState(250000);
+  const [deductions, setDeductions] = useState(30000);
   const [selectedScenarios, setSelectedScenarios] = useState<string[]>([]);
+  
+  // Update from profile when available
+  useEffect(() => {
+    if (!profile) return;
+    
+    // Parse income from profile
+    const parsedIncome = parseIncomeRange(profile.householdIncome);
+    setGrossIncome(parsedIncome);
+    
+    // Estimate deductions based on filing status
+    // Standard deduction 2026 (estimated): MFJ ~$32K, Single ~$16K
+    const standardDeduction = profile.filingStatus === 'Married Filing Jointly' ? 32000 :
+                              profile.filingStatus === 'Head of Household' ? 24000 : 16000;
+    
+    // If high income, likely itemizing - estimate higher deductions
+    if (parsedIncome > 200000) {
+      // Estimate itemized: SALT cap ($10K) + mortgage interest + charity
+      // Rough estimate: 12-15% of income for high earners
+      const estimatedItemized = Math.min(parsedIncome * 0.12, 80000);
+      setDeductions(Math.max(standardDeduction, estimatedItemized));
+    } else {
+      setDeductions(standardDeduction);
+    }
+  }, [profile]);
   
   const taxableIncome = grossIncome - deductions;
   const estimatedTax = calculateTax(taxableIncome);
@@ -110,7 +160,14 @@ export default function TaxPage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Tax Planning</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Tax Planning</h1>
+            {isDemoMode && (
+              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">
+                Demo Data
+              </span>
+            )}
+          </div>
           <p className="text-gray-400 mt-1">Optimize your tax strategy for 2026</p>
         </div>
         

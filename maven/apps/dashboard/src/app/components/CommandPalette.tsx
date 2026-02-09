@@ -122,9 +122,10 @@ export default function CommandPalette() {
     return (
       <button
         onClick={() => setIsOpen(true)}
+        aria-label="Open command palette (Cmd+K)"
         className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-400 hover:bg-white/10 hover:text-white transition"
       >
-        <span>⌘K</span>
+        <span aria-hidden="true">⌘K</span>
         <span>Quick actions</span>
       </button>
     );
@@ -136,14 +137,22 @@ export default function CommandPalette() {
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={() => setIsOpen(false)}
+        aria-hidden="true"
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-xl mx-4 bg-[#12121a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        className="relative w-full max-w-xl mx-4 bg-[#12121a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200"
+      >
         {/* Search input */}
         <div className="flex items-center gap-3 p-4 border-b border-white/10">
-          <span className="text-gray-500">🔍</span>
+          <span className="text-gray-500" aria-hidden="true">🔍</span>
+          <label htmlFor="command-search" className="sr-only">Search commands</label>
           <input
+            id="command-search"
             ref={inputRef}
             type="text"
             value={query}
@@ -155,7 +164,7 @@ export default function CommandPalette() {
             placeholder="Type a command or search..."
             className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-lg"
           />
-          <kbd className="px-2 py-1 bg-white/10 text-gray-500 text-xs rounded">ESC</kbd>
+          <kbd className="px-2 py-1 bg-white/10 text-gray-500 text-xs rounded" aria-label="Press Escape to close">ESC</kbd>
         </div>
         
         {/* Results */}
