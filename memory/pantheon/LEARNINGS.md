@@ -93,6 +93,10 @@
 **Task:** Parallelized batch ticker fetches in fund-profile API
 **Insight:** When an API handles batch requests (e.g., `?tickers=SPY,QQQ,AAPL,...`), never fetch in a sequential for-loop — use `Promise.all()` to parallelize. The pattern: (1) First pass: synchronously resolve cached/special items, collect uncached tickers into an array. (2) Second pass: `Promise.all(tickersNeedingFetch.map(async (t) => ...))` to fetch all in parallel. This turned a 6-second batch request (20 tickers × 300ms) into ~300ms total. Also add HTTP caching headers (`Cache-Control: s-maxage=300, stale-while-revalidate=3600`) so Vercel's edge can cache responses.
 
+### pantheon-demo-unify
+**Task:** Fixed critical bug where /demo and /portfolio-lab showed completely different portfolios (GROWTH_HOLDINGS vs DEMO_PROFILE with different holdings)
+**Insight:** When building demo/sample data features, establish ONE canonical data source from day one. Having hardcoded data in page components (`/demo/page.tsx` with `GROWTH_HOLDINGS`) separate from the central profile (`lib/demo-profile.ts` with `DEMO_PROFILE`) creates drift that's invisible until users compare pages. **Fix pattern:** (1) Put all demo holdings in `demo-profile.ts` with exports for both the profile object AND display-friendly arrays, (2) Have pages import from that single source, (3) Use helper functions like `getDemoHoldings(variant)` to access the right data. This ensures /demo, /portfolio-lab, /tax, /retirement all pull from the same well.
+
 ---
 
 *This file grows with every sprint. Review weekly to promote patterns to PATTERNS.md.*
