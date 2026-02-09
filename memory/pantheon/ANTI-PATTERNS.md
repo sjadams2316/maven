@@ -6,6 +6,11 @@
 
 ## Code Anti-Patterns
 
+### ❌ Visual data doesn't match reality
+**What happened:** Landing page showed red/down charts when markets were actually up. No percentages displayed.
+**Why it failed:** Agents checked for 200 responses and console errors but didn't verify displayed data was CORRECT.
+**Do instead:** Actually look at the page. Charts should be green when up, red when down. Percentages should show. Test against real-world state.
+
 ### ❌ Client-side API calls to Yahoo Finance
 **What happened:** CORS errors, blocked requests, broken Market widget
 **Why it failed:** Yahoo blocks browser requests, Vercel IPs get rate-limited

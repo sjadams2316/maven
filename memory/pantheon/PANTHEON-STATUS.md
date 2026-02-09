@@ -14,6 +14,7 @@
 | pantheon-mobile-qa-v2 | Touch targets, scroll, responsive | Various components | 16:38 EST | 🔄 Running |
 | pantheon-seo-meta-v2 | Page titles, descriptions, OG tags | Layout + pages | 16:38 EST | 🔄 Running |
 | pantheon-security-v2 | Rate limiting, security headers | API routes, middleware | 16:38 EST | 🔄 Running |
+| pantheon-market-display-fix | Fix landing page market charts/data | page.tsx, MarketOverview | 16:40 EST | 🔄 Running |
 
 ---
 

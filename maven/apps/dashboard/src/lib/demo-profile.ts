@@ -158,14 +158,12 @@ export const DEMO_PROFILE: UserProfile = {
       id: "demo-inv-1",
       name: "Taxable Brokerage",
       institution: "Fidelity",
-      balance: 130000,
+      balance: 95180,
       type: "Individual",
       holdings: [
-        // More CIFR/IREN in taxable
+        // CIFR/IREN in taxable (speculative positions)
         { ticker: "CIFR", name: "Cipher Mining", shares: 9500, costBasis: 65000, currentPrice: 6.50, currentValue: 61750, acquisitionDate: "2023-06-15" },
         { ticker: "IREN", name: "Iris Energy", shares: 2700, costBasis: 28000, currentPrice: 12.38, currentValue: 33430, acquisitionDate: "2023-08-20" },
-        // Some VTI for diversification
-        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 120, costBasis: 28000, currentPrice: 298.39, currentValue: 35807, acquisitionDate: "2022-01-10" },
       ]
     },
     {
@@ -278,8 +276,9 @@ function calculateDemoNetWorth(): number {
   return cash + retirement + investment + other - liabilities;
 }
 
-// Net worth: ~$797,400
-// Cash: $85K + Retirement: $385K + Investment: $485K + Other: $225K - Liabilities: $457.5K
+// Net worth: ~$687,580
+// Cash: $85K + Retirement: $385K + Investment: $450K + Other: $225K - Liabilities: $457.5K
+// Holdings total: ~$835K (matches GROWTH_HOLDINGS exactly)
 export const DEMO_NET_WORTH = calculateDemoNetWorth();
 
 // ============================================================================
