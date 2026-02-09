@@ -14,6 +14,7 @@ import { ThesisInsight } from '../components/ThesisInsight';
 import { QuickStartTips } from '../components/QuickStartTips';
 import { openOracle } from '@/lib/open-oracle';
 import ProfileCompletionBanner from '../components/ProfileCompletionBanner';
+import ProfileUpdatePrompt from '../components/ProfileUpdatePrompt';
 
 interface MarketData {
   timestamp: string;
@@ -308,6 +309,9 @@ export default function Dashboard() {
         
         {/* Profile Completion Prompt (shows when profile is incomplete) */}
         <ProfileCompletionBanner />
+        
+        {/* Profile Update Prompt (shows when data is stale) */}
+        <ProfileUpdatePrompt />
         
         {/* ==================== ONBOARDED USER HERO ==================== */}
         {isOnboarded && profile && (

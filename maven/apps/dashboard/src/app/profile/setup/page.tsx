@@ -46,13 +46,20 @@ interface ProfileData {
   investmentIncome: number;
   otherIncome: number;
   
-  // Cash Accounts
+  // Cash Accounts (with labels)
+  checkingAccountName: string;
+  checkingInstitution: string;
   checkingBalance: number;
+  savingsAccountName: string;
+  savingsInstitution: string;
   savingsBalance: number;
+  mmAccountName: string;
+  mmInstitution: string;
   mmBalance: number;
   
   // Retirement Accounts
   has401k: boolean;
+  account401kName: string;
   account401kBalance: number;
   account401kEmployer: string;
   account401kContributionMode: 'percent' | 'dollar';
@@ -62,26 +69,36 @@ interface ProfileData {
   account401kHoldings: Holding[];
   
   hasTraditionalIRA: boolean;
+  traditionalIRAName: string;
+  traditionalIRAInstitution: string;
   traditionalIRABalance: number;
   traditionalIRAHoldings: Holding[];
   
   hasRothIRA: boolean;
+  rothIRAName: string;
+  rothIRAInstitution: string;
   rothIRABalance: number;
   rothIRAHoldings: Holding[];
   
   hasRoth401k: boolean;
+  roth401kName: string;
   roth401kBalance: number;
   roth401kHoldings: Holding[];
   
   hasHSA: boolean;
+  hsaName: string;
+  hsaInstitution: string;
   hsaBalance: number;
   hsaHoldings: Holding[];
   
   hasPension: boolean;
+  pensionName: string;
   pensionValue: number;
   
   // Investment Accounts
   hasBrokerage: boolean;
+  brokerageName: string;
+  brokerageInstitution: string;
   brokerageBalance: number;
   brokerageHoldingsMode: 'value' | 'percentage';
   brokerageHoldings: Holding[];
@@ -91,6 +108,8 @@ interface ProfileData {
     id: string;
     childId: string;
     childName: string;
+    accountName: string;
+    institution: string;
     balance: number;
     holdings: Holding[];
   }>;
@@ -114,6 +133,9 @@ interface ProfileData {
   // Goals
   retirementAge: number;
   monthlyRetirementSpending: number;
+  
+  // Meta
+  lastStepCompleted: number;
 }
 
 const STATES = [
@@ -507,14 +529,17 @@ function HoldingsEntry({
 // MAIN COMPONENT
 // ============================================
 
+const PROFILE_DRAFT_KEY = 'maven_profile_draft';
+
 export default function ProfileSetupPage() {
   const router = useRouter();
   const { user } = useUser();
   const { updateProfile, profile } = useUserProfile();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   
-  const [data, setData] = useState<ProfileData>({
+  const defaultData: ProfileData = {
     firstName: '',
     lastName: '',
     dateOfBirth: '',
@@ -528,10 +553,19 @@ export default function ProfileSetupPage() {
     selfEmploymentIncome: 0,
     investmentIncome: 0,
     otherIncome: 0,
+    // Cash accounts with labels
+    checkingAccountName: 'Checking Account',
+    checkingInstitution: '',
     checkingBalance: 0,
+    savingsAccountName: 'Savings Account',
+    savingsInstitution: '',
     savingsBalance: 0,
+    mmAccountName: 'Money Market',
+    mmInstitution: '',
     mmBalance: 0,
+    // Retirement
     has401k: false,
+    account401kName: '401(k)',
     account401kBalance: 0,
     account401kEmployer: '',
     account401kContributionMode: 'percent',
@@ -540,25 +574,37 @@ export default function ProfileSetupPage() {
     account401kHoldingsMode: 'value',
     account401kHoldings: [],
     hasTraditionalIRA: false,
+    traditionalIRAName: 'Traditional IRA',
+    traditionalIRAInstitution: '',
     traditionalIRABalance: 0,
     traditionalIRAHoldings: [],
     hasRothIRA: false,
+    rothIRAName: 'Roth IRA',
+    rothIRAInstitution: '',
     rothIRABalance: 0,
     rothIRAHoldings: [],
     hasRoth401k: false,
+    roth401kName: 'Roth 401(k)',
     roth401kBalance: 0,
     roth401kHoldings: [],
     hasHSA: false,
+    hsaName: 'HSA',
+    hsaInstitution: '',
     hsaBalance: 0,
     hsaHoldings: [],
     hasPension: false,
+    pensionName: 'Pension',
     pensionValue: 0,
+    // Investment
     hasBrokerage: false,
+    brokerageName: 'Brokerage Account',
+    brokerageInstitution: '',
     brokerageBalance: 0,
     brokerageHoldingsMode: 'value',
     brokerageHoldings: [],
     has529: false,
     accounts529: [],
+    // Other
     realEstateEquity: 0,
     cryptoValue: 0,
     businessEquity: 0,
@@ -573,18 +619,56 @@ export default function ProfileSetupPage() {
     otherDebtBalance: 0,
     retirementAge: 65,
     monthlyRetirementSpending: 0,
-  });
+    lastStepCompleted: 0,
+  };
   
-  // Pre-fill from Clerk user data
+  const [data, setData] = useState<ProfileData>(defaultData);
+  
+  // Load saved draft from localStorage on mount
   useEffect(() => {
-    if (user) {
+    if (typeof window !== 'undefined' && !loaded) {
+      const savedDraft = localStorage.getItem(PROFILE_DRAFT_KEY);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          setData(prev => ({ ...prev, ...parsed }));
+          // Resume from last completed step + 1
+          if (parsed.lastStepCompleted && parsed.lastStepCompleted > 0) {
+            setStep(Math.min(parsed.lastStepCompleted + 1, 8));
+          }
+        } catch (e) {
+          console.error('Failed to parse saved draft:', e);
+        }
+      }
+      setLoaded(true);
+    }
+  }, [loaded]);
+  
+  // Pre-fill from Clerk user data (only if not already filled)
+  useEffect(() => {
+    if (user && loaded) {
       setData(prev => ({
         ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName: prev.firstName || user.firstName || '',
+        lastName: prev.lastName || user.lastName || '',
       }));
     }
-  }, [user]);
+  }, [user, loaded]);
+  
+  // Auto-save draft to localStorage when data changes
+  useEffect(() => {
+    if (loaded && typeof window !== 'undefined') {
+      localStorage.setItem(PROFILE_DRAFT_KEY, JSON.stringify(data));
+    }
+  }, [data, loaded]);
+  
+  // Save step completion
+  const completeStep = (stepNum: number) => {
+    setData(prev => ({
+      ...prev,
+      lastStepCompleted: Math.max(prev.lastStepCompleted, stepNum),
+    }));
+  };
   
   const totalSteps = 8; // Added a step for children/529
   
@@ -623,8 +707,10 @@ export default function ProfileSetupPage() {
       id: crypto.randomUUID(),
       childId: child.id,
       childName: child.name,
+      accountName: `529 Plan - ${child.name}`,
+      institution: '',
       balance: 0,
-      holdings: [],
+      holdings: [] as Holding[],
     };
     update({ accounts529: [...data.accounts529, new529] });
   };
@@ -644,8 +730,8 @@ export default function ProfileSetupPage() {
       if (data.checkingBalance > 0) {
         cashAccounts.push({
           id: 'checking-1',
-          name: 'Checking Account',
-          institution: 'Bank',
+          name: data.checkingAccountName || 'Checking Account',
+          institution: data.checkingInstitution || 'Bank',
           balance: data.checkingBalance,
           type: 'Checking' as const,
         });
@@ -653,8 +739,8 @@ export default function ProfileSetupPage() {
       if (data.savingsBalance > 0) {
         cashAccounts.push({
           id: 'savings-1',
-          name: 'Savings Account',
-          institution: 'Bank',
+          name: data.savingsAccountName || 'Savings Account',
+          institution: data.savingsInstitution || 'Bank',
           balance: data.savingsBalance,
           type: 'Savings' as const,
         });
@@ -662,8 +748,8 @@ export default function ProfileSetupPage() {
       if (data.mmBalance > 0) {
         cashAccounts.push({
           id: 'mm-1',
-          name: 'Money Market',
-          institution: 'Bank',
+          name: data.mmAccountName || 'Money Market',
+          institution: data.mmInstitution || 'Bank',
           balance: data.mmBalance,
           type: 'Money Market' as const,
         });
@@ -673,7 +759,7 @@ export default function ProfileSetupPage() {
       if (data.has401k && data.account401kBalance > 0) {
         retirementAccounts.push({
           id: '401k-1',
-          name: '401(k)',
+          name: data.account401kName || '401(k)',
           institution: data.account401kEmployer || 'Employer',
           balance: data.account401kBalance,
           type: '401(k)' as const,
@@ -695,7 +781,7 @@ export default function ProfileSetupPage() {
       if (data.hasRoth401k && data.roth401kBalance > 0) {
         retirementAccounts.push({
           id: 'roth401k-1',
-          name: 'Roth 401(k)',
+          name: data.roth401kName || 'Roth 401(k)',
           institution: data.account401kEmployer || 'Employer',
           balance: data.roth401kBalance,
           type: 'Roth 401(k)' as const,
@@ -712,8 +798,8 @@ export default function ProfileSetupPage() {
       if (data.hasTraditionalIRA && data.traditionalIRABalance > 0) {
         retirementAccounts.push({
           id: 'trad-ira-1',
-          name: 'Traditional IRA',
-          institution: 'Brokerage',
+          name: data.traditionalIRAName || 'Traditional IRA',
+          institution: data.traditionalIRAInstitution || 'Brokerage',
           balance: data.traditionalIRABalance,
           type: 'Traditional IRA' as const,
           holdings: data.traditionalIRAHoldings.map(h => ({
@@ -729,8 +815,8 @@ export default function ProfileSetupPage() {
       if (data.hasRothIRA && data.rothIRABalance > 0) {
         retirementAccounts.push({
           id: 'roth-ira-1',
-          name: 'Roth IRA',
-          institution: 'Brokerage',
+          name: data.rothIRAName || 'Roth IRA',
+          institution: data.rothIRAInstitution || 'Brokerage',
           balance: data.rothIRABalance,
           type: 'Roth IRA' as const,
           holdings: data.rothIRAHoldings.map(h => ({
@@ -746,8 +832,8 @@ export default function ProfileSetupPage() {
       if (data.hasHSA && data.hsaBalance > 0) {
         retirementAccounts.push({
           id: 'hsa-1',
-          name: 'HSA',
-          institution: 'HSA Provider',
+          name: data.hsaName || 'HSA',
+          institution: data.hsaInstitution || 'HSA Provider',
           balance: data.hsaBalance,
           type: 'HSA' as const,
           holdings: data.hsaHoldings.map(h => ({
@@ -763,7 +849,7 @@ export default function ProfileSetupPage() {
       if (data.hasPension && data.pensionValue > 0) {
         retirementAccounts.push({
           id: 'pension-1',
-          name: 'Pension',
+          name: data.pensionName || 'Pension',
           institution: data.account401kEmployer || 'Employer',
           balance: data.pensionValue,
           type: 'Pension' as const,
@@ -775,8 +861,8 @@ export default function ProfileSetupPage() {
       if (data.hasBrokerage && data.brokerageBalance > 0) {
         investmentAccounts.push({
           id: 'brokerage-1',
-          name: 'Brokerage Account',
-          institution: 'Brokerage',
+          name: data.brokerageName || 'Brokerage Account',
+          institution: data.brokerageInstitution || 'Brokerage',
           balance: data.brokerageBalance,
           type: 'Individual' as const,
           holdingsMode: data.brokerageHoldingsMode,
@@ -795,8 +881,8 @@ export default function ProfileSetupPage() {
         if (acc529.balance > 0) {
           investmentAccounts.push({
             id: acc529.id,
-            name: `529 Plan - ${acc529.childName}`,
-            institution: '529 Provider',
+            name: acc529.accountName || `529 Plan - ${acc529.childName}`,
+            institution: acc529.institution || '529 Provider',
             balance: acc529.balance,
             type: '529' as const,
             beneficiary: acc529.childName,
@@ -883,6 +969,7 @@ export default function ProfileSetupPage() {
         otherAssets: data.otherAssets,
         liabilities,
         onboardingComplete: true,
+        lastUpdated: new Date().toISOString(),
         // Store children for Family tab
         socialSecurity: {
           ...profile?.socialSecurity,
@@ -890,6 +977,11 @@ export default function ProfileSetupPage() {
           children: data.children,
         },
       });
+      
+      // Clear the draft since we've saved successfully
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(PROFILE_DRAFT_KEY);
+      }
       
       router.push('/dashboard');
     } catch (error) {
@@ -1161,23 +1253,107 @@ export default function ProfileSetupPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 Your cash & savings
               </h1>
-              <p className="text-gray-400">Bank accounts, CDs, and liquid savings</p>
+              <p className="text-gray-400">Label each account so it shows up clearly in Maven</p>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Checking Account(s) Total</label>
-                <CurrencyInput value={data.checkingBalance} onChange={(v) => update({ checkingBalance: v })} />
+            <div className="space-y-6">
+              {/* Checking Account */}
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="font-medium text-white mb-3">💳 Checking Account</p>
+                <div className="space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
+                      <input
+                        type="text"
+                        value={data.checkingAccountName}
+                        onChange={(e) => update({ checkingAccountName: e.target.value })}
+                        placeholder="e.g., Chase Checking"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
+                      <input
+                        type="text"
+                        value={data.checkingInstitution}
+                        onChange={(e) => update({ checkingInstitution: e.target.value })}
+                        placeholder="e.g., Chase, Wells Fargo"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
+                    <CurrencyInput value={data.checkingBalance} onChange={(v) => update({ checkingBalance: v })} />
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Savings Account(s) Total</label>
-                <CurrencyInput value={data.savingsBalance} onChange={(v) => update({ savingsBalance: v })} />
+              {/* Savings Account */}
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="font-medium text-white mb-3">🏦 Savings Account</p>
+                <div className="space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
+                      <input
+                        type="text"
+                        value={data.savingsAccountName}
+                        onChange={(e) => update({ savingsAccountName: e.target.value })}
+                        placeholder="e.g., Marcus HYSA"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
+                      <input
+                        type="text"
+                        value={data.savingsInstitution}
+                        onChange={(e) => update({ savingsInstitution: e.target.value })}
+                        placeholder="e.g., Marcus, Ally"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
+                    <CurrencyInput value={data.savingsBalance} onChange={(v) => update({ savingsBalance: v })} />
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Money Market / CDs</label>
-                <CurrencyInput value={data.mmBalance} onChange={(v) => update({ mmBalance: v })} placeholder="0" />
+              {/* Money Market */}
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="font-medium text-white mb-3">💵 Money Market / CDs</p>
+                <div className="space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Account Name</label>
+                      <input
+                        type="text"
+                        value={data.mmAccountName}
+                        onChange={(e) => update({ mmAccountName: e.target.value })}
+                        placeholder="e.g., Fidelity Money Market"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Institution</label>
+                      <input
+                        type="text"
+                        value={data.mmInstitution}
+                        onChange={(e) => update({ mmInstitution: e.target.value })}
+                        placeholder="e.g., Fidelity, Vanguard"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-indigo-500 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Balance</label>
+                    <CurrencyInput value={data.mmBalance} onChange={(v) => update({ mmBalance: v })} placeholder="0" />
+                  </div>
+                </div>
               </div>
               
               <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
@@ -1683,7 +1859,10 @@ export default function ProfileSetupPage() {
           
           {step < totalSteps ? (
             <button
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                completeStep(step);
+                setStep(step + 1);
+              }}
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition"
             >
               Continue →

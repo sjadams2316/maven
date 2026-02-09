@@ -366,6 +366,71 @@ const TOOLS = [
       },
       required: ["symbol", "quantity", "currentPrice"]
     }
+  },
+  {
+    name: "update_account_balance",
+    description: "Update the balance of a cash, checking, savings, or money market account. Use this when the user says things like 'I moved $X from checking to savings' or 'my checking balance is now $X' or 'I transferred money'. Also use when they mention funding an account.",
+    input_schema: {
+      type: "object",
+      properties: {
+        accountType: {
+          type: "string",
+          enum: ["checking", "savings", "money_market", "brokerage", "401k", "ira", "roth_ira", "hsa", "529"],
+          description: "Type of account to update"
+        },
+        accountName: {
+          type: "string",
+          description: "Name of the account (e.g., 'Chase Checking', 'Marcus HYSA')"
+        },
+        institution: {
+          type: "string", 
+          description: "Bank or institution name if known"
+        },
+        newBalance: {
+          type: "number",
+          description: "New balance to set (overrides current balance)"
+        },
+        adjustment: {
+          type: "number",
+          description: "Amount to add (positive) or subtract (negative) from current balance"
+        },
+        note: {
+          type: "string",
+          description: "Reason for the change (e.g., 'transferred to brokerage', 'paycheck deposit')"
+        }
+      },
+      required: ["accountType"]
+    }
+  },
+  {
+    name: "transfer_funds",
+    description: "Record a transfer between accounts. Use this when user says 'I moved $X from A to B' or 'transferred money from checking to brokerage'. This updates both accounts at once.",
+    input_schema: {
+      type: "object",
+      properties: {
+        fromAccount: {
+          type: "string",
+          description: "Account money is coming FROM"
+        },
+        toAccount: {
+          type: "string",
+          description: "Account money is going TO"
+        },
+        amount: {
+          type: "number",
+          description: "Amount transferred"
+        },
+        purchaseTicker: {
+          type: "string",
+          description: "If they bought a security with the transferred funds, the ticker symbol"
+        },
+        purchaseShares: {
+          type: "number",
+          description: "Number of shares purchased if applicable"
+        }
+      },
+      required: ["fromAccount", "toAccount", "amount"]
+    }
   }
 ];
 
@@ -790,6 +855,90 @@ async function executeTool(name: string, input: any, userContext: UserContext, c
       } catch (e) {
         console.error('preview_sale error:', e);
         return JSON.stringify({ status: 'error', message: `Failed to preview sale: ${e}` });
+      }
+    
+    case 'update_account_balance':
+      try {
+        const { accountType, accountName, institution, newBalance, adjustment, note } = input;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        
+        const res = await fetch(`${baseUrl}/api/user/account-balance`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-clerk-user-id': clerkId || ''
+          },
+          body: JSON.stringify({
+            accountType,
+            accountName,
+            institution,
+            newBalance,
+            adjustment,
+            note
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          return JSON.stringify({ status: 'error', message: data.error || 'Failed to update account balance' });
+        }
+        
+        return JSON.stringify({
+          status: 'success',
+          message: data.message || `Updated ${accountName || accountType} balance`,
+          account: data.account,
+          previousBalance: data.previousBalance,
+          newBalance: data.newBalance,
+          change: data.change
+        });
+      } catch (e) {
+        console.error('update_account_balance error:', e);
+        return JSON.stringify({ status: 'error', message: `Failed to update balance: ${e}` });
+      }
+    
+    case 'transfer_funds':
+      try {
+        const { fromAccount, toAccount, amount, purchaseTicker, purchaseShares } = input;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        
+        const res = await fetch(`${baseUrl}/api/user/transfer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-clerk-user-id': clerkId || ''
+          },
+          body: JSON.stringify({
+            fromAccount,
+            toAccount,
+            amount,
+            purchaseTicker,
+            purchaseShares
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          return JSON.stringify({ status: 'error', message: data.error || 'Failed to record transfer' });
+        }
+        
+        let message = `Transferred $${amount.toLocaleString()} from ${fromAccount} to ${toAccount}`;
+        if (purchaseTicker) {
+          message += ` and bought ${purchaseShares || 'shares of'} ${purchaseTicker}`;
+        }
+        
+        return JSON.stringify({
+          status: 'success',
+          message,
+          transfer: data.transfer,
+          fromBalance: data.fromBalance,
+          toBalance: data.toBalance,
+          purchase: data.purchase
+        });
+      } catch (e) {
+        console.error('transfer_funds error:', e);
+        return JSON.stringify({ status: 'error', message: `Failed to record transfer: ${e}` });
       }
       
     default:
