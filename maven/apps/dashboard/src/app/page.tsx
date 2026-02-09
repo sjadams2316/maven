@@ -40,14 +40,20 @@ export default function LandingPage() {
     fetch('/api/market-data')
       .then(res => res.json())
       .then(data => {
+        console.log('[Market Data] Raw API response:', JSON.stringify(data, null, 2));
+        
         // Transform API response to expected format
         const stocks: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.stocks || [];
         const crypto: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.crypto || [];
+        
+        console.log('[Market Data] Stocks array:', stocks);
         
         // Map stocks array to indices object - use explicit property access
         const spyData = stocks.find(s => s.symbol === 'SPY');
         const qqqData = stocks.find(s => s.symbol === 'QQQ');
         const diaData = stocks.find(s => s.symbol === 'DIA');
+        
+        console.log('[Market Data] SPY data:', spyData);
         
         // Map crypto array to object
         const btcData = crypto.find(c => c.symbol === 'BTC');
@@ -64,6 +70,8 @@ export default function LandingPage() {
           },
           timestamp: data.timestamp,
         };
+        
+        console.log('[Market Data] Setting state:', JSON.stringify(marketState, null, 2));
         
         setMarketData(marketState);
       })
