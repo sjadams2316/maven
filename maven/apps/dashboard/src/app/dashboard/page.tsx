@@ -557,9 +557,10 @@ export default function Dashboard() {
                   const incomeMatch = incomeStr.match(/\$?([\d,]+)/);
                   const estimatedIncome = incomeMatch ? parseInt(incomeMatch[1].replace(/,/g, '')) : 100000;
                   
-                  // Show if cash is >15% of total assets OR cash accounts > 6 months of income
-                  const highCashPercent = cashPercent > 15;
-                  const highCashAbsolute = accountCash > (estimatedIncome / 2); // 6 months
+                  // Show if cash is >8% of total assets OR cash accounts > 3 months of income
+                  // Lower thresholds catch more people who might benefit from cash optimization
+                  const highCashPercent = cashPercent > 8;
+                  const highCashAbsolute = accountCash > (estimatedIncome / 4); // 3 months
                   
                   if ((highCashPercent || highCashAbsolute) && totalCash > 10000) {
                     return (
