@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import { openOracle } from '@/lib/open-oracle';
 import ProfileCompletionIndicator from './ProfileCompletionIndicator';
+import DataHealthIndicator from './DataHealthIndicator';
 
 interface HeaderProps {
   profile?: {
@@ -67,6 +68,11 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
               )}
             </div>
           )}
+
+          {/* Data Health Indicator - only shows when degraded/down */}
+          <div className="hidden md:block">
+            <DataHealthIndicator compact={false} />
+          </div>
 
           {/* Navigation */}
           <nav className="hidden sm:flex items-center gap-6">
@@ -149,7 +155,11 @@ export default function Header({ profile, showFinancialSummary = true }: HeaderP
         </div>
 
         {/* Mobile Navigation */}
-        <nav className="sm:hidden flex items-center gap-4 mt-3 overflow-x-auto pb-1">
+        <nav className="sm:hidden flex items-center justify-between gap-4 mt-3 overflow-x-auto pb-1">
+          {/* Data Health Indicator - mobile (compact) */}
+          <DataHealthIndicator compact={true} />
+        </nav>
+        <nav className="sm:hidden flex items-center gap-4 overflow-x-auto pb-1">
           {navLinks.map((link) => (
             link.href === '/oracle' ? (
               <button

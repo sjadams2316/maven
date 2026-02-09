@@ -10,21 +10,19 @@
 - None currently
 
 ### Ready
-1. **Fee Analyzer** — P0
-   - Calculate total expense ratios
-   - Show annual fee drag in dollars
-   - Suggest lower-cost alternatives
-
-2. **Overlap Detection** — P0
+1. **Overlap Detection** — P0
    - Identify overlapping holdings ("VTI and VOO are 99% overlapping")
    - Suggest consolidation opportunities
+
+2. **Tax Efficiency Score** — P0
+   - Combine fee analysis with tax-efficient location suggestions
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 — Do Next
-- [ ] Fee analyzer
+- [x] Fee analyzer ✅
 - [ ] Overlap detection ("VTI and VOO are 99% overlapping")
 - [ ] Tax efficiency score
 - [ ] Factor loading accuracy improvements (real data integration)
@@ -52,6 +50,14 @@
 ## Completed
 
 ### 2026-02-09
+- [x] **Fee Analyzer** — Full implementation
+  - Expense ratio data for 100+ common ETFs/mutual funds
+  - Annual fees displayed in real dollars
+  - 30-year fee drag calculations
+  - "Switch & Save" recommendations with cheaper alternatives
+  - Grading system (A-F) for expense ratios
+  - Integrated into Portfolio Lab Analysis tab
+  - Code: `FeeAnalyzer.tsx` + fee utilities in `portfolio-utils.ts`
 - [x] **Factor Exposure Analysis** — Full implementation
   - Market Beta, Size, Value, Momentum, Quality factors
   - Visual bar representation with benchmark comparison

@@ -652,3 +652,408 @@ export function getBenchmarkFactorExposures(benchmark: 'sp500' | '6040' | 'total
       return { marketBeta: 1.0, size: 0.0, value: 0.0, momentum: 0.0, quality: 0.1 };
   }
 }
+
+// ===========================================
+// FEE ANALYSIS
+// ===========================================
+
+/**
+ * Expense ratio data for common ETFs and mutual funds
+ * Values are decimal percentages (e.g., 0.03 = 0.03% = 3 basis points)
+ * Data sourced from fund prospectuses as of 2024
+ */
+export interface FundFeeData {
+  expenseRatio: number;  // Annual expense ratio as decimal (0.0003 = 0.03%)
+  category: 'etf' | 'index-fund' | 'active-fund' | 'crypto' | 'cash' | 'stock';
+  cheaperAlternative?: string;  // Suggested lower-cost alternative
+  alternativeExpenseRatio?: number;
+}
+
+const FUND_EXPENSE_DATA: Record<string, FundFeeData> = {
+  // Ultra-Low Cost Index ETFs (0.03% - 0.05%)
+  'VTI': { expenseRatio: 0.0003, category: 'etf' },
+  'VOO': { expenseRatio: 0.0003, category: 'etf' },
+  'VXUS': { expenseRatio: 0.0007, category: 'etf' },
+  'VEA': { expenseRatio: 0.0005, category: 'etf' },
+  'VWO': { expenseRatio: 0.0008, category: 'etf' },
+  'BND': { expenseRatio: 0.0003, category: 'etf' },
+  'VNQ': { expenseRatio: 0.0012, category: 'etf' },
+  'VUG': { expenseRatio: 0.0004, category: 'etf' },
+  'VTV': { expenseRatio: 0.0004, category: 'etf' },
+  'VB': { expenseRatio: 0.0005, category: 'etf' },
+  'VYM': { expenseRatio: 0.0006, category: 'etf' },
+  
+  // Vanguard Admiral Shares (Index Mutual Funds)
+  'VFIAX': { expenseRatio: 0.0004, category: 'index-fund' },
+  'VTSAX': { expenseRatio: 0.0004, category: 'index-fund' },
+  'VTIAX': { expenseRatio: 0.0011, category: 'index-fund' },
+  'VBTLX': { expenseRatio: 0.0005, category: 'index-fund' },
+  
+  // iShares Low-Cost ETFs
+  'IVV': { expenseRatio: 0.0003, category: 'etf' },
+  'ITOT': { expenseRatio: 0.0003, category: 'etf' },
+  'IEFA': { expenseRatio: 0.0007, category: 'etf' },
+  'IEMG': { expenseRatio: 0.0009, category: 'etf' },
+  'AGG': { expenseRatio: 0.0003, category: 'etf' },
+  'IWM': { expenseRatio: 0.0019, category: 'etf' },
+  'IJR': { expenseRatio: 0.0006, category: 'etf' },
+  'EFA': { expenseRatio: 0.0032, category: 'etf', cheaperAlternative: 'VEA', alternativeExpenseRatio: 0.0005 },
+  'EEM': { expenseRatio: 0.0068, category: 'etf', cheaperAlternative: 'VWO', alternativeExpenseRatio: 0.0008 },
+  
+  // SPDR ETFs
+  'SPY': { expenseRatio: 0.0009, category: 'etf', cheaperAlternative: 'VOO', alternativeExpenseRatio: 0.0003 },
+  
+  // Schwab Low-Cost ETFs
+  'SCHB': { expenseRatio: 0.0003, category: 'etf' },
+  'SCHF': { expenseRatio: 0.0006, category: 'etf' },
+  'SCHD': { expenseRatio: 0.0006, category: 'etf' },
+  'SCHH': { expenseRatio: 0.0007, category: 'etf' },
+  'SCHA': { expenseRatio: 0.0004, category: 'etf' },
+  
+  // Fidelity Zero Funds (0% expense ratio!)
+  'FZROX': { expenseRatio: 0.0, category: 'index-fund' },
+  'FZILX': { expenseRatio: 0.0, category: 'index-fund' },
+  'FNILX': { expenseRatio: 0.0, category: 'index-fund' },
+  
+  // Fidelity Low-Cost
+  'FXAIX': { expenseRatio: 0.00015, category: 'index-fund' },
+  'FSKAX': { expenseRatio: 0.00015, category: 'index-fund' },
+  'FXNAX': { expenseRatio: 0.00025, category: 'index-fund' },
+  
+  // Popular but Higher-Cost ETFs
+  'QQQ': { expenseRatio: 0.002, category: 'etf', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'ARKK': { expenseRatio: 0.0075, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'ARKW': { expenseRatio: 0.0075, category: 'active-fund', cheaperAlternative: 'VGT', alternativeExpenseRatio: 0.001 },
+  'ARKG': { expenseRatio: 0.0075, category: 'active-fund' },
+  'VGT': { expenseRatio: 0.001, category: 'etf' },
+  'SMH': { expenseRatio: 0.0035, category: 'etf' },
+  'SOXX': { expenseRatio: 0.0035, category: 'etf' },
+  'XLK': { expenseRatio: 0.0009, category: 'etf' },
+  
+  // Bond ETFs
+  'TLT': { expenseRatio: 0.0015, category: 'etf' },
+  'IEF': { expenseRatio: 0.0015, category: 'etf' },
+  'SHY': { expenseRatio: 0.0015, category: 'etf' },
+  'TIP': { expenseRatio: 0.0019, category: 'etf' },
+  'LQD': { expenseRatio: 0.0014, category: 'etf' },
+  'HYG': { expenseRatio: 0.0048, category: 'etf' },
+  'MUB': { expenseRatio: 0.0007, category: 'etf' },
+  'VCIT': { expenseRatio: 0.0004, category: 'etf' },
+  
+  // Gold ETFs
+  'GLD': { expenseRatio: 0.004, category: 'etf', cheaperAlternative: 'IAU', alternativeExpenseRatio: 0.0025 },
+  'IAU': { expenseRatio: 0.0025, category: 'etf' },
+  'SGOL': { expenseRatio: 0.0017, category: 'etf' },
+  'GDX': { expenseRatio: 0.0051, category: 'etf' },
+  
+  // REIT ETFs
+  'IYR': { expenseRatio: 0.0039, category: 'etf', cheaperAlternative: 'VNQ', alternativeExpenseRatio: 0.0012 },
+  'XLRE': { expenseRatio: 0.0009, category: 'etf' },
+  
+  // Crypto ETFs (higher fees due to custody/structure)
+  'IBIT': { expenseRatio: 0.0025, category: 'crypto' },
+  'FBTC': { expenseRatio: 0.0025, category: 'crypto' },
+  'GBTC': { expenseRatio: 0.015, category: 'crypto', cheaperAlternative: 'IBIT', alternativeExpenseRatio: 0.0025 },
+  'BITO': { expenseRatio: 0.0095, category: 'crypto', cheaperAlternative: 'IBIT', alternativeExpenseRatio: 0.0025 },
+  'ETHE': { expenseRatio: 0.025, category: 'crypto' },
+  
+  // EXPENSIVE ACTIVE MUTUAL FUNDS (The Fee Traps)
+  // American Funds (sold through advisors with load fees)
+  'AGTHX': { expenseRatio: 0.0064, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'AIVSX': { expenseRatio: 0.0057, category: 'active-fund', cheaperAlternative: 'VTI', alternativeExpenseRatio: 0.0003 },
+  'ANWFX': { expenseRatio: 0.0075, category: 'active-fund', cheaperAlternative: 'VT', alternativeExpenseRatio: 0.0007 },
+  'AMRMX': { expenseRatio: 0.0059, category: 'active-fund', cheaperAlternative: 'VTI', alternativeExpenseRatio: 0.0003 },
+  'ANCFX': { expenseRatio: 0.0059, category: 'active-fund', cheaperAlternative: 'VTI', alternativeExpenseRatio: 0.0003 },
+  'ABALX': { expenseRatio: 0.0058, category: 'active-fund', cheaperAlternative: 'VBIAX', alternativeExpenseRatio: 0.0007 },
+  'CAIBX': { expenseRatio: 0.0058, category: 'active-fund', cheaperAlternative: 'VYM', alternativeExpenseRatio: 0.0006 },
+  'CWGIX': { expenseRatio: 0.0077, category: 'active-fund', cheaperAlternative: 'VT', alternativeExpenseRatio: 0.0007 },
+  'SMCWX': { expenseRatio: 0.0067, category: 'active-fund', cheaperAlternative: 'VB', alternativeExpenseRatio: 0.0005 },
+  
+  // Fidelity Active Funds
+  'FMAGX': { expenseRatio: 0.0052, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'FCNTX': { expenseRatio: 0.0085, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'FBGRX': { expenseRatio: 0.0079, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  
+  // T. Rowe Price
+  'PRGFX': { expenseRatio: 0.0065, category: 'active-fund', cheaperAlternative: 'VUG', alternativeExpenseRatio: 0.0004 },
+  'PRFDX': { expenseRatio: 0.0065, category: 'active-fund', cheaperAlternative: 'VYM', alternativeExpenseRatio: 0.0006 },
+  
+  // Target Date Funds (varies widely)
+  'VTHRX': { expenseRatio: 0.0013, category: 'index-fund' }, // Vanguard Target 2030
+  'VTTSX': { expenseRatio: 0.0013, category: 'index-fund' }, // Vanguard Target 2060
+  'VFIFX': { expenseRatio: 0.0013, category: 'index-fund' }, // Vanguard Target 2050
+  'FFFHX': { expenseRatio: 0.0068, category: 'active-fund', cheaperAlternative: 'VTHRX', alternativeExpenseRatio: 0.0013 }, // Fidelity Freedom 2030
+  'TRRGX': { expenseRatio: 0.0056, category: 'active-fund', cheaperAlternative: 'VTHRX', alternativeExpenseRatio: 0.0013 }, // T Rowe Target 2030
+  
+  // Money Market / Cash (no alternative needed)
+  'SPAXX': { expenseRatio: 0.0042, category: 'cash' },
+  'VMFXX': { expenseRatio: 0.0011, category: 'cash' },
+  'SWVXX': { expenseRatio: 0.0034, category: 'cash' },
+  'FDRXX': { expenseRatio: 0.0042, category: 'cash' },
+  'CASH': { expenseRatio: 0.0, category: 'cash' },
+  
+  // Individual Stocks (no expense ratio)
+  'AAPL': { expenseRatio: 0.0, category: 'stock' },
+  'MSFT': { expenseRatio: 0.0, category: 'stock' },
+  'GOOGL': { expenseRatio: 0.0, category: 'stock' },
+  'GOOG': { expenseRatio: 0.0, category: 'stock' },
+  'AMZN': { expenseRatio: 0.0, category: 'stock' },
+  'NVDA': { expenseRatio: 0.0, category: 'stock' },
+  'TSLA': { expenseRatio: 0.0, category: 'stock' },
+  'META': { expenseRatio: 0.0, category: 'stock' },
+  'BRK.B': { expenseRatio: 0.0, category: 'stock' },
+  'JPM': { expenseRatio: 0.0, category: 'stock' },
+  'JNJ': { expenseRatio: 0.0, category: 'stock' },
+  'V': { expenseRatio: 0.0, category: 'stock' },
+  'PG': { expenseRatio: 0.0, category: 'stock' },
+  'UNH': { expenseRatio: 0.0, category: 'stock' },
+  'HD': { expenseRatio: 0.0, category: 'stock' },
+  'MA': { expenseRatio: 0.0, category: 'stock' },
+  'DIS': { expenseRatio: 0.0, category: 'stock' },
+  'NFLX': { expenseRatio: 0.0, category: 'stock' },
+  'AMD': { expenseRatio: 0.0, category: 'stock' },
+  'INTC': { expenseRatio: 0.0, category: 'stock' },
+  'CRM': { expenseRatio: 0.0, category: 'stock' },
+  'ORCL': { expenseRatio: 0.0, category: 'stock' },
+  'ADBE': { expenseRatio: 0.0, category: 'stock' },
+  'PYPL': { expenseRatio: 0.0, category: 'stock' },
+  'SQ': { expenseRatio: 0.0, category: 'stock' },
+  'COIN': { expenseRatio: 0.0, category: 'stock' },
+  'PLTR': { expenseRatio: 0.0, category: 'stock' },
+  'SNOW': { expenseRatio: 0.0, category: 'stock' },
+  'XOM': { expenseRatio: 0.0, category: 'stock' },
+  'CVX': { expenseRatio: 0.0, category: 'stock' },
+  'BAC': { expenseRatio: 0.0, category: 'stock' },
+  'WFC': { expenseRatio: 0.0, category: 'stock' },
+  'GS': { expenseRatio: 0.0, category: 'stock' },
+  'PFE': { expenseRatio: 0.0, category: 'stock' },
+  'ABBV': { expenseRatio: 0.0, category: 'stock' },
+  'KO': { expenseRatio: 0.0, category: 'stock' },
+  'PEP': { expenseRatio: 0.0, category: 'stock' },
+  'WMT': { expenseRatio: 0.0, category: 'stock' },
+  'COST': { expenseRatio: 0.0, category: 'stock' },
+  'O': { expenseRatio: 0.0, category: 'stock' },  // Realty Income REIT
+  'SPG': { expenseRatio: 0.0, category: 'stock' }, // Simon Property REIT
+  
+  // Crypto miners (stocks)
+  'CIFR': { expenseRatio: 0.0, category: 'stock' },
+  'IREN': { expenseRatio: 0.0, category: 'stock' },
+  'MARA': { expenseRatio: 0.0, category: 'stock' },
+  'RIOT': { expenseRatio: 0.0, category: 'stock' },
+  'CLSK': { expenseRatio: 0.0, category: 'stock' },
+  'HUT': { expenseRatio: 0.0, category: 'stock' },
+  'BITF': { expenseRatio: 0.0, category: 'stock' },
+  
+  // Direct crypto (no expense ratio, but track separately)
+  'BTC': { expenseRatio: 0.0, category: 'crypto' },
+  'ETH': { expenseRatio: 0.0, category: 'crypto' },
+  'SOL': { expenseRatio: 0.0, category: 'crypto' },
+  'TAO': { expenseRatio: 0.0, category: 'crypto' },
+  'AVAX': { expenseRatio: 0.0, category: 'crypto' },
+  'LINK': { expenseRatio: 0.0, category: 'crypto' },
+  'DOT': { expenseRatio: 0.0, category: 'crypto' },
+  'ADA': { expenseRatio: 0.0, category: 'crypto' },
+  'XRP': { expenseRatio: 0.0, category: 'crypto' },
+  'DOGE': { expenseRatio: 0.0, category: 'crypto' },
+};
+
+/**
+ * Get expense ratio for a ticker
+ * Returns null if unknown (UI should handle gracefully)
+ */
+export function getExpenseRatio(ticker: string): FundFeeData | null {
+  const upper = ticker.toUpperCase();
+  return FUND_EXPENSE_DATA[upper] || null;
+}
+
+/**
+ * Estimate expense ratio for unknown funds based on category heuristics
+ */
+export function estimateExpenseRatio(ticker: string): number {
+  const upper = ticker.toUpperCase();
+  
+  // Check known funds first
+  const known = FUND_EXPENSE_DATA[upper];
+  if (known) return known.expenseRatio;
+  
+  // Heuristics for unknown tickers
+  // Most single stocks have no ER
+  if (/^[A-Z]{1,5}$/.test(upper) && !upper.includes('X')) {
+    return 0; // Likely a stock
+  }
+  
+  // If it ends in X, likely a mutual fund (higher fees)
+  if (upper.endsWith('X')) {
+    return 0.005; // Assume 0.50% for unknown mutual funds
+  }
+  
+  // Default assumption for unknown ETFs
+  return 0.002; // 0.20%
+}
+
+/**
+ * Fee analysis result for a single holding
+ */
+export interface HoldingFeeAnalysis {
+  ticker: string;
+  name: string;
+  value: number;
+  expenseRatio: number | null;
+  annualFee: number;
+  thirtyYearDrag: number;
+  category: string;
+  cheaperAlternative?: string;
+  alternativeExpenseRatio?: number;
+  potentialSavings?: number;  // Annual savings if switched to alternative
+}
+
+/**
+ * Portfolio-wide fee analysis
+ */
+export interface PortfolioFeeAnalysis {
+  totalValue: number;
+  totalAnnualFees: number;
+  weightedExpenseRatio: number;  // As decimal
+  thirtyYearFeeDrag: number;
+  holdingsByFee: HoldingFeeAnalysis[];  // Sorted by annual fee descending
+  topExpensiveHoldings: HoldingFeeAnalysis[];  // Top 5 by fee
+  potentialAnnualSavings: number;
+  optimizedExpenseRatio: number;
+  savingsOpportunities: {
+    ticker: string;
+    currentExpenseRatio: number;
+    alternativeTicker: string;
+    alternativeExpenseRatio: number;
+    value: number;
+    annualSavings: number;
+  }[];
+}
+
+/**
+ * Calculate fee drag over time with compounding
+ * Shows how much fees cost you including opportunity cost
+ */
+function calculateFeeDrag(value: number, expenseRatio: number, years: number, expectedReturn: number = 0.07): number {
+  // Calculate portfolio value with and without fees
+  const valueWithFees = value * Math.pow(1 + expectedReturn - expenseRatio, years);
+  const valueWithoutFees = value * Math.pow(1 + expectedReturn, years);
+  return valueWithoutFees - valueWithFees;
+}
+
+/**
+ * Analyze fees for entire portfolio
+ */
+export function analyzePortfolioFees(
+  holdings: (Holding & { accountName?: string; accountType?: string })[]
+): PortfolioFeeAnalysis {
+  const holdingAnalyses: HoldingFeeAnalysis[] = [];
+  let totalValue = 0;
+  let totalWeightedER = 0;
+  let totalAnnualFees = 0;
+  let potentialAnnualSavings = 0;
+  let optimizedTotalWeightedER = 0;
+  const savingsOpportunities: PortfolioFeeAnalysis['savingsOpportunities'] = [];
+  
+  holdings.forEach(h => {
+    const value = h.currentValue || (h.shares * (h.currentPrice || 0));
+    if (value <= 0) return;
+    
+    totalValue += value;
+    
+    const feeData = getExpenseRatio(h.ticker);
+    const expenseRatio = feeData?.expenseRatio ?? estimateExpenseRatio(h.ticker);
+    const annualFee = value * expenseRatio;
+    const thirtyYearDrag = calculateFeeDrag(value, expenseRatio, 30);
+    
+    totalWeightedER += expenseRatio * value;
+    totalAnnualFees += annualFee;
+    
+    // Calculate savings opportunity if there's a cheaper alternative
+    let savings = 0;
+    let optimizedER = expenseRatio;
+    if (feeData?.cheaperAlternative && feeData.alternativeExpenseRatio !== undefined) {
+      savings = value * (expenseRatio - feeData.alternativeExpenseRatio);
+      optimizedER = feeData.alternativeExpenseRatio;
+      
+      if (savings > 10) { // Only track if meaningful (> $10/year)
+        savingsOpportunities.push({
+          ticker: h.ticker,
+          currentExpenseRatio: expenseRatio,
+          alternativeTicker: feeData.cheaperAlternative,
+          alternativeExpenseRatio: feeData.alternativeExpenseRatio,
+          value,
+          annualSavings: savings,
+        });
+      }
+    }
+    
+    potentialAnnualSavings += savings;
+    optimizedTotalWeightedER += optimizedER * value;
+    
+    holdingAnalyses.push({
+      ticker: h.ticker,
+      name: h.name || h.ticker,
+      value,
+      expenseRatio: feeData ? feeData.expenseRatio : null,
+      annualFee,
+      thirtyYearDrag,
+      category: feeData?.category || 'unknown',
+      cheaperAlternative: feeData?.cheaperAlternative,
+      alternativeExpenseRatio: feeData?.alternativeExpenseRatio,
+      potentialSavings: savings > 0 ? savings : undefined,
+    });
+  });
+  
+  // Sort by annual fee descending
+  holdingAnalyses.sort((a, b) => b.annualFee - a.annualFee);
+  
+  // Sort savings opportunities by annual savings descending
+  savingsOpportunities.sort((a, b) => b.annualSavings - a.annualSavings);
+  
+  const weightedExpenseRatio = totalValue > 0 ? totalWeightedER / totalValue : 0;
+  const optimizedExpenseRatio = totalValue > 0 ? optimizedTotalWeightedER / totalValue : 0;
+  const thirtyYearFeeDrag = calculateFeeDrag(totalValue, weightedExpenseRatio, 30);
+  
+  return {
+    totalValue,
+    totalAnnualFees,
+    weightedExpenseRatio,
+    thirtyYearFeeDrag,
+    holdingsByFee: holdingAnalyses,
+    topExpensiveHoldings: holdingAnalyses.filter(h => h.annualFee > 0).slice(0, 5),
+    potentialAnnualSavings,
+    optimizedExpenseRatio,
+    savingsOpportunities,
+  };
+}
+
+/**
+ * Get a grade for expense ratio (A-F)
+ */
+export function getExpenseRatioGrade(expenseRatio: number): { grade: string; label: string; color: string } {
+  if (expenseRatio === 0) return { grade: 'A+', label: 'Zero Cost', color: 'text-emerald-400' };
+  if (expenseRatio <= 0.0005) return { grade: 'A', label: 'Excellent', color: 'text-emerald-400' };
+  if (expenseRatio <= 0.001) return { grade: 'B', label: 'Good', color: 'text-green-400' };
+  if (expenseRatio <= 0.003) return { grade: 'C', label: 'Average', color: 'text-yellow-400' };
+  if (expenseRatio <= 0.006) return { grade: 'D', label: 'Expensive', color: 'text-orange-400' };
+  return { grade: 'F', label: 'Very Expensive', color: 'text-red-400' };
+}
+
+/**
+ * Format expense ratio for display
+ */
+export function formatExpenseRatio(expenseRatio: number): string {
+  if (expenseRatio === 0) return '0.00%';
+  if (expenseRatio < 0.0001) return '<0.01%';
+  return `${(expenseRatio * 100).toFixed(2)}%`;
+}
+
+/**
+ * Format basis points
+ */
+export function formatBasisPoints(expenseRatio: number): string {
+  const bps = expenseRatio * 10000;
+  if (bps === 0) return '0 bps';
+  if (bps < 1) return '<1 bp';
+  return `${Math.round(bps)} bps`;
+}

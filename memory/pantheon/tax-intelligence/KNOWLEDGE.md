@@ -17,10 +17,13 @@ Find every dollar of tax savings possible. Make tax optimization accessible to e
 - **Tax-Loss Harvesting Scanner** — Identifies holdings with losses, suggests swaps
 - **Wash Sale Detection** — Flags potential wash sale violations
 - **Tax Alpha Counter** — Shows potential savings on dashboard
+- **Fee Analyzer** — Shows expense ratios, annual fees, 30-year drag, and cheaper alternatives
 
 ### Code Location
 - Tax harvesting page: `apps/dashboard/src/app/tax-harvesting/page.tsx`
 - Tax alpha API: `apps/dashboard/src/app/api/tax-alpha/`
+- Fee Analyzer component: `apps/dashboard/src/app/components/FeeAnalyzer.tsx`
+- Expense ratio utilities: `apps/dashboard/src/lib/portfolio-utils.ts` (bottom of file)
 
 ### Data Sources
 - User holdings from UserProvider
@@ -97,6 +100,29 @@ Selling investments at a loss to offset capital gains, reducing tax liability.
 - December 31, 2026 deadline for pre-2027 investments
 - Rural QOZs get 30% basis step-up
 - File: `memory/research/concentrated-positions/qualified-opportunity-zones.md`
+
+### Fee Analyzer Implementation (2026-02-09)
+**Problem:** Users don't realize how much fund fees cost them. A 1% expense ratio on $500K costs $5,000/year — and $150K+ over 30 years.
+
+**Solution Built:**
+- Expense ratio data for 100+ common ETFs/mutual funds hardcoded
+- Unknown tickers estimated by heuristics (mutual funds ~0.5%, ETFs ~0.2%, stocks = 0%)
+- Shows: annual fees in dollars, weighted expense ratio, 30-year fee drag
+- "Switch & Save" table showing cheaper alternatives (e.g., AGTHX → VUG saves ~$3,200/year on $500K)
+- Grading system (A-F) for expense ratios
+
+**Key Insights:**
+- American Funds (AGTHX, AIVSX, etc.) often 0.5-0.7% — 10x more than Vanguard equivalents
+- GBTC (1.5%) vs IBIT (0.25%) — massive difference for crypto exposure
+- SPY (0.09%) vs VOO (0.03%) — even well-known ETFs have cheaper alternatives
+- Target date funds vary widely: Vanguard 0.13% vs Fidelity Freedom 0.68%
+
+**Data Sources Considered:**
+- FMP API has expense ratios but requires paid tier
+- Yahoo Finance doesn't consistently provide expense ratios
+- Hardcoded data is reliable and fast; can be updated periodically
+
+**Location:** Portfolio Lab → Analysis tab (bottom)
 
 ---
 

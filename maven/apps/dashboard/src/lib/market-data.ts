@@ -1,6 +1,8 @@
 // Market data fetching utilities
 // Uses CoinGecko for crypto, Yahoo Finance for stocks
 
+import { validatePrice, priceCache } from './price-validation';
+
 export interface MarketQuote {
   symbol: string;
   name: string;
@@ -8,6 +10,10 @@ export interface MarketQuote {
   change: number;
   changePercent: number;
   lastUpdated: Date;
+  /** Validation status */
+  validated?: boolean;
+  /** Warning messages from validation */
+  warnings?: string[];
 }
 
 // CoinGecko IDs for crypto
@@ -34,49 +40,115 @@ export async function getCryptoPrices(symbols: string[]): Promise<MarketQuote[]>
       { next: { revalidate: 60 } } // Cache for 60 seconds
     );
     
-    if (!response.ok) throw new Error('CoinGecko API error');
+    if (!response.ok) {
+      console.warn(`[CoinGecko] API error: HTTP ${response.status}`);
+      // Try to return cached prices on error
+      return symbols.map(symbol => {
+        const cached = priceCache.get(symbol);
+        if (cached) {
+          return {
+            symbol: cached.symbol,
+            name: getCryptoName(cached.symbol),
+            price: cached.price,
+            change: cached.change || 0,
+            changePercent: cached.changePercent || 0,
+            lastUpdated: cached.timestamp || new Date(),
+            warnings: ['Using cached data - API unavailable'],
+          };
+        }
+        return createEmptyCryptoQuote(symbol);
+      });
+    }
     
     const data = await response.json();
     
-    return symbols.map(symbol => {
+    const quotes = symbols.map(symbol => {
       const id = CRYPTO_IDS[symbol.toUpperCase()];
       const coinData = data[id];
       
       if (!coinData) {
-        return {
-          symbol,
-          name: symbol,
-          price: 0,
-          change: 0,
-          changePercent: 0,
-          lastUpdated: new Date(),
-        };
+        console.warn(`[CoinGecko] No data for ${symbol}`);
+        return createEmptyCryptoQuote(symbol);
       }
       
       const price = coinData.usd || 0;
       const changePercent = coinData.usd_24h_change || 0;
       const change = price * (changePercent / 100);
+      const timestamp = new Date();
       
-      return {
+      // Validate the price data
+      const validation = validatePrice({
+        symbol: symbol.toUpperCase(),
+        price,
+        changePercent,
+        timestamp,
+      }, 'crypto');
+      
+      if (!validation.isValid) {
+        console.error(`[CoinGecko] Invalid price for ${symbol}:`, validation.errors);
+        return createEmptyCryptoQuote(symbol);
+      }
+      
+      if (validation.warnings.length > 0) {
+        console.warn(`[CoinGecko] Warnings for ${symbol}:`, validation.warnings);
+      }
+      
+      const quote: MarketQuote = {
         symbol: symbol.toUpperCase(),
         name: getCryptoName(symbol),
         price,
         change,
         changePercent,
-        lastUpdated: new Date(),
+        lastUpdated: timestamp,
+        validated: true,
+        warnings: validation.warnings.length > 0 ? validation.warnings : undefined,
       };
+      
+      // Cache the valid price
+      priceCache.set({
+        symbol: quote.symbol,
+        price: quote.price,
+        change: quote.change,
+        changePercent: quote.changePercent,
+        timestamp: quote.lastUpdated,
+      });
+      
+      return quote;
     });
+    
+    return quotes;
   } catch (error) {
-    console.error('Error fetching crypto prices:', error);
-    return symbols.map(s => ({
-      symbol: s,
-      name: getCryptoName(s),
-      price: 0,
-      change: 0,
-      changePercent: 0,
-      lastUpdated: new Date(),
-    }));
+    console.error('[CoinGecko] Error fetching crypto prices:', error);
+    // Return cached prices on error
+    return symbols.map(symbol => {
+      const cached = priceCache.get(symbol);
+      if (cached) {
+        return {
+          symbol: cached.symbol,
+          name: getCryptoName(cached.symbol),
+          price: cached.price,
+          change: cached.change || 0,
+          changePercent: cached.changePercent || 0,
+          lastUpdated: cached.timestamp || new Date(),
+          warnings: ['Using cached data - fetch failed'],
+        };
+      }
+      return createEmptyCryptoQuote(symbol);
+    });
   }
+}
+
+function createEmptyCryptoQuote(symbol: string): MarketQuote {
+  return {
+    symbol: symbol.toUpperCase(),
+    name: getCryptoName(symbol),
+    price: 0,
+    change: 0,
+    changePercent: 0,
+    lastUpdated: new Date(),
+    validated: false,
+    warnings: ['No data available'],
+  };
 }
 
 function getCryptoName(symbol: string): string {
@@ -101,13 +173,30 @@ export async function getStockPrices(symbols: string[]): Promise<MarketQuote[]> 
             { next: { revalidate: 60 } }
           );
           
-          if (!response.ok) throw new Error(`Yahoo API error for ${symbol}`);
+          if (!response.ok) {
+            console.warn(`[Yahoo] API error for ${symbol}: HTTP ${response.status}`);
+            // Try cache on error
+            const cached = priceCache.get(symbol);
+            if (cached) {
+              return {
+                symbol: cached.symbol,
+                name: getStockName(cached.symbol),
+                price: cached.price,
+                change: cached.change || 0,
+                changePercent: cached.changePercent || 0,
+                lastUpdated: cached.timestamp || new Date(),
+                warnings: ['Using cached data - API unavailable'],
+              };
+            }
+            return createEmptyStockQuote(symbol);
+          }
           
           const data = await response.json();
           const result = data.chart?.result?.[0];
           
           if (!result) {
-            return createEmptyQuote(symbol);
+            console.warn(`[Yahoo] No result data for ${symbol}`);
+            return createEmptyStockQuote(symbol);
           }
           
           const meta = result.meta;
@@ -115,37 +204,110 @@ export async function getStockPrices(symbols: string[]): Promise<MarketQuote[]> 
           const previousClose = meta.previousClose || meta.chartPreviousClose || price;
           const change = price - previousClose;
           const changePercent = previousClose ? (change / previousClose) * 100 : 0;
+          const timestamp = new Date();
           
-          return {
+          // Validate the price data
+          const validation = validatePrice({
+            symbol: symbol.toUpperCase(),
+            price,
+            changePercent,
+            timestamp,
+          });
+          
+          if (!validation.isValid) {
+            console.error(`[Yahoo] Invalid price for ${symbol}:`, validation.errors);
+            // Try cache as fallback
+            const cached = priceCache.get(symbol);
+            if (cached && cached.price > 0) {
+              return {
+                symbol: cached.symbol,
+                name: getStockName(cached.symbol),
+                price: cached.price,
+                change: cached.change || 0,
+                changePercent: cached.changePercent || 0,
+                lastUpdated: cached.timestamp || new Date(),
+                warnings: ['Using cached data - invalid response'],
+              };
+            }
+            return createEmptyStockQuote(symbol);
+          }
+          
+          if (validation.warnings.length > 0) {
+            console.warn(`[Yahoo] Warnings for ${symbol}:`, validation.warnings);
+          }
+          
+          const quote: MarketQuote = {
             symbol: symbol.toUpperCase(),
             name: getStockName(symbol),
             price,
             change,
             changePercent,
-            lastUpdated: new Date(),
+            lastUpdated: timestamp,
+            validated: true,
+            warnings: validation.warnings.length > 0 ? validation.warnings : undefined,
           };
+          
+          // Cache the valid price
+          priceCache.set({
+            symbol: quote.symbol,
+            price: quote.price,
+            change: quote.change,
+            changePercent: quote.changePercent,
+            timestamp: quote.lastUpdated,
+          });
+          
+          return quote;
         } catch (error) {
-          console.error(`Error fetching ${symbol}:`, error);
-          return createEmptyQuote(symbol);
+          console.error(`[Yahoo] Error fetching ${symbol}:`, error);
+          // Try cache on error
+          const cached = priceCache.get(symbol);
+          if (cached) {
+            return {
+              symbol: cached.symbol,
+              name: getStockName(cached.symbol),
+              price: cached.price,
+              change: cached.change || 0,
+              changePercent: cached.changePercent || 0,
+              lastUpdated: cached.timestamp || new Date(),
+              warnings: ['Using cached data - fetch failed'],
+            };
+          }
+          return createEmptyStockQuote(symbol);
         }
       })
     );
     
     return quotes;
   } catch (error) {
-    console.error('Error fetching stock prices:', error);
-    return symbols.map(createEmptyQuote);
+    console.error('[Yahoo] Error fetching stock prices:', error);
+    return symbols.map(symbol => {
+      const cached = priceCache.get(symbol);
+      if (cached) {
+        return {
+          symbol: cached.symbol,
+          name: getStockName(cached.symbol),
+          price: cached.price,
+          change: cached.change || 0,
+          changePercent: cached.changePercent || 0,
+          lastUpdated: cached.timestamp || new Date(),
+          warnings: ['Using cached data'],
+        };
+      }
+      return createEmptyStockQuote(symbol);
+    });
   }
 }
 
-function createEmptyQuote(symbol: string): MarketQuote {
+function createEmptyStockQuote(symbol: string): MarketQuote {
   return {
-    symbol,
+    symbol: symbol.toUpperCase(),
     name: getStockName(symbol),
     price: 0,
     change: 0,
     changePercent: 0,
     lastUpdated: new Date(),
+    validated: false,
+    warnings: ['No data available'],
   };
 }
 
