@@ -317,9 +317,9 @@ async function checkFmpHealth(): Promise<DataSourceHealth> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT);
     
-    // Fetch AAPL profile as a health check (using stable API, v3 deprecated Aug 2025)
+    // Fetch AAPL quote as a health check (using stable API, v3 deprecated Aug 2025)
     const response = await fetch(
-      `https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey=${apiKey}`,
+      `https://financialmodelingprep.com/stable/quote?symbol=AAPL&apikey=${apiKey}`,
       {
         signal: controller.signal,
         cache: 'no-store',
@@ -344,8 +344,8 @@ async function checkFmpHealth(): Promise<DataSourceHealth> {
     
     const data = await response.json();
     
-    // Validate response structure
-    const isValid = Array.isArray(data) && data.length > 0 && data[0].symbol === 'AAPL';
+    // Validate response structure - quote returns array with price data
+    const isValid = Array.isArray(data) && data.length > 0 && data[0].symbol === 'AAPL' && typeof data[0].price === 'number';
     
     if (!isValid) {
       return {
