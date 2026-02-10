@@ -15,6 +15,12 @@ import {
   MODEL_PORTFOLIOS,
   type MorningstarFundData,
 } from '@/lib/mock-morningstar-data';
+import {
+  getCMAForTicker,
+  getPortfolioExpectedReturn,
+  CAPITAL_MARKET_ASSUMPTIONS,
+  CMA_KEY_INSIGHT,
+} from '@/lib/capital-market-assumptions';
 
 // Demo portfolio for showcase
 const DEMO_PORTFOLIO = [
@@ -1279,32 +1285,37 @@ export default function PortfolioOptimizerPage() {
                                   <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider">
                                     <span className="text-emerald-400">🔮</span>
                                     <span>Expected (Looking Forward — Capital Market Assumptions)</span>
+                                    <InfoTooltip term="expected-returns">
+                                      <span className="text-gray-500 cursor-help text-xs">ⓘ</span>
+                                    </InfoTooltip>
                                   </div>
                                 </td>
                               </tr>
                               {(() => {
-                                // Capital Market Assumptions (forward-looking expected returns)
-                                // Based on current valuations, not historical performance
-                                const CMA = {
-                                  usLargeCap: 5.5,    // US Large Cap (VOO, QQQ, FXAIX)
-                                  usSmallCap: 6.5,    // US Small Cap
-                                  intlDeveloped: 7.5, // International Developed (VXUS)
-                                  emergingMarkets: 8.5,
-                                  bonds: 4.5,         // BND
-                                  cash: 3.0,
+                                // Use actual CMA library data for expected returns
+                                // Map portfolio tickers to expected returns
+                                const getTickerExpectedReturn = (ticker: string): number => {
+                                  const cma = getCMAForTicker(ticker);
+                                  if (cma) return cma.expectedReturn;
+                                  // Fallback for tickers not in CMA (use US large cap as default)
+                                  return CAPITAL_MARKET_ASSUMPTIONS['us-large-cap'].expectedReturn;
                                 };
                                 
-                                // Current portfolio: 85% US equity, 8% int'l, 5% bonds, 2% other
-                                const currentExpected = (0.85 * CMA.usLargeCap) + (0.08 * CMA.intlDeveloped) + (0.05 * CMA.bonds) + (0.02 * CMA.cash);
+                                // Calculate current portfolio expected return using actual holdings
+                                const currentExpected = portfolio.reduce((sum, h) => {
+                                  const weight = h.value / totalValue;
+                                  const expectedReturn = getTickerExpectedReturn(h.ticker);
+                                  return sum + (expectedReturn * weight);
+                                }, 0);
                                 
-                                // Proposed portfolio based on model
+                                // Proposed portfolio based on model allocations
                                 const model = MODEL_PORTFOLIOS[modelKey].allocation;
                                 const proposedExpected = 
-                                  (model.usEquity / 100 * CMA.usLargeCap) + 
-                                  (model.intlEquity / 100 * CMA.intlDeveloped) + 
-                                  (model.bonds / 100 * CMA.bonds) + 
-                                  (model.cash / 100 * CMA.cash) +
-                                  (model.alternatives / 100 * 6.0); // Alternatives ~6%
+                                  (model.usEquity / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-large-cap'].expectedReturn) + 
+                                  (model.intlEquity / 100 * CAPITAL_MARKET_ASSUMPTIONS['intl-developed'].expectedReturn) + 
+                                  (model.bonds / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-aggregate-bonds'].expectedReturn) + 
+                                  (model.cash / 100 * CAPITAL_MARKET_ASSUMPTIONS['cash'].expectedReturn) +
+                                  (model.alternatives / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-reits'].expectedReturn);
                                 
                                 // Risk-adjusted expected return (expected return / expected volatility)
                                 const currentRiskAdjusted = currentExpected / currentMetrics.volatility;
@@ -1380,6 +1391,100 @@ export default function PortfolioOptimizerPage() {
                                   </tr>
                                 );
                               })}
+                              
+                              {/* Dollar Projections Section */}
+                              <tr>
+                                <td colSpan={4} className="pt-6 pb-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider">
+                                    <span className="text-purple-400">💵</span>
+                                    <span>Projected Value (10yr, $100K starting)</span>
+                                  </div>
+                                </td>
+                              </tr>
+                              {(() => {
+                                // Calculate projected values based on different return assumptions
+                                const startingAmount = 100000;
+                                const years = 10;
+                                
+                                // Get ticker expected return using CMA
+                                const getTickerExpectedReturn = (ticker: string): number => {
+                                  const cma = getCMAForTicker(ticker);
+                                  if (cma) return cma.expectedReturn;
+                                  return CAPITAL_MARKET_ASSUMPTIONS['us-large-cap'].expectedReturn;
+                                };
+                                
+                                // Current portfolio expected return
+                                const currentExpectedReturn = portfolio.reduce((sum, h) => {
+                                  const weight = h.value / totalValue;
+                                  return sum + (getTickerExpectedReturn(h.ticker) * weight);
+                                }, 0);
+                                
+                                // Proposed portfolio expected return based on model
+                                const model = MODEL_PORTFOLIOS[modelKey].allocation;
+                                const proposedExpectedReturn = 
+                                  (model.usEquity / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-large-cap'].expectedReturn) + 
+                                  (model.intlEquity / 100 * CAPITAL_MARKET_ASSUMPTIONS['intl-developed'].expectedReturn) + 
+                                  (model.bonds / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-aggregate-bonds'].expectedReturn) + 
+                                  (model.cash / 100 * CAPITAL_MARKET_ASSUMPTIONS['cash'].expectedReturn) +
+                                  (model.alternatives / 100 * CAPITAL_MARKET_ASSUMPTIONS['us-reits'].expectedReturn);
+                                
+                                // Compound growth calculation
+                                const compound = (rate: number) => startingAmount * Math.pow(1 + rate / 100, years);
+                                
+                                // Historical projections (using historical returns)
+                                const currentHistorical = compound(currentMetrics.tenYear);
+                                const proposedHistorical = compound(proposedMetrics.tenYear);
+                                
+                                // Expected projections (using CMA forward-looking returns)
+                                const currentExpected = compound(currentExpectedReturn);
+                                const proposedExpected = compound(proposedExpectedReturn);
+                                
+                                return [
+                                  { 
+                                    label: 'Based on historical returns', 
+                                    current: currentHistorical, 
+                                    proposed: proposedHistorical, 
+                                    isExpected: false 
+                                  },
+                                  { 
+                                    label: 'Based on expected returns (CMA)', 
+                                    current: currentExpected, 
+                                    proposed: proposedExpected, 
+                                    isExpected: true 
+                                  },
+                                ].map((row, i) => {
+                                  const diff = row.proposed - row.current;
+                                  // For expected returns, improvement means proposed is better
+                                  // For historical, it might show a "loss" but that's expected due to diversification
+                                  const isImprovement = row.isExpected ? diff > 0 : diff > 0;
+                                  const isTradeOff = row.isExpected ? diff < 0 : diff < 0;
+                                  
+                                  return (
+                                    <tr key={`proj-${i}`} className="text-gray-300">
+                                      <td className="py-2 pr-4 pl-4 font-medium">{row.label}</td>
+                                      <td className="py-2 pr-4 text-right text-white">
+                                        ${(row.current / 1000).toFixed(0)}K
+                                      </td>
+                                      <td className="py-2 pr-4 text-right text-white">
+                                        ${(row.proposed / 1000).toFixed(0)}K
+                                      </td>
+                                      <td className="py-2 text-right">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                          isImprovement 
+                                            ? 'bg-emerald-500/20 text-emerald-400' 
+                                            : isTradeOff 
+                                              ? 'bg-amber-500/20 text-amber-400'
+                                              : 'bg-gray-500/20 text-gray-400'
+                                        }`}>
+                                          {diff > 0 ? '+' : ''}${(diff / 1000).toFixed(0)}K
+                                          {isImprovement && ' ✓'}
+                                          {isTradeOff && ' ⚠'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
                             </tbody>
                           </table>
                         </div>
@@ -1398,25 +1503,38 @@ export default function PortfolioOptimizerPage() {
                                 <div className="bg-black/20 rounded-lg p-3">
                                   <div className="text-amber-400 font-medium mb-1">📊 Historical (Rearview Mirror)</div>
                                   <ul className="text-gray-400 space-y-1 text-xs">
-                                    <li>• US Large Cap: ~13% annualized</li>
-                                    <li>• International: ~5% annualized</li>
+                                    <li>• US Large Cap: ~{CMA_KEY_INSIGHT.usHistorical10yr}% annualized</li>
+                                    <li>• International: ~{CMA_KEY_INSIGHT.intlHistorical10yr}% annualized</li>
                                     <li>• US looks much better</li>
                                   </ul>
                                 </div>
                                 <div className="bg-black/20 rounded-lg p-3">
                                   <div className="text-emerald-400 font-medium mb-1">🔮 Expected (Forward-Looking)</div>
                                   <ul className="text-gray-400 space-y-1 text-xs">
-                                    <li>• US Large Cap: ~5.5% expected</li>
-                                    <li>• International: ~7.5% expected</li>
+                                    <li>• US Large Cap: ~{CMA_KEY_INSIGHT.usExpected10yr}% expected</li>
+                                    <li>• US Growth: ~{CMA_KEY_INSIGHT.usGrowthExpected10yr}% expected</li>
+                                    <li>• International: ~{CMA_KEY_INSIGHT.intlExpected10yr}% expected</li>
                                     <li>• International looks better</li>
                                   </ul>
                                 </div>
                               </div>
                               <p className="text-xs text-gray-400 mt-3">
-                                <strong className="text-gray-300">Why?</strong> Current US valuations (P/E ~25) are historically high, 
-                                suggesting lower future returns. International markets (P/E ~15) trade at lower valuations, 
-                                offering better expected returns. This is why diversification matters.
+                                <strong className="text-gray-300">Why?</strong> Current US valuations (CAPE ~35) are historically high, 
+                                suggesting lower future returns. International markets (CAPE ~18) trade at lower valuations, 
+                                offering better expected returns. {CMA_KEY_INSIGHT.narrative}
                               </p>
+                              <div className="mt-3 pt-3 border-t border-gray-700/50">
+                                <div className="text-xs text-gray-500">
+                                  <strong className="text-gray-400">Sources:</strong> Vanguard 2026 Capital Markets Model, 
+                                  J.P. Morgan 2026 Long-Term Capital Market Assumptions (30th Edition), 
+                                  BlackRock Capital Market Assumptions, Research Affiliates
+                                </div>
+                                <div className="mt-2 text-xs text-emerald-400/70">
+                                  <strong>Vanguard 2026 Best Opportunities:</strong> {CMA_KEY_INSIGHT.vanguardRanking.map((item, i) => (
+                                    <span key={i}>{i + 1}. {item}{i < 2 ? ' • ' : ''}</span>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

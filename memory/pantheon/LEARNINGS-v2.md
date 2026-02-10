@@ -194,3 +194,34 @@
 **Confidence:** 2 ⭐⭐
 **Confirmed by:** Multiple user-reported bugs that passed automated tests
 **Insight:** Automated tests (200 response, no console errors) miss data correctness bugs. Need human-like testing: "Does CIFR show once or twice?" "Does the price match Yahoo Finance?" "Do the percentages add up?" Add data sanity checks to QA protocol.
+
+---
+
+## 2026-02-09 — Portfolio Enhancement
+
+### L025 — Show Both Historical AND Expected Returns
+**Tags:** `data`, `ux`, `finance`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** compare-enhance agent, CMA research
+**Insight:** Portfolio comparison must show BOTH historical returns AND forward-looking expectations (CMAs). Historical alone makes diversification look bad (US dominated). CMAs flip the narrative: international expected to outperform. Pattern: Display side-by-side with explanation of why they differ.
+
+### L026 — Forward-Looking CMAs Contradict Historical Returns
+**Tags:** `data`, `finance`, `ux`
+**Confidence:** 3 ⭐⭐⭐
+**Confirmed by:** Vanguard 2026, JP Morgan 2026 LTCMA, Research Affiliates
+**Insight:** Capital Market Assumptions reveal a counterintuitive truth: **the asset classes that performed best historically are expected to perform worst going forward, and vice versa.**
+
+Key 2026 findings:
+- **US Large Cap:** Historical ~13%, Expected ~5.5% (valuations elevated)
+- **US Growth:** Historical ~15%, Expected ~4% (Vanguard "most guarded")
+- **International:** Historical ~5%, Expected ~7% (lower valuations)
+- **Bonds:** Historical ~1.5%, Expected ~4.5% (Vanguard's #1 pick!)
+
+Vanguard 2026 explicitly ranks best opportunities:
+1. High-quality US fixed income
+2. US value-oriented equities  
+3. Non-US developed market equities
+
+Pattern: When displaying portfolio recommendations, ALWAYS show expected returns alongside historical. Users need context to understand why diversification makes sense despite past underperformance.
+
+Sources: Vanguard VCMM (Dec 2025), JP Morgan 2026 LTCMA (Oct 2025), Research Affiliates AAI
