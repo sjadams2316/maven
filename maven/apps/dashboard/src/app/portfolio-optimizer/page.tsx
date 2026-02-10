@@ -1233,11 +1233,124 @@ export default function PortfolioOptimizerPage() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700/50">
+                              {/* Historical Section Header */}
+                              <tr>
+                                <td colSpan={4} className="pt-4 pb-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider">
+                                    <span className="text-amber-400">📊</span>
+                                    <span>Historical (Looking Back)</span>
+                                  </div>
+                                </td>
+                              </tr>
                               {[
-                                { label: '1-Year Return', current: currentMetrics.oneYear, proposed: proposedMetrics.oneYear, suffix: '%', inverse: false },
-                                { label: '3-Year Return (Ann.)', current: currentMetrics.threeYear, proposed: proposedMetrics.threeYear, suffix: '%', inverse: false },
-                                { label: '5-Year Return (Ann.)', current: currentMetrics.fiveYear, proposed: proposedMetrics.fiveYear, suffix: '%', inverse: false },
                                 { label: '10-Year Return (Ann.)', current: currentMetrics.tenYear, proposed: proposedMetrics.tenYear, suffix: '%', inverse: false },
+                                { label: '5-Year Return (Ann.)', current: currentMetrics.fiveYear, proposed: proposedMetrics.fiveYear, suffix: '%', inverse: false },
+                                { label: '3-Year Return (Ann.)', current: currentMetrics.threeYear, proposed: proposedMetrics.threeYear, suffix: '%', inverse: false },
+                              ].map((row, i) => {
+                                const diff = row.proposed - row.current;
+                                const isImprovement = row.inverse ? diff > 0 : diff > 0;
+                                const isTradeOff = row.inverse ? diff < 0 : diff < 0;
+                                
+                                return (
+                                  <tr key={`hist-${i}`} className="text-gray-300">
+                                    <td className="py-2 pr-4 pl-4 font-medium">{row.label}</td>
+                                    <td className="py-2 pr-4 text-right text-white">{row.current.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-2 pr-4 text-right text-white">{row.proposed.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-2 text-right">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                        isImprovement 
+                                          ? 'bg-emerald-500/20 text-emerald-400' 
+                                          : isTradeOff 
+                                            ? 'bg-amber-500/20 text-amber-400'
+                                            : 'bg-gray-500/20 text-gray-400'
+                                      }`}>
+                                        {diff > 0 ? '+' : ''}{diff.toFixed(1)}{row.suffix}
+                                        {isImprovement && ' ✓'}
+                                        {isTradeOff && ' ⚠'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                              
+                              {/* Expected Section Header */}
+                              <tr>
+                                <td colSpan={4} className="pt-6 pb-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider">
+                                    <span className="text-emerald-400">🔮</span>
+                                    <span>Expected (Looking Forward — Capital Market Assumptions)</span>
+                                  </div>
+                                </td>
+                              </tr>
+                              {(() => {
+                                // Capital Market Assumptions (forward-looking expected returns)
+                                // Based on current valuations, not historical performance
+                                const CMA = {
+                                  usLargeCap: 5.5,    // US Large Cap (VOO, QQQ, FXAIX)
+                                  usSmallCap: 6.5,    // US Small Cap
+                                  intlDeveloped: 7.5, // International Developed (VXUS)
+                                  emergingMarkets: 8.5,
+                                  bonds: 4.5,         // BND
+                                  cash: 3.0,
+                                };
+                                
+                                // Current portfolio: 85% US equity, 8% int'l, 5% bonds, 2% other
+                                const currentExpected = (0.85 * CMA.usLargeCap) + (0.08 * CMA.intlDeveloped) + (0.05 * CMA.bonds) + (0.02 * CMA.cash);
+                                
+                                // Proposed portfolio based on model
+                                const model = MODEL_PORTFOLIOS[modelKey].allocation;
+                                const proposedExpected = 
+                                  (model.usEquity / 100 * CMA.usLargeCap) + 
+                                  (model.intlEquity / 100 * CMA.intlDeveloped) + 
+                                  (model.bonds / 100 * CMA.bonds) + 
+                                  (model.cash / 100 * CMA.cash) +
+                                  (model.alternatives / 100 * 6.0); // Alternatives ~6%
+                                
+                                // Risk-adjusted expected return (expected return / expected volatility)
+                                const currentRiskAdjusted = currentExpected / currentMetrics.volatility;
+                                const proposedRiskAdjusted = proposedExpected / proposedMetrics.volatility;
+                                
+                                return [
+                                  { label: '10-Year Expected Return', current: currentExpected, proposed: proposedExpected, suffix: '%', inverse: false },
+                                  { label: 'Risk-Adjusted Expected', current: currentRiskAdjusted, proposed: proposedRiskAdjusted, suffix: '', inverse: false },
+                                ].map((row, i) => {
+                                  const diff = row.proposed - row.current;
+                                  const isImprovement = diff > 0;
+                                  const isTradeOff = diff < 0;
+                                  
+                                  return (
+                                    <tr key={`cma-${i}`} className="text-gray-300">
+                                      <td className="py-2 pr-4 pl-4 font-medium">{row.label}</td>
+                                      <td className="py-2 pr-4 text-right text-white">{row.current.toFixed(row.suffix ? 1 : 2)}{row.suffix}</td>
+                                      <td className="py-2 pr-4 text-right text-white">{row.proposed.toFixed(row.suffix ? 1 : 2)}{row.suffix}</td>
+                                      <td className="py-2 text-right">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                          isImprovement 
+                                            ? 'bg-emerald-500/20 text-emerald-400' 
+                                            : isTradeOff 
+                                              ? 'bg-amber-500/20 text-amber-400'
+                                              : 'bg-gray-500/20 text-gray-400'
+                                        }`}>
+                                          {diff > 0 ? '+' : ''}{diff.toFixed(row.suffix ? 1 : 2)}{row.suffix}
+                                          {isImprovement && ' ✓'}
+                                          {isTradeOff && ' ⚠'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
+                              
+                              {/* Risk Metrics Section Header */}
+                              <tr>
+                                <td colSpan={4} className="pt-6 pb-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider">
+                                    <span className="text-blue-400">🛡️</span>
+                                    <span>Risk Metrics</span>
+                                  </div>
+                                </td>
+                              </tr>
+                              {[
                                 { label: 'Sharpe Ratio', current: currentMetrics.sharpe, proposed: proposedMetrics.sharpe, suffix: '', inverse: false },
                                 { label: 'Max Drawdown', current: currentMetrics.maxDrawdown, proposed: proposedMetrics.maxDrawdown, suffix: '%', inverse: true },
                                 { label: 'Volatility (Std Dev)', current: currentMetrics.volatility, proposed: proposedMetrics.volatility, suffix: '%', inverse: true },
@@ -1247,11 +1360,11 @@ export default function PortfolioOptimizerPage() {
                                 const isTradeOff = row.inverse ? diff < 0 : diff < 0;
                                 
                                 return (
-                                  <tr key={i} className="text-gray-300">
-                                    <td className="py-3 pr-4 font-medium">{row.label}</td>
-                                    <td className="py-3 pr-4 text-right text-white">{row.current.toFixed(1)}{row.suffix}</td>
-                                    <td className="py-3 pr-4 text-right text-white">{row.proposed.toFixed(1)}{row.suffix}</td>
-                                    <td className="py-3 text-right">
+                                  <tr key={`risk-${i}`} className="text-gray-300">
+                                    <td className="py-2 pr-4 pl-4 font-medium">{row.label}</td>
+                                    <td className="py-2 pr-4 text-right text-white">{row.current.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-2 pr-4 text-right text-white">{row.proposed.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-2 text-right">
                                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                                         isImprovement 
                                           ? 'bg-emerald-500/20 text-emerald-400' 
@@ -1271,13 +1384,41 @@ export default function PortfolioOptimizerPage() {
                           </table>
                         </div>
                         
-                        {/* Trade-off Summary */}
-                        <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                          <p className="text-sm text-blue-200">
-                            <strong>💡 What this means:</strong> The proposed portfolio trades some return potential 
-                            (lower equity exposure) for significantly reduced risk. Sharpe ratio improves because 
-                            the risk-adjusted return is better balanced.
-                          </p>
+                        {/* Why the Difference Explainer */}
+                        <div className="mt-4 p-4 bg-gradient-to-r from-amber-500/10 to-emerald-500/10 border border-amber-500/30 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <span className="text-xl">💡</span>
+                            <div>
+                              <h5 className="font-semibold text-white mb-2">Why do historical and expected returns differ so much?</h5>
+                              <p className="text-sm text-gray-300 mb-3">
+                                US equities have dramatically outperformed international markets over the past decade. 
+                                However, <strong className="text-white">past performance doesn't predict future returns</strong>.
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div className="bg-black/20 rounded-lg p-3">
+                                  <div className="text-amber-400 font-medium mb-1">📊 Historical (Rearview Mirror)</div>
+                                  <ul className="text-gray-400 space-y-1 text-xs">
+                                    <li>• US Large Cap: ~13% annualized</li>
+                                    <li>• International: ~5% annualized</li>
+                                    <li>• US looks much better</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-black/20 rounded-lg p-3">
+                                  <div className="text-emerald-400 font-medium mb-1">🔮 Expected (Forward-Looking)</div>
+                                  <ul className="text-gray-400 space-y-1 text-xs">
+                                    <li>• US Large Cap: ~5.5% expected</li>
+                                    <li>• International: ~7.5% expected</li>
+                                    <li>• International looks better</li>
+                                  </ul>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-400 mt-3">
+                                <strong className="text-gray-300">Why?</strong> Current US valuations (P/E ~25) are historically high, 
+                                suggesting lower future returns. International markets (P/E ~15) trade at lower valuations, 
+                                offering better expected returns. This is why diversification matters.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       

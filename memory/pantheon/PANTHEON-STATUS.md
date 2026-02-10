@@ -10,7 +10,8 @@
 
 | Agent | Task | Files | Dependencies | Started | Status |
 |-------|------|-------|--------------|---------|--------|
-| compare-enhance | Rich portfolio comparison | portfolio-optimizer/page.tsx | None | 19:10 EST | 🔄 Running |
+| compare-enhance | Rich portfolio comparison | portfolio-optimizer/page.tsx | None | 19:10 EST | ✅ Complete |
+| cma-research | Capital Market Assumptions | lib/capital-market-assumptions.ts | None | 19:15 EST | 🔄 Running |
 
 ---
 
@@ -48,6 +49,7 @@ Example:
 
 | Agent | Task | Result | Completed | Learning |
 |-------|------|--------|-----------|----------|
+| compare-enhance | Enhanced portfolio compare with metrics, tickers, charts | ✅ | 19:10 EST | L025 |
 | pantheon-demo-unify | Unified demo data sources | ✅ | 16:40 EST | L004 |
 | pantheon-demo-unify-v2 | Fixed $36K discrepancy | ✅ | 16:43 EST | L004 |
 | pantheon-mobile-qa-v2 | Touch targets, text sizes | ✅ | 16:43 EST | L002 |

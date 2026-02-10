@@ -148,3 +148,51 @@
 **Fix:** Always have fallback data for external APIs
 **Lesson:** **External APIs WILL fail in production.** Every external call needs: timeout, fallback data, error logging. Pattern: `try { fetchLive() } catch { return FALLBACK } finally { logStatus() }`
 
+---
+
+## L025 — UX, Product
+
+### compare-enhance
+**Task:** Enhanced Portfolio Compare/Rebalance feature with rich data display
+**Insight:** Compare/rebalance features need **decision-grade data** to be actionable. Showing allocation percentages alone is like showing someone two houses and only telling them the square footage. Users need:
+- **Performance metrics** over multiple timeframes (1, 3, 5, 10yr returns)
+- **Risk-adjusted metrics** (Sharpe ratio, Max Drawdown, Volatility)  
+- **Specific security recommendations** with tickers, shares, costs, and ratings — not just "buy international"
+- **Visual comparisons** (pie charts, not just allocation bars)
+- **Clear trade-off indicators** (green for improvements, amber for what you're giving up)
+
+**Anti-Pattern to Add:**
+"Thin comparison views — showing side-by-side percentages without performance metrics, risk data, or specific recommendations. Users can't make decisions without decision-grade data."
+
+---
+
+## L026 — Domain, Product
+
+### cma-research
+**Task:** Incorporate forward-looking Capital Market Assumptions (CMAs) into portfolio analysis
+**Insight:** **Don't just look in the rearview mirror.** Historical returns make diversification recommendations look wrong:
+- US Large Cap 10yr historical: ~13%
+- International 10yr historical: ~5%
+
+User sees: "Why would I buy the underperformer?"
+
+But forward-looking CMAs flip this:
+- US Large Cap expected (10yr): 5-6%
+- International expected (10yr): 7-8%
+
+The thesis: High current valuations compress future returns. International is expected to outperform from lower starting valuations (CAPE ~15 vs ~30).
+
+**The Rule:** Recommendation features must show BOTH:
+1. **Historical (Looking Back)** — what actually happened
+2. **Expected (Looking Forward)** — what's projected based on valuations
+
+And explain WHY they differ: "Past performance favored US concentration. Forward expectations favor diversification."
+
+**CMA Sources (Free):**
+- Research Affiliates: https://interactive.researchaffiliates.com/asset-allocation
+- Vanguard Economic Outlook (annual)
+- J.P. Morgan Long-Term Capital Market Assumptions (annual)
+
+**Anti-Pattern:**
+"Showing only historical returns for forward-looking recommendations — makes diversification look bad and leads users to performance chase into overvalued assets."
+
