@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
-import { classifyTicker } from '@/lib/portfolio-utils';
+import { decomposeFundHolding } from '@/lib/portfolio-utils';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
 import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsight';
@@ -453,38 +453,25 @@ export default function PortfolioLab() {
     );
   }, [researchData, allHoldings]);
   
-  // Current allocation (uses shared classifyTicker for consistency with Dashboard)
+  // Current allocation with LOOK-THROUGH analysis for multi-asset funds
+  // Global funds (VTWAX, VT, ACWI) and target-date funds are decomposed into true geographic exposure
   const currentAllocation = useMemo(() => {
     const categories = { usEquity: 0, intlEquity: 0, bonds: 0, crypto: 0, cash: 0, reits: 0, alternatives: 0 };
     
     allHoldings.forEach((h: Holding) => {
-      const assetClass = classifyTicker(h.ticker);
       const value = h.currentValue || 0;
       
-      // Map asset classes to our categories
-      switch (assetClass) {
-        case 'crypto':
-          categories.crypto += value;
-          break;
-        case 'cash':
-          categories.cash += value;
-          break;
-        case 'bonds':
-          categories.bonds += value;
-          break;
-        case 'intlEquity':
-          categories.intlEquity += value;
-          break;
-        case 'reits':
-          categories.reits += value;
-          break;
-        case 'gold':
-        case 'alternatives':
-          categories.alternatives += value;
-          break;
-        default:
-          categories.usEquity += value;
-      }
+      // Use look-through decomposition for multi-asset funds (VTWAX, VT, target-date, etc.)
+      const decomposed = decomposeFundHolding(h.ticker, value);
+      
+      // Add decomposed values to each category
+      categories.usEquity += decomposed.usEquity;
+      categories.intlEquity += decomposed.intlEquity;
+      categories.bonds += decomposed.bonds;
+      categories.crypto += decomposed.crypto;
+      categories.cash += decomposed.cash;
+      categories.reits += decomposed.reits;
+      categories.alternatives += decomposed.gold + decomposed.alternatives;
     });
     
     // Convert to percentages

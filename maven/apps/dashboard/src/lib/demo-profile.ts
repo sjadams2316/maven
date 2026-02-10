@@ -57,7 +57,8 @@ export interface DemoHolding {
 export const GROWTH_HOLDINGS: DemoHolding[] = [
   { symbol: 'VTI', name: 'Vanguard Total Stock', value: 151000, change: 0.4, shares: '440 shares', sharesNum: 440 },
   { symbol: 'TAO', name: 'Bittensor', value: 100000, change: -1.77, shares: '645 tokens', sharesNum: 645 },
-  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 80000, change: 0.4, shares: '125 shares', sharesNum: 125 },
+  // VTWAX: Global fund with look-through (60% US, 40% Int'l) - demonstrates X-Ray analysis
+  { symbol: 'VTWAX', name: 'Vanguard Total World Stock', value: 80000, change: 0.3, shares: '665 shares', sharesNum: 665 },
   { symbol: 'BND', name: 'Vanguard Total Bond', value: 60000, change: 0.1, shares: '810 shares', sharesNum: 810 },
   { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 50000, change: 0.5, shares: '610 shares', sharesNum: 610 },
   { symbol: 'CIFR', name: 'Cipher Mining', value: 40000, change: 13.78, shares: '2,400 shares', sharesNum: 2400 },
@@ -144,8 +145,8 @@ export const DEMO_PROFILE: UserProfile = {
         { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 440, costBasis: 120000, currentPrice: 342.64, currentValue: 150762 },
         // BND - bond allocation (810 shares × $74 = ~$60K)
         { ticker: "BND", name: "Vanguard Total Bond Market", shares: 810, costBasis: 55000, currentPrice: 74.25, currentValue: 60143 },
-        // VOO - S&P 500 (125 shares × $638 = ~$80K)
-        { ticker: "VOO", name: "Vanguard S&P 500", shares: 125, costBasis: 65000, currentPrice: 638.23, currentValue: 79779 },
+        // VTWAX - Total World Stock (665 shares × ~$120 = ~$80K) - Look-through: 60% US, 40% Int'l
+        { ticker: "VTWAX", name: "Vanguard Total World Stock", shares: 665, costBasis: 65000, currentPrice: 120.30, currentValue: 80000 },
       ]
     },
     {

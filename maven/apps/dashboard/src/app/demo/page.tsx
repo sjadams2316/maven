@@ -7,7 +7,7 @@ import NetWorthCard from '../components/NetWorthCard';
 import InsightCard from '../components/InsightCard';
 import MarketOverview from '../components/MarketOverview';
 import QuickActions from '../components/QuickActions';
-import { classifyTicker } from '@/lib/portfolio-utils';
+import { decomposeFundHolding } from '@/lib/portfolio-utils';
 import { 
   DemoVariant, 
   DemoHolding,
@@ -229,7 +229,8 @@ export default function DemoPage() {
   const indexedInsights = DEMO_INSIGHTS.map((insight, originalIdx) => ({ ...insight, originalIdx }));
   const visibleInsights = indexedInsights.filter(({ originalIdx }) => !dismissedInsights.includes(originalIdx));
   
-  // Calculate ACTUAL allocation from holdings
+  // Calculate ACTUAL allocation from holdings with LOOK-THROUGH analysis
+  // Global funds like VTWAX, VT are decomposed into their true US/Int'l allocation
   const actualAllocation = useMemo(() => {
     const totalValue = DEMO_HOLDINGS.reduce((sum, h) => sum + h.value, 0);
     
@@ -243,28 +244,16 @@ export default function DemoPage() {
     };
     
     DEMO_HOLDINGS.forEach(h => {
-      const assetClass = classifyTicker(h.symbol);
-      const pct = (h.value / totalValue) * 100;
+      // Use look-through decomposition for multi-asset funds (VTWAX, VT, target-date, etc.)
+      const decomposed = decomposeFundHolding(h.symbol, h.value);
       
-      switch (assetClass) {
-        case 'usEquity':
-          buckets.usStocks += pct;
-          break;
-        case 'intlEquity':
-          buckets.intlStocks += pct;
-          break;
-        case 'bonds':
-          buckets.bonds += pct;
-          break;
-        case 'crypto':
-          buckets.crypto += pct;
-          break;
-        case 'reits':
-          buckets.reits += pct;
-          break;
-        default:
-          buckets.other += pct;
-      }
+      // Add decomposed values as percentages
+      buckets.usStocks += (decomposed.usEquity / totalValue) * 100;
+      buckets.intlStocks += (decomposed.intlEquity / totalValue) * 100;
+      buckets.bonds += (decomposed.bonds / totalValue) * 100;
+      buckets.crypto += (decomposed.crypto / totalValue) * 100;
+      buckets.reits += (decomposed.reits / totalValue) * 100;
+      buckets.other += ((decomposed.cash + decomposed.gold + decomposed.alternatives) / totalValue) * 100;
     });
     
     // Round individual components first, then sum for "other" so tooltip math adds up

@@ -7,12 +7,12 @@
 ## 2026-02-10
 
 **Budget:** $50.00
-**Spent:** $0.00
-**Remaining:** $50.00
+**Spent:** ~$0.15
+**Remaining:** ~$49.85
 
 | Time | Agent | Task | Cost | Status |
 |------|-------|------|------|--------|
-| — | — | — | — | — |
+| 11:27 | pantheon-fund-lookthrough | Fund look-through for global funds | ~$0.15 | ✅ Complete (L034) |
 
 ---
 

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Term } from './InfoTooltip';
 import {
+  decomposeFundHolding,
   classifyTicker,
   calculatePortfolioFactorExposures,
   getFactorInterpretation,
@@ -428,7 +429,7 @@ async function fetchCurrentPrice(ticker: string): Promise<number | null> {
   return null;
 }
 
-// Calculate allocation percentages
+// Calculate allocation percentages with look-through analysis for multi-asset funds
 function calculateAllocation(holdings: Holding[], totalValue: number): Record<string, number> {
   const allocation: Record<string, number> = {
     usEquity: 0,
@@ -441,69 +442,89 @@ function calculateAllocation(holdings: Holding[], totalValue: number): Record<st
 
   holdings.forEach((h) => {
     const value = h.currentValue || 0;
-    const assetClass = classifyTicker(h.ticker);
-    // Map to simplified categories
-    if (assetClass === 'reits' || assetClass === 'gold') {
-      allocation.alternatives += (value / totalValue) * 100;
-    } else {
-      allocation[assetClass] = (allocation[assetClass] || 0) + (value / totalValue) * 100;
-    }
+    // Use look-through decomposition for multi-asset funds (VTWAX, VT, target-date, etc.)
+    const decomposed = decomposeFundHolding(h.ticker, value);
+    
+    // Add decomposed values to each category
+    allocation.usEquity += (decomposed.usEquity / totalValue) * 100;
+    allocation.intlEquity += (decomposed.intlEquity / totalValue) * 100;
+    allocation.bonds += (decomposed.bonds / totalValue) * 100;
+    allocation.crypto += (decomposed.crypto / totalValue) * 100;
+    allocation.cash += (decomposed.cash / totalValue) * 100;
+    // Group reits, gold, and alternatives together
+    allocation.alternatives += ((decomposed.reits + decomposed.gold + decomposed.alternatives) / totalValue) * 100;
   });
 
   return allocation;
 }
 
-// Estimate portfolio beta from holdings
+// Estimate portfolio beta from holdings with look-through for multi-asset funds
 function estimateBeta(holdings: Holding[], totalValue: number): number {
   // Simple heuristic based on asset class mix
   let weightedBeta = 0;
   
+  // Approximate beta by asset class
+  const betas: Record<string, number> = {
+    usEquity: 1.1,
+    intlEquity: 0.9,
+    bonds: 0.1,
+    crypto: 2.0,
+    cash: 0.0,
+    reits: 1.0,
+    gold: 0.1,
+    alternatives: 0.5,
+  };
+  
   holdings.forEach((h) => {
     const value = h.currentValue || 0;
-    const weight = value / totalValue;
-    const assetClass = classifyTicker(h.ticker);
+    // Use look-through for multi-asset funds
+    const decomposed = decomposeFundHolding(h.ticker, value);
     
-    // Approximate beta by asset class
-    const betas: Record<string, number> = {
-      usEquity: 1.1,
-      intlEquity: 0.9,
-      bonds: 0.1,
-      crypto: 2.0,
-      cash: 0.0,
-      reits: 1.0,
-      gold: 0.1,
-      alternatives: 0.5,
-    };
-    
-    weightedBeta += (betas[assetClass] || 1.0) * weight;
+    // Weight each decomposed asset class by its beta
+    weightedBeta += (decomposed.usEquity / totalValue) * betas.usEquity;
+    weightedBeta += (decomposed.intlEquity / totalValue) * betas.intlEquity;
+    weightedBeta += (decomposed.bonds / totalValue) * betas.bonds;
+    weightedBeta += (decomposed.crypto / totalValue) * betas.crypto;
+    weightedBeta += (decomposed.cash / totalValue) * betas.cash;
+    weightedBeta += (decomposed.reits / totalValue) * betas.reits;
+    weightedBeta += (decomposed.gold / totalValue) * betas.gold;
+    weightedBeta += (decomposed.alternatives / totalValue) * betas.alternatives;
   });
   
   return weightedBeta;
 }
 
-// Estimate portfolio volatility
+// Estimate portfolio volatility with look-through for multi-asset funds
 function estimateVolatility(holdings: Holding[], totalValue: number): number {
   // Simple heuristic based on asset class mix
   let weightedVol = 0;
   
+  // Approximate volatility by asset class (annualized %)
+  const vols: Record<string, number> = {
+    usEquity: 18,
+    intlEquity: 22,
+    bonds: 6,
+    crypto: 60,
+    cash: 1,
+    reits: 20,
+    gold: 15,
+    alternatives: 25,
+  };
+  
   holdings.forEach((h) => {
     const value = h.currentValue || 0;
-    const weight = value / totalValue;
-    const assetClass = classifyTicker(h.ticker);
+    // Use look-through for multi-asset funds
+    const decomposed = decomposeFundHolding(h.ticker, value);
     
-    // Approximate volatility by asset class (annualized %)
-    const vols: Record<string, number> = {
-      usEquity: 18,
-      intlEquity: 22,
-      bonds: 6,
-      crypto: 60,
-      cash: 1,
-      reits: 20,
-      gold: 15,
-      alternatives: 25,
-    };
-    
-    weightedVol += (vols[assetClass] || 18) * weight;
+    // Weight each decomposed asset class by its volatility
+    weightedVol += (decomposed.usEquity / totalValue) * vols.usEquity;
+    weightedVol += (decomposed.intlEquity / totalValue) * vols.intlEquity;
+    weightedVol += (decomposed.bonds / totalValue) * vols.bonds;
+    weightedVol += (decomposed.crypto / totalValue) * vols.crypto;
+    weightedVol += (decomposed.cash / totalValue) * vols.cash;
+    weightedVol += (decomposed.reits / totalValue) * vols.reits;
+    weightedVol += (decomposed.gold / totalValue) * vols.gold;
+    weightedVol += (decomposed.alternatives / totalValue) * vols.alternatives;
   });
   
   return weightedVol;

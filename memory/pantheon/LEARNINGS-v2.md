@@ -146,8 +146,9 @@
 **For Testing/QA tasks, inject:** L007, L008, L015, L018, L021, L022
 **For External API tasks, inject:** L001, L008, L010, L020
 **For Error Handling tasks, inject:** L001, L003, L005
-**For Finance/Analysis tasks, inject:** L025, L026, L027
-**For Portfolio Display tasks, inject:** L004, L019, L025, L026, L027
+**For Finance/Analysis tasks, inject:** L025, L026, L027, L034
+**For Portfolio Display tasks, inject:** L004, L019, L025, L026, L027, L034
+**For Allocation/Rebalancing tasks, inject:** L019, L034
 
 *Last updated: 2026-02-10*
 
@@ -165,11 +166,11 @@
 
 ---
 
-*Last distilled: 2026-02-09 18:40 EST*
-*Total learnings: 18*
-*High-confidence: 5*
-*Medium-confidence: 5*
-*Needs validation: 8*
+*Last distilled: 2026-02-10 11:55 EST*
+*Total learnings: 34*
+*High-confidence: 10*
+*Medium-confidence: 8*
+*Needs validation: 16*
 
 ---
 
@@ -342,3 +343,42 @@ Then calculate. Never assume.
 1. Set Root Directory in Vercel Dashboard (Settings > Build & Deployment)
 2. Use vercel.json for runtime config (headers, redirects, etc.)
 3. Don't try to override project settings via vercel.json — it will fail schema validation
+
+### L034 — Fund Look-Through Analysis for True Geographic Allocation
+**Tags:** `data`, `finance`, `ui`, `portfolio`
+**Confidence:** 4 ⭐⭐⭐⭐
+**Confirmed by:** pantheon-fund-lookthrough 2026-02-10
+**Insight:** Global funds (VTWAX, VT, ACWI) and target-date funds contain BOTH US and international stocks, but simple ticker classification shows them as 100% one category. This misrepresents true portfolio exposure.
+
+**The Problem:**
+- VTWAX is 60% US / 40% International, but `classifyTicker('VTWAX')` might return just 'usEquity'
+- A portfolio with 100% VTWAX would show as "100% US" when it's actually "60% US / 40% Int'l"
+- Target-date funds (VTTSX, VFFVX) also contain bonds, international, etc.
+
+**The Solution:**
+Use `decomposeFundHolding(ticker, value)` instead of `classifyTicker(ticker)`:
+```typescript
+// BAD — treats VTWAX as single asset class
+const assetClass = classifyTicker(h.symbol);
+buckets[assetClass] += value;
+
+// GOOD — decomposes into true underlying allocation
+const decomposed = decomposeFundHolding(h.symbol, h.value);
+buckets.usStocks += decomposed.usEquity;
+buckets.intlStocks += decomposed.intlEquity;
+buckets.bonds += decomposed.bonds;
+// ... etc
+```
+
+**Where this matters:**
+- Allocation displays on Dashboard, Portfolio Lab
+- Risk calculations (beta, volatility) — a 60/40 fund has different risk than 100% US
+- Rebalancing recommendations
+- What-If simulations
+
+**Fund compositions in FUND_COMPOSITIONS constant:**
+- `portfolio-utils.ts` has ~100 funds with breakdown data
+- Target-date funds shift over time (2065 more aggressive than 2025)
+- Vanguard, Fidelity, T. Rowe, Schwab target-date funds all covered
+
+**Pattern:** Whenever calculating portfolio allocation percentages, use `decomposeFundHolding()` not `classifyTicker()`. The function already handles fallback (returns full value in single category if fund not in FUND_COMPOSITIONS).
