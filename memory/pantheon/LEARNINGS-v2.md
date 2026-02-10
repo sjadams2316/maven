@@ -322,3 +322,23 @@ Then calculate. Never assume.
 4. If deploy fails, debug THAT before pushing more code
 
 **Red Flag:** If you push 3 commits and the site hasn't changed, STOP and check the deploy pipeline.
+
+### L033 — vercel.json Cannot Configure Root Directory
+**Tags:** `deployment`, `vercel`, `configuration`
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** Vercel deploy failures 2026-02-10 — schema validation rejected `projectSettings`
+**Insight:** The `rootDirectory` setting is a Vercel PROJECT setting, not a `vercel.json` property. It can only be configured in the Vercel Dashboard (Settings → Build & Deployment).
+
+**The Mistake:** I added `{ "projectSettings": { "rootDirectory": "maven/apps/dashboard" } }` to vercel.json.
+**Result:** Deploy failed with "should NOT have additional property `projectSettings`"
+**The Fix:** Configure Root Directory in Vercel Dashboard UI, keep vercel.json for other settings only.
+
+**Valid vercel.json properties:**
+- `headers`, `redirects`, `rewrites`, `cleanUrls`, `trailingSlash`
+- `build.env`, `functions`, `regions`, `crons`
+- NOT `rootDirectory`, `projectSettings`, or build-time project config
+
+**Pattern:** When configuring monorepo deployments:
+1. Set Root Directory in Vercel Dashboard (Settings > Build & Deployment)
+2. Use vercel.json for runtime config (headers, redirects, etc.)
+3. Don't try to override project settings via vercel.json — it will fail schema validation
