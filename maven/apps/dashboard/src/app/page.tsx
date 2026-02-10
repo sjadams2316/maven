@@ -23,6 +23,28 @@ const FALLBACK_MARKET_DATA = {
   timestamp: new Date().toISOString(),
 };
 
+// Check if US stock market is currently open
+// Market hours: 9:30 AM - 4:00 PM ET, Monday-Friday (excluding holidays)
+function isMarketOpen(): boolean {
+  const now = new Date();
+  
+  // Convert to Eastern Time
+  const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const hours = etTime.getHours();
+  const minutes = etTime.getMinutes();
+  const day = etTime.getDay(); // 0 = Sunday, 6 = Saturday
+  
+  // Weekend check
+  if (day === 0 || day === 6) return false;
+  
+  // Convert to minutes since midnight for easier comparison
+  const currentMinutes = hours * 60 + minutes;
+  const marketOpen = 9 * 60 + 30;  // 9:30 AM = 570 minutes
+  const marketClose = 16 * 60;      // 4:00 PM = 960 minutes
+  
+  return currentMinutes >= marketOpen && currentMinutes < marketClose;
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
@@ -256,8 +278,8 @@ export default function LandingPage() {
                 {/* Market Status */}
                 <div className="flex items-center justify-center gap-3 mb-3 text-xs text-gray-500">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span>US Markets Closed</span>
+                    <span className={`w-2 h-2 rounded-full ${isMarketOpen() ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                    <span>{isMarketOpen() ? 'US Markets Open' : 'US Markets Closed'}</span>
                   </div>
                   <span className="text-gray-600">•</span>
                   <span>As of {new Date(marketData.timestamp).toLocaleString('en-US', { 
