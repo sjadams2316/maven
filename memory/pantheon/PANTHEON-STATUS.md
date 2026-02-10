@@ -10,7 +10,7 @@
 
 | Agent | Task | Files | Dependencies | Started | Status |
 |-------|------|-------|--------------|---------|--------|
-| — | — | — | — | — | No active agents |
+| compare-enhance | Rich portfolio comparison | portfolio-optimizer/page.tsx | None | 19:10 EST | 🔄 Running |
 
 ---
 

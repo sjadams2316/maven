@@ -168,3 +168,13 @@ const price = data?.chart?.result?.[0]?.meta?.price || 0;
 **Why it failed:** Automated tests don't ask "is CIFR showing once or twice?"
 **Do instead:** Add data sanity checks: deduped holdings, prices match external source, percentages sum to 100.
 
+### ❌ Thin comparison views (percentages without decision-grade data)
+**What happened:** Portfolio compare showed allocation bars side-by-side (85% → 65%) but no performance metrics, risk data, or specific tickers
+**Why it's wrong:** Users can't make rebalancing decisions without knowing: historical returns (1, 3, 5, 10yr), risk metrics (Sharpe, Max Drawdown), and specific ETF recommendations
+**Do instead:** Compare features need decision-grade data:
+- Performance across multiple timeframes (1yr, 3yr, 5yr, 10yr, since inception)
+- Risk-adjusted metrics (Sharpe ratio, Max Drawdown, Volatility)
+- Specific ticker recommendations with expense ratios and ratings
+- Visual comparisons (pie charts, not just bars)
+- Clear indicators of trade-offs (green = improved, amber = trading something off)
+

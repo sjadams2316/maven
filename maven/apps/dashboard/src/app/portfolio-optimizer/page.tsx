@@ -1082,101 +1082,411 @@ export default function PortfolioOptimizerPage() {
                   ))}
                 </div>
                 
-                {selectedModel && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-400 mb-4">Target vs Current Allocation</h4>
-                      <div className="space-y-4">
-                        {Object.entries(MODEL_PORTFOLIOS[selectedModel as keyof typeof MODEL_PORTFOLIOS].allocation).map(([asset, target]) => {
-                          // Calculate current allocation
-                          let current = 0;
-                          if (asset === 'usEquity') current = 85;
-                          else if (asset === 'intlEquity') current = 8;
-                          else if (asset === 'bonds') current = 5;
-                          else if (asset === 'cash') current = 1;
-                          else if (asset === 'alternatives') current = 1;
+                {selectedModel && (() => {
+                  // Calculate current portfolio metrics
+                  const currentMetrics = {
+                    oneYear: portfolio.reduce((sum, h) => {
+                      const fund = MOCK_FUND_DATA[h.ticker];
+                      return sum + (fund?.performance.oneYear || 0) * (h.value / totalValue);
+                    }, 0),
+                    threeYear: portfolio.reduce((sum, h) => {
+                      const fund = MOCK_FUND_DATA[h.ticker];
+                      return sum + (fund?.performance.threeYear || 0) * (h.value / totalValue);
+                    }, 0),
+                    fiveYear: portfolio.reduce((sum, h) => {
+                      const fund = MOCK_FUND_DATA[h.ticker];
+                      return sum + (fund?.performance.fiveYear || 0) * (h.value / totalValue);
+                    }, 0),
+                    tenYear: portfolio.reduce((sum, h) => {
+                      const fund = MOCK_FUND_DATA[h.ticker];
+                      return sum + (fund?.performance.tenYear || 0) * (h.value / totalValue);
+                    }, 0),
+                    sharpe: portfolioMetrics.sharpeRatio,
+                    maxDrawdown: portfolio.reduce((sum, h) => {
+                      const fund = MOCK_FUND_DATA[h.ticker];
+                      return sum + (fund?.riskMetrics.maxDrawdown || 0) * (h.value / totalValue);
+                    }, 0),
+                    volatility: portfolioMetrics.standardDeviation,
+                  };
+                  
+                  // Proposed portfolio metrics (based on model allocation - simulated)
+                  const modelKey = selectedModel as keyof typeof MODEL_PORTFOLIOS;
+                  const proposedMetrics = {
+                    oneYear: modelKey === 'conservative' ? 12.5 : modelKey === 'moderate' ? 18.2 : modelKey === 'growth' ? 22.8 : 26.5,
+                    threeYear: modelKey === 'conservative' ? 6.2 : modelKey === 'moderate' ? 8.5 : modelKey === 'growth' ? 9.8 : 10.5,
+                    fiveYear: modelKey === 'conservative' ? 7.8 : modelKey === 'moderate' ? 10.2 : modelKey === 'growth' ? 12.5 : 14.2,
+                    tenYear: modelKey === 'conservative' ? 6.5 : modelKey === 'moderate' ? 8.8 : modelKey === 'growth' ? 11.2 : 12.8,
+                    sharpe: modelKey === 'conservative' ? 0.85 : modelKey === 'moderate' ? 0.95 : modelKey === 'growth' ? 1.05 : 0.98,
+                    maxDrawdown: modelKey === 'conservative' ? -12.5 : modelKey === 'moderate' ? -18.2 : modelKey === 'growth' ? -22.1 : -28.5,
+                    volatility: MODEL_PORTFOLIOS[modelKey].standardDeviation,
+                  };
+                  
+                  // Current allocation for pie chart
+                  const currentAllocation = [
+                    { label: 'US Equity', value: 85, color: '#6366f1' },
+                    { label: 'Int\'l Equity', value: 8, color: '#8b5cf6' },
+                    { label: 'Bonds', value: 5, color: '#10b981' },
+                    { label: 'Cash', value: 1, color: '#64748b' },
+                    { label: 'Alternatives', value: 1, color: '#f59e0b' },
+                  ];
+                  
+                  const targetAllocation = Object.entries(MODEL_PORTFOLIOS[modelKey].allocation).map(([key, value], i) => ({
+                    label: key === 'usEquity' ? 'US Equity' : key === 'intlEquity' ? 'Int\'l Equity' : key.charAt(0).toUpperCase() + key.slice(1),
+                    value,
+                    color: ['#6366f1', '#8b5cf6', '#10b981', '#64748b', '#f59e0b'][i],
+                  }));
+                  
+                  // Donut chart SVG generator
+                  const DonutChart = ({ data, size = 160 }: { data: typeof currentAllocation; size?: number }) => {
+                    const total = data.reduce((sum, d) => sum + d.value, 0);
+                    let cumulativePercent = 0;
+                    const radius = size / 2 - 10;
+                    const innerRadius = radius * 0.6;
+                    
+                    return (
+                      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                        {data.filter(d => d.value > 0).map((slice, i) => {
+                          const percent = slice.value / total;
+                          const startAngle = cumulativePercent * 2 * Math.PI - Math.PI / 2;
+                          cumulativePercent += percent;
+                          const endAngle = cumulativePercent * 2 * Math.PI - Math.PI / 2;
                           
-                          const diff = current - target;
+                          const x1 = size / 2 + radius * Math.cos(startAngle);
+                          const y1 = size / 2 + radius * Math.sin(startAngle);
+                          const x2 = size / 2 + radius * Math.cos(endAngle);
+                          const y2 = size / 2 + radius * Math.sin(endAngle);
+                          const x3 = size / 2 + innerRadius * Math.cos(endAngle);
+                          const y3 = size / 2 + innerRadius * Math.sin(endAngle);
+                          const x4 = size / 2 + innerRadius * Math.cos(startAngle);
+                          const y4 = size / 2 + innerRadius * Math.sin(startAngle);
+                          
+                          const largeArc = percent > 0.5 ? 1 : 0;
+                          
+                          const d = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`;
                           
                           return (
-                            <div key={asset}>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-gray-300 capitalize">{asset.replace(/([A-Z])/g, ' $1')}</span>
-                                <div className="flex gap-4">
-                                  <span className="text-gray-500">Target: {target}%</span>
-                                  <span className="text-white">Current: {current}%</span>
-                                  <span className={diff > 0 ? 'text-amber-400' : diff < 0 ? 'text-blue-400' : 'text-gray-500'}>
-                                    {diff > 0 ? '+' : ''}{diff}%
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
-                                <div
-                                  className="h-full bg-gray-600 rounded-full"
-                                  style={{ width: `${target}%` }}
-                                />
-                                <div
-                                  className={`absolute top-0 h-full rounded-full ${
-                                    current > target ? 'bg-amber-500' : 'bg-indigo-500'
-                                  }`}
-                                  style={{ 
-                                    width: `${Math.min(current, target)}%`,
-                                    opacity: current > target ? 0.7 : 1
-                                  }}
-                                />
-                              </div>
-                            </div>
+                            <path
+                              key={i}
+                              d={d}
+                              fill={slice.color}
+                              stroke="#1f2937"
+                              strokeWidth="2"
+                              className="transition-all hover:opacity-80"
+                            >
+                              <title>{slice.label}: {slice.value}%</title>
+                            </path>
                           );
                         })}
-                      </div>
-                    </div>
-                    
-                    <div id="rebalance-trades" className={`transition-all ${hoveredElement === 'rebalance-trades' ? 'ring-2 ring-indigo-500/50 rounded-lg p-2 -m-2' : ''}`}>
-                      <h4 className="text-sm font-medium text-gray-400 mb-4">Rebalancing Trades</h4>
-                      <div className="space-y-3">
-                        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex justify-between items-center">
-                          <div>
-                            <div className="text-sm font-medium text-red-400">Sell US Equity</div>
-                            <div className="text-xs text-gray-400">QQQ, VOO overweight</div>
+                        <text x={size/2} y={size/2} textAnchor="middle" dominantBaseline="middle" className="fill-white text-xs font-medium">
+                          {total}%
+                        </text>
+                      </svg>
+                    );
+                  };
+                  
+                  return (
+                    <div className="space-y-6">
+                      {/* Visual Comparison - Pie Charts */}
+                      <div className="bg-gray-700/30 rounded-xl p-5">
+                        <h4 className="text-sm font-medium text-gray-400 mb-4">📊 Visual Comparison</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-400 mb-3">Current Portfolio</div>
+                            <DonutChart data={currentAllocation} />
+                            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                              {currentAllocation.filter(a => a.value > 0).map((a, i) => (
+                                <div key={i} className="flex items-center gap-1.5 text-xs">
+                                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: a.color }} />
+                                  <span className="text-gray-400">{a.label}</span>
+                                  <span className="text-white font-medium">{a.value}%</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-red-400">-$32,400</div>
-                            <div className="text-xs text-gray-500">-20% allocation</div>
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex justify-between items-center">
-                          <div>
-                            <div className="text-sm font-medium text-emerald-400">Buy International</div>
-                            <div className="text-xs text-gray-400">VXUS underweight</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-emerald-400">+$19,400</div>
-                            <div className="text-xs text-gray-500">+12% allocation</div>
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex justify-between items-center">
-                          <div>
-                            <div className="text-sm font-medium text-emerald-400">Buy Bonds</div>
-                            <div className="text-xs text-gray-400">BND underweight</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-emerald-400">+$16,200</div>
-                            <div className="text-xs text-gray-500">+10% allocation</div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-400 mb-3">Proposed ({MODEL_PORTFOLIOS[modelKey].name})</div>
+                            <DonutChart data={targetAllocation} />
+                            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                              {targetAllocation.filter(a => a.value > 0).map((a, i) => (
+                                <div key={i} className="flex items-center gap-1.5 text-xs">
+                                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: a.color }} />
+                                  <span className="text-gray-400">{a.label}</span>
+                                  <span className="text-white font-medium">{a.value}%</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
                       
-                      <button
-                        onClick={() => setShowRebalancePreview(true)}
-                        className="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
-                      >
-                        Preview Rebalancing Impact →
-                      </button>
+                      {/* Performance Metrics Table */}
+                      <div className="bg-gray-700/30 rounded-xl p-5">
+                        <h4 className="text-sm font-medium text-gray-400 mb-4">📈 Performance Comparison</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-600">
+                                <th className="pb-3 pr-4">Metric</th>
+                                <th className="pb-3 pr-4 text-right">Current</th>
+                                <th className="pb-3 pr-4 text-right">Proposed</th>
+                                <th className="pb-3 text-right">Change</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700/50">
+                              {[
+                                { label: '1-Year Return', current: currentMetrics.oneYear, proposed: proposedMetrics.oneYear, suffix: '%', inverse: false },
+                                { label: '3-Year Return (Ann.)', current: currentMetrics.threeYear, proposed: proposedMetrics.threeYear, suffix: '%', inverse: false },
+                                { label: '5-Year Return (Ann.)', current: currentMetrics.fiveYear, proposed: proposedMetrics.fiveYear, suffix: '%', inverse: false },
+                                { label: '10-Year Return (Ann.)', current: currentMetrics.tenYear, proposed: proposedMetrics.tenYear, suffix: '%', inverse: false },
+                                { label: 'Sharpe Ratio', current: currentMetrics.sharpe, proposed: proposedMetrics.sharpe, suffix: '', inverse: false },
+                                { label: 'Max Drawdown', current: currentMetrics.maxDrawdown, proposed: proposedMetrics.maxDrawdown, suffix: '%', inverse: true },
+                                { label: 'Volatility (Std Dev)', current: currentMetrics.volatility, proposed: proposedMetrics.volatility, suffix: '%', inverse: true },
+                              ].map((row, i) => {
+                                const diff = row.proposed - row.current;
+                                const isImprovement = row.inverse ? diff > 0 : diff > 0;
+                                const isTradeOff = row.inverse ? diff < 0 : diff < 0;
+                                
+                                return (
+                                  <tr key={i} className="text-gray-300">
+                                    <td className="py-3 pr-4 font-medium">{row.label}</td>
+                                    <td className="py-3 pr-4 text-right text-white">{row.current.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-3 pr-4 text-right text-white">{row.proposed.toFixed(1)}{row.suffix}</td>
+                                    <td className="py-3 text-right">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                        isImprovement 
+                                          ? 'bg-emerald-500/20 text-emerald-400' 
+                                          : isTradeOff 
+                                            ? 'bg-amber-500/20 text-amber-400'
+                                            : 'bg-gray-500/20 text-gray-400'
+                                      }`}>
+                                        {diff > 0 ? '+' : ''}{diff.toFixed(1)}{row.suffix}
+                                        {isImprovement && ' ✓'}
+                                        {isTradeOff && ' ⚠'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Trade-off Summary */}
+                        <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                          <p className="text-sm text-blue-200">
+                            <strong>💡 What this means:</strong> The proposed portfolio trades some return potential 
+                            (lower equity exposure) for significantly reduced risk. Sharpe ratio improves because 
+                            the risk-adjusted return is better balanced.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Specific Ticker Recommendations */}
+                      <div className="bg-gray-700/30 rounded-xl p-5">
+                        <h4 className="text-sm font-medium text-gray-400 mb-4">🎯 Specific Trade Recommendations</h4>
+                        
+                        <div className="space-y-4">
+                          {/* SELL Section */}
+                          <div>
+                            <div className="text-xs text-red-400 uppercase tracking-wider mb-2 font-semibold">SELL</div>
+                            <div className="space-y-2">
+                              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-white">QQQ</span>
+                                      <span className="text-xs text-gray-400">40 shares</span>
+                                      <span className="text-red-400 font-semibold">-$21,000</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">Invesco QQQ Trust</div>
+                                  </div>
+                                  <div className="text-right text-xs">
+                                    <div className="text-gray-400">Expense: 0.20%</div>
+                                    <div className="text-yellow-400">★★★★★</div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-400">
+                                  <span className="text-amber-400">Reason:</span> Tech overweight at 42% vs target 29%. High volatility (19.8% std dev).
+                                </div>
+                              </div>
+                              
+                              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-white">VOO</span>
+                                      <span className="text-xs text-gray-400">22 shares</span>
+                                      <span className="text-red-400 font-semibold">-$11,400</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">Vanguard S&P 500 ETF</div>
+                                  </div>
+                                  <div className="text-right text-xs">
+                                    <div className="text-gray-400">Expense: 0.03%</div>
+                                    <div className="text-yellow-400">★★★★★</div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-400">
+                                  <span className="text-amber-400">Reason:</span> Reallocating to international and bonds for diversification.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* BUY Section */}
+                          <div>
+                            <div className="text-xs text-emerald-400 uppercase tracking-wider mb-2 font-semibold">BUY</div>
+                            <div className="space-y-2">
+                              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-white">VXUS</span>
+                                      <span className="text-xs text-gray-400">312 shares</span>
+                                      <span className="text-emerald-400 font-semibold">+$19,400</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">Vanguard Total International Stock ETF</div>
+                                  </div>
+                                  <div className="text-right text-xs">
+                                    <div className="text-emerald-400">Expense: 0.07%</div>
+                                    <div className="text-yellow-400">★★★★☆</div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-400">
+                                  <span className="text-emerald-400">Why:</span> Diversified international exposure. 38% Europe, 28% Asia, 26% EM. Low correlation to US equities.
+                                </div>
+                              </div>
+                              
+                              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-white">BND</span>
+                                      <span className="text-xs text-gray-400">225 shares</span>
+                                      <span className="text-emerald-400 font-semibold">+$16,200</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">Vanguard Total Bond Market ETF</div>
+                                  </div>
+                                  <div className="text-right text-xs">
+                                    <div className="text-emerald-400">Expense: 0.03%</div>
+                                    <div className="text-yellow-400">★★★★☆</div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-400">
+                                  <span className="text-emerald-400">Why:</span> Core bond exposure. 5.8% volatility vs 15% for equities. Negative correlation provides downside protection.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Net Trade Summary */}
+                        <div className="mt-4 p-4 bg-gray-600/30 rounded-lg">
+                          <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                            <div>
+                              <div className="text-gray-400">Sells</div>
+                              <div className="text-red-400 font-bold">-$32,400</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400">Buys</div>
+                              <div className="text-emerald-400 font-bold">+$35,600</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400">Net Cash</div>
+                              <div className="text-white font-bold">-$3,200</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Target vs Current Allocation Bars */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-400 mb-4">Target vs Current Allocation</h4>
+                          <div className="space-y-4">
+                            {Object.entries(MODEL_PORTFOLIOS[modelKey].allocation).map(([asset, target]) => {
+                              // Calculate current allocation
+                              let current = 0;
+                              if (asset === 'usEquity') current = 85;
+                              else if (asset === 'intlEquity') current = 8;
+                              else if (asset === 'bonds') current = 5;
+                              else if (asset === 'cash') current = 1;
+                              else if (asset === 'alternatives') current = 1;
+                              
+                              const diff = current - target;
+                              
+                              return (
+                                <div key={asset}>
+                                  <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-gray-300 capitalize">{asset.replace(/([A-Z])/g, ' $1')}</span>
+                                    <div className="flex gap-4">
+                                      <span className="text-gray-500">Target: {target}%</span>
+                                      <span className="text-white">Current: {current}%</span>
+                                      <span className={diff > 0 ? 'text-amber-400' : diff < 0 ? 'text-blue-400' : 'text-gray-500'}>
+                                        {diff > 0 ? '+' : ''}{diff}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
+                                    <div
+                                      className="h-full bg-gray-600 rounded-full"
+                                      style={{ width: `${target}%` }}
+                                    />
+                                    <div
+                                      className={`absolute top-0 h-full rounded-full ${
+                                        current > target ? 'bg-amber-500' : 'bg-indigo-500'
+                                      }`}
+                                      style={{ 
+                                        width: `${Math.min(current, target)}%`,
+                                        opacity: current > target ? 0.7 : 1
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        <div id="rebalance-trades" className={`transition-all ${hoveredElement === 'rebalance-trades' ? 'ring-2 ring-indigo-500/50 rounded-lg p-2 -m-2' : ''}`}>
+                          <h4 className="text-sm font-medium text-gray-400 mb-4">Trade-off Summary</h4>
+                          <div className="space-y-3">
+                            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-emerald-400 text-lg">✓</span>
+                                <span className="font-medium text-emerald-400">What Improves</span>
+                              </div>
+                              <ul className="text-sm text-gray-300 space-y-1">
+                                <li>• Risk-adjusted returns (Sharpe: {currentMetrics.sharpe.toFixed(2)} → {proposedMetrics.sharpe.toFixed(2)})</li>
+                                <li>• Max drawdown protection ({currentMetrics.maxDrawdown.toFixed(0)}% → {proposedMetrics.maxDrawdown.toFixed(0)}%)</li>
+                                <li>• Volatility reduction ({currentMetrics.volatility.toFixed(1)}% → {proposedMetrics.volatility.toFixed(1)}%)</li>
+                                <li>• Geographic diversification (8% → {MODEL_PORTFOLIOS[modelKey].allocation.intlEquity}% international)</li>
+                              </ul>
+                            </div>
+                            
+                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-amber-400 text-lg">⚠</span>
+                                <span className="font-medium text-amber-400">Trade-offs</span>
+                              </div>
+                              <ul className="text-sm text-gray-300 space-y-1">
+                                <li>• Lower expected return in bull markets</li>
+                                <li>• Reduced tech sector exposure (growth potential)</li>
+                                <li>• Tax event from selling appreciated positions (~$8,400 gains)</li>
+                              </ul>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => setShowRebalancePreview(true)}
+                            className="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+                          >
+                            Preview Full Rebalancing Impact →
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
               
               {/* Optimization Opportunities */}
