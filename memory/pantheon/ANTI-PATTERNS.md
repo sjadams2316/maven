@@ -40,6 +40,30 @@ const price = data?.chart?.result?.[0]?.meta?.price || 0;
 **Why it failed:** Health check tested `/profile/AAPL`, app used `/quote/`
 **Do instead:** Health checks must mirror actual usage
 
+### ❌ Injecting all learnings into every agent
+**What happened:** Spawned agents with "read LEARNINGS.md" — 18KB of context injected into every agent
+**Why it failed:** At $250+/day, this burns tokens on irrelevant context. A UI task doesn't need API error handling patterns.
+**Do instead:** 
+1. Use LEARNINGS-v2.md (tagged format)
+2. Specify EXACT learning IDs: "Relevant learnings: L004, L019, L020"
+3. Reference the Domain-Specific Injection Guide in LEARNINGS-v2.md
+4. NEVER say "read all learnings" — always be selective
+
+**Savings:** ~70% reduction in learning context tokens per agent
+
+---
+
+### ❌ Fixing issues in isolation without blast radius analysis
+**What happened:** Fixed data sync between /demo and /portfolio-lab, but same issue existed on /tax-harvesting, /fragility, /goals, /family, and other pages
+**Why it failed:** Fixed the symptom in one place, not the systemic pattern
+**Do instead:** 
+1. Identify the ROOT PATTERN (e.g., "pages using different data sources")
+2. Search for ALL instances of that pattern
+3. Fix comprehensively in one sweep
+4. Document in ANTI-PATTERNS.md so it's never repeated
+
+**Key question to ask:** "If this was wrong HERE, where ELSE is it probably wrong?"
+
 ---
 
 ## UX Anti-Patterns

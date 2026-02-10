@@ -51,6 +51,13 @@ When Sam asks for a "sweep" or "find bugs", do this:
 - Look for opportunities to improve UX
 - Research domain topics for INVESTMENT-RESEARCH.md
 
+## Pantheon Health Check (weekly or when spawning heavily)
+- [ ] Learnings count: `grep -c "^### L" memory/pantheon/LEARNINGS-v2.md` (trigger shadow agent at 1000)
+- [ ] File size: `wc -c memory/pantheon/LEARNINGS-v2.md` (archive at 50KB)
+- [ ] Check for duplicate learnings
+- [ ] Check ANTI-PATTERNS.md for new entries needed
+- [ ] Review if any infrastructure thresholds approaching
+
 ## Key Lesson (2026-02-08)
 "View all holdings" was routing to /onboarding instead of /portfolio-lab.
 **Always verify links go where they claim to go.**

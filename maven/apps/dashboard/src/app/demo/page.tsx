@@ -197,37 +197,24 @@ export default function DemoPage() {
     return () => clearInterval(interval);
   }, []);
   
-  // Merge live prices into holdings
+  // DEMO HOLDINGS: Use static values - DO NOT apply live prices
+  // Live prices cause inconsistency because crypto (TAO) swings wildly
+  // Demo is an educational example, not live data
   const DEMO_HOLDINGS = useMemo(() => {
-    return BASE_HOLDINGS.map(h => {
-      const ticker = h.symbol.toUpperCase();
-      const livePrice = livePrices[ticker];
-      if (livePrice && h.sharesNum) {
-        const liveValue = h.sharesNum * livePrice;
-        const originalPrice = h.value / h.sharesNum;
-        const priceChange = ((livePrice - originalPrice) / originalPrice) * 100;
-        return {
-          ...h,
-          value: liveValue,
-          change: priceChange,
-        };
-      }
-      return h;
-    }).sort((a, b) => b.value - a.value);
-  }, [BASE_HOLDINGS, livePrices]);
+    return [...BASE_HOLDINGS].sort((a, b) => b.value - a.value);
+  }, [BASE_HOLDINGS]);
   
-  // Calculate live net worth from holdings
-  const liveNetWorth = useMemo(() => {
-    const holdingsTotal = DEMO_HOLDINGS.reduce((sum, h) => sum + h.value, 0);
-    // Add approximate cash/other assets based on variant
-    const cashAndOther = isRetiree ? 120000 : 80000; // Cash reserves
-    return holdingsTotal + cashAndOther;
-  }, [DEMO_HOLDINGS, isRetiree]);
+  // Calculate net worth from static holdings
+  const holdingsTotal = useMemo(() => {
+    return DEMO_HOLDINGS.reduce((sum, h) => sum + h.value, 0);
+  }, [DEMO_HOLDINGS]);
   
-  const baseNetWorth = isRetiree ? RETIREE_NET_WORTH : DEMO_NET_WORTH;
-  const netWorth = Object.keys(livePrices).length > 0 ? liveNetWorth : baseNetWorth;
-  const netWorthChange = netWorth - baseNetWorth;
-  const netWorthChangePercent = baseNetWorth > 0 ? (netWorthChange / baseNetWorth) * 100 : 0;
+  // Net worth = holdings + cash buffer
+  const cashAndOther = isRetiree ? 120000 : 85000;
+  const netWorth = holdingsTotal + cashAndOther;
+  // Static demo change - shows concept without volatile live data
+  const netWorthChange = isRetiree ? 8500 : 12400;
+  const netWorthChangePercent = isRetiree ? 0.71 : 1.09;
   
   // Track insights with their original indices
   const indexedInsights = DEMO_INSIGHTS.map((insight, originalIdx) => ({ ...insight, originalIdx }));

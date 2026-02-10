@@ -277,6 +277,11 @@ export function calculateLiveFinancials(
 
 /**
  * Convenience hook that combines useLivePrices with financials calculation
+ * 
+ * IMPORTANT: In demo mode, we do NOT apply live prices to holdings.
+ * Demo is an educational example with fixed values. Applying live prices
+ * to volatile assets like crypto (TAO) causes massive inconsistencies
+ * across pages because the static values assume different prices.
  */
 export function useLiveFinancials(
   profile: UserProfile | null,
@@ -287,24 +292,25 @@ export function useLiveFinancials(
   isLoading: boolean;
   lastUpdated: Date | null;
 } {
-  const { livePrices, isLoading, lastUpdated } = useLivePrices(profile, isDemoMode);
+  // In demo mode, DON'T fetch live prices for holdings - use static values
+  // This ensures consistency across all pages
+  const { livePrices, isLoading, lastUpdated } = useLivePrices(
+    profile, 
+    false // Always pass false to skip live price fetch for holdings
+  );
   
   const financials = useMemo(() => {
     if (!profile) return null;
     
-    // If we have live prices, calculate live financials
-    if (Object.keys(livePrices).length > 0) {
-      return calculateLiveFinancials(profile, livePrices);
-    }
-    
-    // Otherwise, return static financials (same calculation without live prices)
+    // ALWAYS use static financials (no live prices) for consistency
+    // Live prices on volatile crypto breaks the demo narrative
     return calculateLiveFinancials(profile, {});
-  }, [profile, livePrices]);
+  }, [profile]);
   
   return {
     financials,
-    livePrices,
-    isLoading,
-    lastUpdated,
+    livePrices: {}, // Return empty - demo uses static values
+    isLoading: false,
+    lastUpdated: new Date(),
   };
 }

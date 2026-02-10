@@ -227,49 +227,40 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
-## Project Pantheon (v2.5 - Compounding System Live)
+## Project Pantheon (v3.2 - Autonomous Build System)
 
-**What:** Multi-agent architecture for Maven. Self-improving intelligence network.
+**What:** Multi-agent architecture for Maven. Self-improving intelligence network that builds autonomously.
 
-**First Full Production Run (2026-02-09):**
-- **20+ features shipped in ~4 hours**
-- Cost: ~$300 in API credits (full day of heavy usage)
-- Equivalent traditional dev cost: $30-50K+
-- ROI: ~100-150x on API spend
-- **GitHub Actions auto-deploy fixed** — pushes to main now auto-deploy
+**v3.2 Upgrades (2026-02-10):**
+- **Blast Radius Analysis** — Every fix automatically searches for ALL instances of the pattern
+- **Selective Learning Injection** — Agents get specific L### IDs, not "read all learnings" (70% token savings)
+- **SPAWN-CHECKLIST.md** — Mandatory checklist before every spawn
+- **Autonomous Build System** — Pantheon builds Maven 24/7 from prioritized backlog
+- **Orchestrator Accountability** — Eli enforces protocols, catches missing learnings
 
-**Compounding System (Built 2026-02-09 afternoon):**
-- **LEARNINGS.md** — Every agent captures one insight
-- **ANTI-PATTERNS.md** — 23 documented failures to avoid
-- **FEEDBACK.md** — User reactions as ground truth
-- **code-patterns/** — Copy-paste solutions
-- **Automated crons:** Weekly review, research accumulation, auto-QA
-
-**Verified Working:** Test sprint 3/3 agents captured learnings automatically.
-
-**The Flywheel:**
+**Autonomous Build Loop:**
 ```
-Sprint 1 → Learnings captured
-Sprint 2 → Agents read learnings, work smarter
-Sprint 3 → Patterns emerge, anti-patterns avoided
-Month 2 → System improving itself
-Month 6 → Competitors need 6 months to match DAY 1
+BACKLOG → SELECTOR → COST CHECK → SPAWN AGENT → QUALITY GATE → SHIP/ESCALATE → REPORT
 ```
+
+**Safety Rails:** $50/day budget, max 3 items/window, forbidden zones (auth/payments/APIs)
 
 **Infrastructure:**
 - `memory/pantheon/PANTHEON-STATUS.md` — Live agent tracker + file locks
 - `memory/pantheon/PANTHEON-PROTOCOL.md` — Full spawn guidelines
-- `memory/pantheon/LEARNINGS.md` — Running insight log
+- `memory/pantheon/LEARNINGS-v2.md` — Tagged learnings (28 total)
 - `memory/pantheon/PATTERNS.md` — Proven solutions
 - `memory/pantheon/ANTI-PATTERNS.md` — What NOT to do
-- `memory/pantheon/FEEDBACK.md` — User signals
-- `memory/pantheon/code-patterns/` — Reusable code
+- `memory/pantheon/SPAWN-CHECKLIST.md` — Pre-spawn checklist
+- `memory/pantheon/AUTONOMOUS-BUILD-SPEC.md` — Full autonomous build spec
+- `maven/BACKLOG.md` — Prioritized work queue
+- `memory/pantheon/DAILY-SPEND.md` — Cost tracking
 
 **Files:**
-- `memory/PROJECT-PANTHEON.md` — Full spec (updated with compounding system)
+- `memory/PROJECT-PANTHEON.md` — Full spec (v3.2)
 - `memory/pantheon/COMPOUNDING-ROADMAP.md` — Future improvements
 
-**This is the moat.** Every sprint makes the next one smarter. Gap widens daily.
+**This is the moat.** Maven builds itself while Sam sleeps. Gap widens daily.
 
 ---
 

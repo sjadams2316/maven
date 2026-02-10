@@ -16,26 +16,53 @@
 - [ ] Review relevant backlogs for prioritized tasks
 - [ ] Estimate credits (rule of thumb: ~$1-3 per agent)
 
-### 2. Context Tag Injection (NEW)
-**Don't inject all learnings — inject relevant ones by domain:**
+### 2. Context Tag Injection (MANDATORY — saves $$$)
+**At $250+/day, every token matters. NEVER inject all learnings.**
 
-| Task Type | Inject These Tags |
-|-----------|-------------------|
-| UI/Components | `ui`, `ux`, `mobile`, `accessibility` |
-| API Routes | `api`, `external`, `error`, `performance` |
-| Data/Demo | `data`, `state` |
-| Testing/QA | `testing`, `api`, `ux` |
-| Mobile | `mobile`, `ui` |
+| Task Type | Inject ONLY These Learnings |
+|-----------|----------------------------|
+| UI/Components | L002, L005, L006, L013, L014, L017 |
+| API Routes | L001, L003, L007, L008, L010, L020 |
+| Data/Demo | L004, L007, L009, L019, L020 |
+| Testing/QA | L007, L008, L015, L018, L021, L022 |
+| Mobile | L002, L006 |
+| External APIs | L001, L008, L010, L020 |
+| Error Handling | L001, L003, L005 |
+| Finance/Analysis | L025, L026, L027 |
+| Portfolio Display | L004, L019, L025, L026, L027 |
 
-**Format:** "Read learnings tagged `[tag]` from LEARNINGS-v2.md"
+**Format in spawn task:**
+```
+Relevant learnings (from LEARNINGS-v2.md):
+- L004: Demo data must have ONE canonical source
+- L019: Consolidate same tickers across accounts
+```
 
-### 2. Task Sizing
+**DO NOT say "read LEARNINGS.md" — specify exact IDs.**
+**Old LEARNINGS.md is deprecated → LEARNINGS-v1-deprecated.md**
+
+### 2. Blast Radius Analysis (MANDATORY)
+**Before scoping ANY fix, ask: "Where ELSE does this problem exist?"**
+
+| Question | Action |
+|----------|--------|
+| What's the root pattern? | Identify the systemic issue, not just the symptom |
+| What other pages/components use this? | Search codebase for all instances |
+| Should this be one agent or comprehensive? | Default to comprehensive |
+
+❌ Wrong: "Fix data sync on portfolio-lab"
+✅ Right: "Audit and fix data consistency across ALL pages"
+
+**If you skip this step, you WILL be fixing the same bug again next week.**
+
+### 3. Task Sizing
 **Ideal task:** 1-2 files, <200 lines changed, 2-5 min runtime
 
 ❌ Too big: "Rebuild the dashboard"
 ✅ Just right: "Fix data-health indicator showing FMP as down"
+✅ Also right: "Audit + fix data consistency across all 8 pages" (comprehensive is OK when blast radius requires it)
 
-### 3. File Lock Check
+### 4. File Lock Check
 Before spawning, verify no other agent is touching the same files.
 Check `PANTHEON-STATUS.md` → Active Agents → Files.
 

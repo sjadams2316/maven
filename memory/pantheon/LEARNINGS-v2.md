@@ -140,12 +140,16 @@
 ## Domain-Specific Injection Guide
 
 **For UI/Component tasks, inject:** L002, L005, L006, L013, L014, L017
-**For API tasks, inject:** L001, L003, L007, L008, L010
+**For API tasks, inject:** L001, L003, L007, L008, L010, L020
 **For Mobile tasks, inject:** L002, L006
-**For Data/Demo tasks, inject:** L004, L007, L009
-**For Testing/QA tasks, inject:** L007, L008, L015, L018
-**For External API tasks, inject:** L001, L008, L010
+**For Data/Demo tasks, inject:** L004, L007, L009, L019, L020, L028
+**For Testing/QA tasks, inject:** L007, L008, L015, L018, L021, L022
+**For External API tasks, inject:** L001, L008, L010, L020
 **For Error Handling tasks, inject:** L001, L003, L005
+**For Finance/Analysis tasks, inject:** L025, L026, L027
+**For Portfolio Display tasks, inject:** L004, L019, L025, L026, L027
+
+*Last updated: 2026-02-10*
 
 ---
 
@@ -237,3 +241,23 @@ Sources: Vanguard VCMM (Dec 2025), JP Morgan 2026 LTCMA (Oct 2025), Research Aff
 This visual contrast crystallizes the CMA narrative. Users see the same $100K starting point grows to dramatically different amounts depending on assumptions. Historical makes US look like the obvious winner. Expected shows why advisors recommend diversification.
 
 Pattern: Show both projections side-by-side with checkmarks on expected improvements and amber warnings on historical trade-offs. Include the "why they differ" explainer with CMA sources.
+
+---
+
+## 2026-02-10 — Data Consistency Fix
+
+### L028 — Reusable Hooks for Cross-Cutting Concerns
+**Tags:** `data`, `api`, `state`
+**Confidence:** 3 ⭐⭐⭐
+**Confirmed by:** pantheon-data-consistency-audit (10 pages fixed)
+**Insight:** When the same logic is needed across many pages (like fetching live prices), create a reusable hook in `/hooks/`. Don't copy-paste the same useEffect + fetch pattern into 10 different pages.
+
+Pattern created: `useLivePrices.ts`
+- `useLivePrices()` — Raw price fetching
+- `useLiveFinancials()` — Financials with live prices applied
+- `calculateLiveFinancials()` — Helper for calculations
+
+**Before:** Each page had its own fetch logic → drift, inconsistency, bugs
+**After:** One hook, 10 pages import it → single source of truth
+
+See: `docs/DATA-SOURCES.md` for the canonical pattern.

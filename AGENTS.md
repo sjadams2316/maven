@@ -117,6 +117,14 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
 
+### Pantheon Spawns (MANDATORY)
+Before EVERY `sessions_spawn` call, follow `memory/pantheon/SPAWN-CHECKLIST.md`:
+1. **Blast radius** — Am I fixing comprehensively?
+2. **Learning injection** — Which SPECIFIC learning IDs apply? (Never "read all learnings")
+3. **File locks** — Check PANTHEON-STATUS.md first
+
+If Sam catches me spawning without selective learning injection, I've failed.
+
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
 **📝 Platform Formatting:**

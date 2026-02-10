@@ -1,9 +1,9 @@
 # Project Pantheon — Multi-Agent Architecture for Maven
 
 *Created: 2026-02-09*
-*Last Updated: 2026-02-09 19:35 EST*
-*Status: Fully Autonomous + Compounding + Oracle Integration*
-*Version: 3.1 — Oracle Design Principles + Skeptic Agent Added*
+*Last Updated: 2026-02-10 07:24 EST*
+*Status: Fully Autonomous + Compounding + Autonomous Build System*
+*Version: 3.2 — Blast Radius + Selective Injection + Autonomous Builds*
 
 ---
 
@@ -55,6 +55,36 @@ To prevent work loss from API credit exhaustion:
 - Knowledge bases persist regardless of agent completion
 - Agents can resume from KNOWLEDGE.md context if restarted
 
+### Blast Radius Analysis (v3.2 — NEW)
+
+**When fixing ANY issue, ALWAYS think: "Where else does this same problem exist?"**
+
+This is MANDATORY — not optional. Every fix triggers a ripple effect analysis.
+
+**Protocol:**
+1. **Identify the Pattern** — What's the root cause? (e.g., "page uses static data instead of live prices")
+2. **Find All Instances** — Search codebase for everywhere this pattern might exist
+3. **Spawn Comprehensive Fix** — Don't fix one page, fix ALL affected pages in one sweep
+4. **Document the Pattern** — Add to ANTI-PATTERNS.md so it's never repeated
+
+**Example:**
+- ❌ Wrong: "Demo page and Portfolio Lab don't match" → Fix just those two pages
+- ✅ Right: "Pages aren't using consistent data sources" → Audit ALL pages, fix ALL of them
+
+**Why This Matters:**
+- Users lose trust when they see different numbers on different pages
+- Fixing one page at a time wastes cycles (you'll just find the same bug elsewhere later)
+- Comprehensive fixes demonstrate systems thinking
+
+**Trigger Questions:**
+- "What OTHER pages/components use this same data?"
+- "What OTHER pages/components have this same pattern?"
+- "If this was wrong here, where ELSE is it probably wrong?"
+
+**This is now a CORE Pantheon principle.** When Eli or any agent receives a fix request, the default response is to think about blast radius FIRST, then execute comprehensively.
+
+---
+
 ### Agent Coordination
 
 **Status Tracking:** `memory/pantheon/PANTHEON-STATUS.md`
@@ -66,12 +96,14 @@ To prevent work loss from API credit exhaustion:
 1. Check PANTHEON-STATUS.md — is similar work in flight?
 2. Check file locks — will this touch files another agent is editing?
 3. Read PATTERNS.md — are there known gotchas for this type of work?
-4. Add entry to status tracker
+4. **Think about BLAST RADIUS — does this fix need to be applied elsewhere?**
+5. Add entry to status tracker
 
 **After Completion:**
 1. Move agent to "Recently Completed"
 2. Release file locks
 3. Spawn QA agent if code was committed
+4. **Update ANTI-PATTERNS.md if a new pattern was discovered**
 
 ### Autonomous Thinking (v3.0 — NEW)
 
@@ -175,6 +207,43 @@ User gets better answers
 1. **Explicit Mode** — Classify intent (Explain, Compare, Simulate, Execute, Audit)
 2. **Forced Tool Grounding** — No hallucinated financial advice
 3. **Decision Receipts** — Structured audit trail for every meaningful action
+
+### Autonomous Build System (v3.2 — NEW)
+
+**Pantheon builds Maven 24/7 without waiting for human prompts.**
+
+**The Loop:**
+```
+BACKLOG → SELECTOR → COST CHECK → SPAWN AGENT → QUALITY GATE → SHIP/ESCALATE → REPORT
+```
+
+**Components:**
+- `maven/BACKLOG.md` — Prioritized work queue (P0/P1/P2/P3)
+- `memory/pantheon/DAILY-SPEND.md` — Cost tracking
+- `memory/pantheon/AUTONOMOUS-BUILD-SPEC.md` — Full specification
+
+**Safety Rails:**
+- $50/day budget (auto-pause if exceeded)
+- Max 3 items per build window
+- Quality gate: build passes, <200 lines, learning captured
+- Forbidden zones: auth, payments, APIs, new routes
+- Kill switch: 3 failures = pause + alert
+
+**What CAN be auto-built:**
+- Bug fixes with clear reproduction
+- UI improvements (styling, copy, layout)
+- Performance and accessibility fixes
+- Adding data to existing displays
+
+**What CANNOT be auto-built:**
+- New pages or routes
+- API integrations requiring keys
+- Auth, payments, database changes
+- Major architecture refactors
+
+**Morning Report:** Daily summary of what shipped, escalated, or failed overnight.
+
+See: `memory/pantheon/AUTONOMOUS-BUILD-SPEC.md` for full details.
 4. **Disagree When Appropriate** — Advisor, not yes-machine
 5. **Scoped Memory** — Personalization without creepiness
 
