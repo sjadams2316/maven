@@ -10,7 +10,7 @@
 
 | Agent | Task | Files | Dependencies | Started | Status |
 |-------|------|-------|--------------|---------|--------|
-| — | — | — | — | — | No active agents |
+| pantheon-giving | Build /giving page (philanthropy, DAF, QCD) | app/giving/page.tsx | None | 08:57 EST | 🔄 Running |
 
 ---
 
