@@ -49,8 +49,8 @@ const FALLBACK_PRICES: Record<string, { name: string; price: number; change: num
   'QQQ': { name: 'Invesco QQQ Trust', price: 528.47, change: 3.18, changePercent: 0.61 },
   'DIA': { name: 'SPDR Dow Jones Industrial', price: 447.82, change: 0.89, changePercent: 0.20 },
   'IWM': { name: 'iShares Russell 2000 ETF', price: 224.56, change: 1.12, changePercent: 0.50 },
-  'VOO': { name: 'Vanguard S&P 500 ETF', price: 555.20, change: 2.22, changePercent: 0.40 },
-  'VTI': { name: 'Vanguard Total Stock Market', price: 289.45, change: 1.16, changePercent: 0.40 },
+  'VOO': { name: 'Vanguard S&P 500 ETF', price: 638.23, change: 2.55, changePercent: 0.40 },
+  'VTI': { name: 'Vanguard Total Stock Market', price: 342.64, change: 1.37, changePercent: 0.40 },
   'VGT': { name: 'Vanguard Information Technology', price: 608.30, change: 4.26, changePercent: 0.70 },
   'VNQ': { name: 'Vanguard Real Estate ETF', price: 89.20, change: 0.27, changePercent: 0.30 },
   'BND': { name: 'Vanguard Total Bond Market', price: 72.45, change: 0.07, changePercent: 0.10 },
@@ -63,14 +63,14 @@ const FALLBACK_PRICES: Record<string, { name: string; price: number; change: num
   'NVDA': { name: 'NVIDIA Corporation', price: 870.00, change: 13.05, changePercent: 1.52 },
   'META': { name: 'Meta Platforms Inc.', price: 630.00, change: 5.67, changePercent: 0.91 },
   'TSLA': { name: 'Tesla Inc.', price: 390.00, change: 7.02, changePercent: 1.83 },
-  // International ETFs
-  'VXUS': { name: 'Vanguard Total Intl Stock', price: 64.85, change: 0.32, changePercent: 0.50 },
-  'VWO': { name: 'Vanguard Emerging Markets', price: 45.20, change: 0.23, changePercent: 0.51 },
-  'VEA': { name: 'Vanguard FTSE Developed Markets', price: 50.10, change: 0.25, changePercent: 0.50 },
-  'EFA': { name: 'iShares MSCI EAFE ETF', price: 82.30, change: 0.41, changePercent: 0.50 },
-  // Bitcoin miners / crypto-adjacent stocks  
-  'CIFR': { name: 'Cipher Mining', price: 6.45, change: -0.13, changePercent: -1.97 },
-  'IREN': { name: 'Iris Energy', price: 12.80, change: 0.26, changePercent: 2.07 },
+  // International ETFs (updated Feb 2026)
+  'VXUS': { name: 'Vanguard Total Intl Stock', price: 82.15, change: 0.41, changePercent: 0.50 },
+  'VWO': { name: 'Vanguard Emerging Markets', price: 57.75, change: 0.29, changePercent: 0.51 },
+  'VEA': { name: 'Vanguard FTSE Developed Markets', price: 54.10, change: 0.27, changePercent: 0.50 },
+  'EFA': { name: 'iShares MSCI EAFE ETF', price: 88.30, change: 0.44, changePercent: 0.50 },
+  // Bitcoin miners / crypto-adjacent stocks (updated Feb 2026)
+  'CIFR': { name: 'Cipher Mining', price: 16.76, change: 2.03, changePercent: 13.78 },
+  'IREN': { name: 'Iris Energy', price: 46.15, change: 0.92, changePercent: 2.04 },
   'MARA': { name: 'Marathon Digital', price: 22.50, change: 0.45, changePercent: 2.04 },
   'RIOT': { name: 'Riot Platforms', price: 12.30, change: 0.25, changePercent: 2.07 },
   'CLSK': { name: 'CleanSpark', price: 15.40, change: 0.31, changePercent: 2.05 },
