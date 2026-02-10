@@ -368,10 +368,21 @@ export default function PortfolioLab() {
       .flatMap((a: any) => a.holdings || [])
       .filter((h: Holding) => h.currentValue && h.currentValue > 0);
     
-    // DEMO MODE: Use static values - DO NOT apply live prices
-    // Live prices cause inconsistency because crypto (TAO) swings wildly
-    // Demo is an educational example with fixed values for consistency
-    // (Live prices removed - was causing dashboard/portfolio-lab mismatch)
+    // In demo mode, apply live prices for accuracy
+    if (isDemoMode && Object.keys(livePrices).length > 0) {
+      rawHoldings = rawHoldings.map((h: Holding) => {
+        const ticker = h.ticker.toUpperCase();
+        const livePrice = livePrices[ticker];
+        if (livePrice && h.shares) {
+          return {
+            ...h,
+            currentPrice: livePrice,
+            currentValue: h.shares * livePrice,
+          };
+        }
+        return h;
+      });
+    }
     
     // Cash-like tickers to consolidate
     const CASH_TICKERS = ['CASH', 'USD', 'SPAXX', 'VMFXX', 'SWVXX', 'FDRXX', 'SPRXX', 'FTEXX', 'VMMXX'];

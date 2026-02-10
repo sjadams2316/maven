@@ -261,3 +261,21 @@ Pattern created: `useLivePrices.ts`
 **After:** One hook, 10 pages import it → single source of truth
 
 See: `docs/DATA-SOURCES.md` for the canonical pattern.
+
+### L029 — Verify Agent Work Before Reporting Success
+**Tags:** `testing`, `process`
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** Data consistency bug 2026-02-10 — agent claimed "10 pages fixed" but root cause wasn't addressed
+**Insight:** When an agent reports "task complete," the orchestrator MUST verify by actually checking the output:
+- For UI changes: Open the page and look at it
+- For data fixes: Compare actual values across pages
+- For API changes: Test the endpoint
+
+Never accept "build passes" as proof of correctness. "Works" ≠ "Correct."
+
+**Pattern:** After every agent completion:
+1. Open browser
+2. Navigate to affected pages
+3. Verify the ACTUAL user-facing result
+4. Compare across pages if data consistency is involved
+5. Only then report success

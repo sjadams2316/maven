@@ -27,19 +27,33 @@ export interface DemoHolding {
 
 /**
  * GROWTH_HOLDINGS - The canonical demo portfolio
- * This is the single source of truth for what the demo user owns.
- * All pages should derive their data from this.
+ * Single source of truth for demo user holdings.
+ * 
+ * Share counts are fixed. Values are calculated from live prices.
+ * The "value" field is a fallback when live prices aren't available.
+ * 
+ * Target portfolio (~$800K at Feb 2026 prices):
+ * - TAO: 962 tokens × $156 = ~$150K (crypto)
+ * - VTI: 620 shares × $289 = ~$179K (US stocks)
+ * - CIFR: 7,750 shares × $6.45 = ~$50K (BTC miner)
+ * - IREN: 3,900 shares × $12.80 = ~$50K (BTC miner)
+ * - BND: 830 shares × $72.45 = ~$60K (bonds)
+ * - VOO: 145 shares × $555 = ~$80K (S&P 500)
+ * - VXUS: 700 shares × $64.85 = ~$45K (international)
+ * - VWO: 550 shares × $45.20 = ~$25K (emerging markets)
+ * - VNQ: 450 shares × $89.20 = ~$40K (REITs)
+ * Holdings total: ~$679K + $90K cash = ~$770K liquid + $30K other = ~$800K
  */
 export const GROWTH_HOLDINGS: DemoHolding[] = [
-  { symbol: 'TAO', name: 'Bittensor', value: 354900, change: 4.78, shares: '105 tokens', sharesNum: 105 },
-  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 185000, change: 1.2, shares: '620 shares', sharesNum: 620 },
-  { symbol: 'CIFR', name: 'Cipher Mining', value: 78000, change: -2.3, shares: '12,000 shares', sharesNum: 12000 },
-  { symbol: 'IREN', name: 'Iris Energy', value: 52000, change: 3.1, shares: '4,200 shares', sharesNum: 4200 },
-  { symbol: 'BND', name: 'Vanguard Total Bond', value: 48000, change: 0.3, shares: '580 shares', sharesNum: 580 },
-  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 42000, change: 1.1, shares: '95 shares', sharesNum: 95 },
-  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 35000, change: 0.8, shares: '540 shares', sharesNum: 540 },
-  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 22000, change: -16.0, shares: '380 shares', sharesNum: 380, unrealizedLoss: -4200 },
-  { symbol: 'VNQ', name: 'Vanguard REIT', value: 18000, change: -0.5, shares: '195 shares', sharesNum: 195 },
+  { symbol: 'TAO', name: 'Bittensor', value: 150000, change: -1.77, shares: '962 tokens', sharesNum: 962 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock', value: 179000, change: 0.4, shares: '620 shares', sharesNum: 620 },
+  { symbol: 'VOO', name: 'Vanguard S&P 500', value: 80000, change: 0.4, shares: '145 shares', sharesNum: 145 },
+  { symbol: 'BND', name: 'Vanguard Total Bond', value: 60000, change: 0.1, shares: '830 shares', sharesNum: 830 },
+  { symbol: 'CIFR', name: 'Cipher Mining', value: 50000, change: -1.97, shares: '7,750 shares', sharesNum: 7750 },
+  { symbol: 'IREN', name: 'Iris Energy', value: 50000, change: 2.07, shares: '3,900 shares', sharesNum: 3900 },
+  { symbol: 'VXUS', name: 'Vanguard Total Intl', value: 45000, change: 0.5, shares: '700 shares', sharesNum: 700 },
+  { symbol: 'VNQ', name: 'Vanguard REIT', value: 40000, change: 0.3, shares: '450 shares', sharesNum: 450 },
+  { symbol: 'VWO', name: 'Vanguard Emerging Mkts', value: 25000, change: 0.5, shares: '550 shares', sharesNum: 550, unrealizedLoss: -3200 },
 ];
 
 // Calculate totals from holdings
@@ -104,38 +118,37 @@ export const DEMO_PROFILE: UserProfile = {
   ],
   
   // Retirement Accounts - Contains Growth Portfolio ETFs
+  // Share counts match GROWTH_HOLDINGS for consistency
   retirementAccounts: [
     {
       id: "demo-ret-1",
       name: "Employer 401(k)",
       institution: "Fidelity",
-      balance: 275000,
+      balance: 319000,
       type: "401(k)",
       employer: "Tech Corp",
       contributionPercent: 15,
       employerMatchPercent: 6,
       holdings: [
-        // VTI - primary US stock holding
-        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 620, costBasis: 148000, currentPrice: 298.39, currentValue: 185000 },
-        // BND - bond allocation
-        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 580, costBasis: 44000, currentPrice: 82.76, currentValue: 48000 },
-        // VOO - S&P 500
-        { ticker: "VOO", name: "Vanguard S&P 500", shares: 95, costBasis: 38000, currentPrice: 442.11, currentValue: 42000 },
+        // VTI - primary US stock holding (620 shares × $289 = ~$179K)
+        { ticker: "VTI", name: "Vanguard Total Stock Market", shares: 620, costBasis: 148000, currentPrice: 289.45, currentValue: 179459 },
+        // BND - bond allocation (830 shares × $72.45 = ~$60K)
+        { ticker: "BND", name: "Vanguard Total Bond Market", shares: 830, costBasis: 58000, currentPrice: 72.45, currentValue: 60134 },
+        // VOO - S&P 500 (145 shares × $555 = ~$80K)
+        { ticker: "VOO", name: "Vanguard S&P 500", shares: 145, costBasis: 72000, currentPrice: 555.20, currentValue: 80504 },
       ]
     },
     {
       id: "demo-ret-2",
       name: "Traditional IRA",
       institution: "Fidelity",
-      balance: 75000,
+      balance: 85500,
       type: "Traditional IRA",
       holdings: [
-        // VXUS - International
-        { ticker: "VXUS", name: "Vanguard Total International", shares: 540, costBasis: 30000, currentPrice: 64.81, currentValue: 35000 },
-        // VWO - Emerging markets (has unrealized loss for tax harvesting demo)
-        { ticker: "VWO", name: "Vanguard Emerging Markets", shares: 380, costBasis: 26200, currentPrice: 57.89, currentValue: 22000 },
-        // VNQ - REIT
-        { ticker: "VNQ", name: "Vanguard Real Estate ETF", shares: 195, costBasis: 16000, currentPrice: 92.31, currentValue: 18000 },
+        // VXUS - International (700 shares × $64.85 = ~$45K)
+        { ticker: "VXUS", name: "Vanguard Total International", shares: 700, costBasis: 42000, currentPrice: 64.85, currentValue: 45395 },
+        // VNQ - REIT (450 shares × $89.20 = ~$40K)
+        { ticker: "VNQ", name: "Vanguard Real Estate ETF", shares: 450, costBasis: 36000, currentPrice: 89.20, currentValue: 40140 },
       ]
     },
     {
@@ -145,9 +158,9 @@ export const DEMO_PROFILE: UserProfile = {
       balance: 35000,
       type: "Roth IRA",
       holdings: [
-        // Tech-focused speculative holdings in Roth (tax-free growth)
-        { ticker: "CIFR", name: "Cipher Mining", shares: 2500, costBasis: 18000, currentPrice: 6.50, currentValue: 16250 },
-        { ticker: "IREN", name: "Iris Energy", shares: 1500, costBasis: 12000, currentPrice: 12.38, currentValue: 18570 },
+        // Speculative BTC miner holdings in Roth (tax-free growth)
+        { ticker: "CIFR", name: "Cipher Mining", shares: 2750, costBasis: 18000, currentPrice: 6.45, currentValue: 17738 },
+        { ticker: "IREN", name: "Iris Energy", shares: 1400, costBasis: 12000, currentPrice: 12.80, currentValue: 17920 },
       ]
     },
   ],
@@ -158,23 +171,25 @@ export const DEMO_PROFILE: UserProfile = {
       id: "demo-inv-1",
       name: "Taxable Brokerage",
       institution: "Fidelity",
-      balance: 95180,
+      balance: 82620,
       type: "Individual",
       holdings: [
-        // CIFR/IREN in taxable (speculative positions)
-        { ticker: "CIFR", name: "Cipher Mining", shares: 9500, costBasis: 65000, currentPrice: 6.50, currentValue: 61750, acquisitionDate: "2023-06-15" },
-        { ticker: "IREN", name: "Iris Energy", shares: 2700, costBasis: 28000, currentPrice: 12.38, currentValue: 33430, acquisitionDate: "2023-08-20" },
+        // CIFR/IREN in taxable (speculative positions with tax-loss potential)
+        { ticker: "CIFR", name: "Cipher Mining", shares: 5000, costBasis: 45000, currentPrice: 6.45, currentValue: 32250, acquisitionDate: "2023-06-15" },
+        { ticker: "IREN", name: "Iris Energy", shares: 2500, costBasis: 35000, currentPrice: 12.80, currentValue: 32000, acquisitionDate: "2023-08-20" },
+        { ticker: "VWO", name: "Vanguard Emerging Markets", shares: 550, costBasis: 28200, currentPrice: 45.20, currentValue: 24860, acquisitionDate: "2024-01-10" },
       ]
     },
     {
       id: "demo-inv-2",
       name: "Crypto Holdings",
       institution: "Coinbase",
-      balance: 354900,
+      balance: 150000,
       type: "Individual",
       holdings: [
-        // TAO - The big crypto position that dominates the portfolio
-        { ticker: "TAO", name: "Bittensor", shares: 105, costBasis: 42000, currentPrice: 3380, currentValue: 354900 },
+        // TAO - The big crypto position (~19% of portfolio)
+        // 962 tokens at ~$156 = ~$150K
+        { ticker: "TAO", name: "Bittensor", shares: 962, costBasis: 45000, currentPrice: 156, currentValue: 150072 },
       ]
     },
   ],

@@ -63,11 +63,24 @@ const FALLBACK_PRICES: Record<string, { name: string; price: number; change: num
   'NVDA': { name: 'NVIDIA Corporation', price: 870.00, change: 13.05, changePercent: 1.52 },
   'META': { name: 'Meta Platforms Inc.', price: 630.00, change: 5.67, changePercent: 0.91 },
   'TSLA': { name: 'Tesla Inc.', price: 390.00, change: 7.02, changePercent: 1.83 },
-  // Crypto (approximate)
-  'BTC': { name: 'Bitcoin', price: 97500, change: 1462.50, changePercent: 1.52 },
+  // International ETFs
+  'VXUS': { name: 'Vanguard Total Intl Stock', price: 64.85, change: 0.32, changePercent: 0.50 },
+  'VWO': { name: 'Vanguard Emerging Markets', price: 45.20, change: 0.23, changePercent: 0.51 },
+  'VEA': { name: 'Vanguard FTSE Developed Markets', price: 50.10, change: 0.25, changePercent: 0.50 },
+  'EFA': { name: 'iShares MSCI EAFE ETF', price: 82.30, change: 0.41, changePercent: 0.50 },
+  // Bitcoin miners / crypto-adjacent stocks  
+  'CIFR': { name: 'Cipher Mining', price: 6.45, change: -0.13, changePercent: -1.97 },
+  'IREN': { name: 'Iris Energy', price: 12.80, change: 0.26, changePercent: 2.07 },
+  'MARA': { name: 'Marathon Digital', price: 22.50, change: 0.45, changePercent: 2.04 },
+  'RIOT': { name: 'Riot Platforms', price: 12.30, change: 0.25, changePercent: 2.07 },
+  'CLSK': { name: 'CleanSpark', price: 15.40, change: 0.31, changePercent: 2.05 },
+  'COIN': { name: 'Coinbase Global', price: 285.00, change: 5.70, changePercent: 2.04 },
+  'MSTR': { name: 'MicroStrategy', price: 380.00, change: 7.60, changePercent: 2.04 },
+  // Crypto (approximate - updated Feb 2026)
+  'BTC': { name: 'Bitcoin', price: 68500, change: -685.00, changePercent: -0.99 },
   'ETH': { name: 'Ethereum', price: 2650, change: 39.75, changePercent: 1.52 },
   'SOL': { name: 'Solana', price: 200, change: 4.00, changePercent: 2.04 },
-  'TAO': { name: 'Bittensor', price: 480, change: 14.40, changePercent: 3.09 },
+  'TAO': { name: 'Bittensor', price: 156, change: -2.81, changePercent: -1.77 },
 };
 
 // Validate symbol format

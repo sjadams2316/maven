@@ -197,24 +197,33 @@ export default function DemoPage() {
     return () => clearInterval(interval);
   }, []);
   
-  // DEMO HOLDINGS: Use static values - DO NOT apply live prices
-  // Live prices cause inconsistency because crypto (TAO) swings wildly
-  // Demo is an educational example, not live data
+  // Apply live prices to holdings for accuracy
   const DEMO_HOLDINGS = useMemo(() => {
-    return [...BASE_HOLDINGS].sort((a, b) => b.value - a.value);
-  }, [BASE_HOLDINGS]);
+    return BASE_HOLDINGS.map(h => {
+      const ticker = h.symbol.toUpperCase();
+      const livePrice = livePrices[ticker];
+      if (livePrice && h.sharesNum) {
+        const liveValue = h.sharesNum * livePrice;
+        return {
+          ...h,
+          value: liveValue,
+        };
+      }
+      return h;
+    }).sort((a, b) => b.value - a.value);
+  }, [BASE_HOLDINGS, livePrices]);
   
-  // Calculate net worth from static holdings
+  // Calculate net worth from holdings
   const holdingsTotal = useMemo(() => {
     return DEMO_HOLDINGS.reduce((sum, h) => sum + h.value, 0);
   }, [DEMO_HOLDINGS]);
   
   // Net worth = holdings + cash buffer
   const cashAndOther = isRetiree ? 120000 : 85000;
+  const baseNetWorth = isRetiree ? 1200000 : 835000; // Reference point for change calculation
   const netWorth = holdingsTotal + cashAndOther;
-  // Static demo change - shows concept without volatile live data
-  const netWorthChange = isRetiree ? 8500 : 12400;
-  const netWorthChangePercent = isRetiree ? 0.71 : 1.09;
+  const netWorthChange = netWorth - baseNetWorth;
+  const netWorthChangePercent = baseNetWorth > 0 ? (netWorthChange / baseNetWorth) * 100 : 0;
   
   // Track insights with their original indices
   const indexedInsights = DEMO_INSIGHTS.map((insight, originalIdx) => ({ ...insight, originalIdx }));
