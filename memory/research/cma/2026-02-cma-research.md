@@ -1,278 +1,220 @@
-# Capital Market Assumptions Research
+# Capital Market Assumptions Research - February 2026
 
-**Research Date:** February 9, 2026
-**Last Updated:** February 9, 2026
-**Researcher:** AI Research Agent
+**Date:** February 9, 2026  
+**Purpose:** Gather forward-looking CMAs for Pantheon dashboard portfolio comparison features
 
 ---
 
 ## Executive Summary
 
-This document compiles 10-year Capital Market Assumptions (CMAs) from leading investment research firms to support Pantheon's portfolio analysis features. The key finding is that **forward-looking expectations favor international equities over US**, despite historical returns heavily favoring US large caps.
+Forward-looking CMAs from major sources (Vanguard, JP Morgan) paint a very different picture than historical returns:
 
-### Key Insight: The Narrative Flip
+| Asset Class | Historical 10yr | Expected 10-15yr | Delta |
+|-------------|-----------------|------------------|-------|
+| US Large Cap | ~13% | 5.5% | -7.5% |
+| US Growth | ~15% | 4.0% | -11% |
+| US Value | ~10% | 6.8% | -3.2% |
+| Int'l Developed | ~5% | 7.0% | +2% |
+| Emerging Markets | ~4% | 7.8% | +3.8% |
+| US Agg Bonds | ~1.5% | 4.5% | +3% |
 
-| Asset Class | Historical 10yr | Expected 10yr |
-|-------------|-----------------|---------------|
-| US Large Cap | ~13% | ~5% (3.1-6.7%) |
-| International Developed | ~5% | ~6.5% (4.9-8.1%) |
-| Emerging Markets | ~4% | ~7.8% (7.2-9.9%) |
-
-This flip is critical for explaining diversification recommendations to users.
-
----
-
-## Sources Researched
-
-### 1. Vanguard Capital Markets Model (VCMM)
-**URL:** https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html
-**As Of:** December 31, 2025
-
-**Methodology:**
-- Monte Carlo simulation based on historical data since 1960
-- Generates 10,000 simulations per asset class
-- Provides ranges (not point estimates) for expected returns
-- Driven by: starting yields, valuations, earnings growth
-
-**Key Forecasts (10-year):**
-- US Equities: 3.5%-5.5%
-- US Large Cap: 3.4%-5.4%
-- US Small Cap: 5.1%-7.1%
-- US Growth: 2.3%-4.3%
-- US Value: 5.8%-7.8%
-- Non-US Equities: 4.9%-6.9%
-- US Aggregate Bonds: 3.8%-4.8%
-- US High Yield: 4.3%-5.3%
-- EM Sovereign (hedged): 5.1%-6.1%
-
-**30-Year Forecasts:**
-- US Stocks: 4.4%-6.4%
-- Non-US Stocks: 6.2%-8.2%
-- US Aggregate Bonds: 4.1%-5.1%
+**Key Insight:** The narrative flips. International equities and even bonds are expected to outperform US growth stocks.
 
 ---
 
-### 2. J.P. Morgan Long-Term Capital Market Assumptions (LTCMA)
-**URL:** https://am.jpmorgan.com/us/en/asset-management/institutional/insights/portfolio-insights/ltcma/
-**Press Release:** https://am.jpmorgan.com/us/en/asset-management/adv/about-us/media/press-releases/jp-morgan-unveils-2025-long-term-capital-market-assumptions/
-**As Of:** September 30, 2025 (29th edition)
+## Primary Sources Researched
 
-**Methodology:**
-- 10-15 year horizon
-- Combines quantitative models with qualitative inputs from 100+ analysts
-- Covers 200+ assets and strategies
+### 1. Vanguard 2026 Economic and Market Outlook (Dec 2025)
 
-**Key Forecasts:**
-- US Large Cap: 6.7%
-- Developed Markets: 7.5% (was 8.1% in 2024)
-- Emerging Markets: 7.8% (was 7.2% in 2024)
-- US Aggregate Bonds: 4.8%
-- US Intermediate Treasuries: 3.8%
-- US Long Treasuries: 5.2%
-- US Investment Grade Credit: 5.0%
-- US High Yield: 6.1%
-- EM Sovereign Bonds: 6.3%
-- US Core Real Estate: 8.1%
-- Private Equity: 9.9%
-- Infrastructure: 6.3%
-- Commodities: 3.8%
-- US Cash: 2.8% (cycle-neutral rate)
+**Source:** https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/2026-outlook-economic-upside-stock-market-downside.html
 
-**Key Themes:**
-- Higher policy rates reinforce strong bond returns
-- Generational opportunity in real estate
-- AI expected to boost productivity 20bps annually
-- 60/40 portfolio expected to return 6.4%
+**Key Findings:**
+- **Best Risk-Return Opportunities (ranked):**
+  1. High-quality US fixed income
+  2. US value-oriented equities
+  3. Non-US developed market equities
 
----
+- **US Stocks:** "We expect returns for U.S. stocks—particularly growth stocks—to be muted over the next five to 10 years."
+  - Muted 4-5% forecast "nearly single-handedly driven by our risk-return assessment of large-cap technology companies"
+  - Two headwinds: high earnings expectations + creative destruction from new entrants
 
-### 3. BlackRock Capital Market Assumptions
-**URL:** https://www.blackrock.com/institutions/en-us/insights/thought-leadership/capital-market-assumptions
-**As Of:** September 30, 2025
+- **Bonds:** "Bonds are back" - projected ~4% returns over decade regardless of Fed policy
+  - Provides diversification if AI investment disappoints
+  - Short-to-intermediate term bonds fare well
 
-**Key Forecasts:**
-- US Equities: 5.2% (was 6.2% in 2024)
-- Non-US Equities: 7.1% (was 8% in 2024)
-- US Aggregate Bonds: 4.1%
-- High Yield: 5.7%
-- Hedged EM Bonds: 4.7%
+- **International:** Non-US developed markets should benefit as "AI's eventual boost to growth broadens to consumers of AI technology"
 
-**Key Themes:**
-- Prefers non-US developed market government bonds
-- Favors emerging market equities
-- Recommends inflation-linked bonds due to tariff risks
-- Underweight global investment grade credit (expects spread widening)
+- **Portfolio Allocation:** Vanguard's VEMO portfolio: 40% stocks, 60% bonds
 
----
+- **Economic Outlook:**
+  - US GDP growth: ~2.25% in 2026
+  - Fed neutral rate: 3.5% (more hawkish than bond market expects)
+  - Inflation: above 2% through 2026
+  - 60% probability of 3% real GDP growth in coming years (AI-driven)
 
-### 4. Research Affiliates Asset Allocation Interactive
-**URL:** https://interactive.researchaffiliates.com/asset-allocation
-**As Of:** December 31, 2025
+### 2. JP Morgan 2026 Long-Term Capital Market Assumptions (Oct 2025) - 30th Edition
 
-**Methodology:**
-- Valuation-dependent model (CAPE-based)
-- Known for contrarian, value-oriented approach
-- Generally most bearish on US large caps
+**Source:** https://www.prnewswire.com/news-releases/jp-morgan-releases-2026-long-term-capital-market-assumptions-302589249.html
 
-**Key Forecasts:**
-- US Large Cap: 3.1% (most bearish)
-- US Small Cap: 7.1%
-- Developed Markets ex-US: 7.7%
-- Emerging Markets: 7.5%
-- US Aggregate Bonds: 4.7%
+**Key Findings:**
 
-**Notable:** Expects US bonds to outperform US large cap stocks over 10 years!
+#### Portfolio Returns
+- **60/40 Portfolio:** 6.4% expected annualized return
+- **60/40 + 30% Alternatives:** 6.9% return, 25% Sharpe ratio improvement
 
----
+#### Specific Asset Class Returns
 
-### 5. Schwab Long-Term Capital Market Expectations
-**URL:** https://www.schwab.com/learn/story/schwabs-long-term-capital-market-expectations
-**As Of:** October 31, 2025
+| Asset Class | Expected Return |
+|-------------|-----------------|
+| US Large Cap Equities | 6.7% |
+| Global Equities (USD) | 7.0% |
+| Emerging Markets Equities (USD) | 7.8% |
+| US Intermediate Treasuries | 4.0% |
+| US Long Treasuries | 4.9% |
+| US Investment Grade Credit | 5.2% |
+| US High Yield | 6.1% |
+| US Core Real Estate | 8.2% |
+| European Core Real Estate | 6.9% |
+| Global Core Infrastructure | 6.5% |
+| Commodities (broad basket) | 4.6% |
+| Gold | 5.5% |
+| Global Timberland | 6.3% |
+| Private Equity | 10.2% |
 
-**Key Forecasts:**
-- US Large Caps: 5.9%
-- Non-US Developed Large Caps: 7.0%
-- US Aggregate Bonds: 4.8%
+#### Key Themes
+1. **Resilience despite slower growth:** Asset return projections remain strong despite labor constraints
+2. **Economic nationalism:** Trade frictions making headlines but boosting domestic investment
+3. **AI at critical juncture:** Adoption surging, investment massive - active management key
+4. **Currency matters:** EUR-based investors faced dollar strength headwind
+5. **Diversification essential:** Smarter portfolios use alternatives and real assets
 
----
+### 3. Research Affiliates Asset Allocation Interactive
 
-### 6. Morningstar Multi-Asset Research
-**As Of:** December 31, 2025
+**Source:** https://interactive.researchaffiliates.com/asset-allocation
 
-**Key Forecasts:**
-- US Stocks: 5.3%
-- Non-US Developed: 7.5%
-- Emerging Markets: 9.9% (most bullish on EM)
-- US Aggregate Bonds: 4.5%
+**Key Features:**
+- Free online tool updated regularly
+- 10-year track record of CMA accuracy
+- Covers 18 assets across 9 asset classes
+- Two models: valuation-dependent and yield-and-growth
+
+**Asset Classes Covered:**
+- US Equity (Large Cap, Small Cap)
+- International Equity (Developed Markets)
+- EM Equity (Emerging Markets)
+- US Bonds (Short/Intermediate/Long Treasury, Aggregate)
+- Credit (IG, Long Corporate, High Yield, EM Sovereign)
+- International Bonds (Global Treasury, EM Local)
+- TIPS (Intermediate, Long)
+- REITs (Equity REITs)
+- Commodities (Diversified)
 
 ---
 
-### 7. GMO (Grantham Mayo Van Otterloo)
-**URL:** https://www.gmo.com/americas/research-library/
-**As Of:** November 2025
+## Data Compiled for Implementation
 
-**Methodology:**
-- 7-year forecasts
-- Real returns (subtract ~2.5% for nominal)
-- Known for extreme valuations-based views
+The following CMAs were compiled and added to `apps/dashboard/src/lib/capital-market-assumptions.ts`:
 
-**Key Forecasts (REAL returns):**
-- US Large Caps: -6.0% (very bearish!)
-- International Large Caps: -0.7%
-- International Small Caps: 2.5%
-- EM Equities: 1.0%
-- EM Value: 3.8%
-- US Bonds: 1.3%
-- EM Bonds: 1.5%
+### Equities
 
----
+| Key | Asset Class | Expected Return | Volatility | Range |
+|-----|-------------|-----------------|------------|-------|
+| us-large-cap | US Large Cap | 5.5% | 16.5% | 4.0-6.7% |
+| us-small-cap | US Small Cap | 6.5% | 21.0% | 5.1-7.4% |
+| us-growth | US Growth | 4.0% | 18.5% | 2.5-5.0% |
+| us-value | US Value | 6.8% | 16.0% | 5.8-7.8% |
+| intl-developed | Int'l Developed | 7.0% | 17.5% | 5.5-8.0% |
+| emerging-markets | Emerging Markets | 7.8% | 23.0% | 7.0-9.0% |
 
-### 8. Fidelity Capital Markets Assumptions
-**URL:** https://institutional.fidelity.com/app/literature/view?itemCode=9904178
-**As Of:** April 2025
-**Horizon:** 20 years (2025-2044)
+### Fixed Income
 
-**Key Forecasts:**
-- US Equities: 5.8% nominal (3.2% real)
-- Non-US Equities: 6.7% nominal (4.1% real)
-- Emerging Markets: 8.1% nominal (5.5% real)
-- US Aggregate Bonds: 5.1% nominal (2.5% real)
+| Key | Asset Class | Expected Return | Volatility | Range |
+|-----|-------------|-----------------|------------|-------|
+| us-aggregate-bonds | US Agg Bonds | 4.5% | 5.5% | 4.0-5.0% |
+| us-treasury | US Treasury | 4.3% | 6.0% | 4.0-4.9% |
+| us-tips | US TIPS | 3.8% | 5.5% | 3.2-4.5% |
+| us-corporate-bonds | US IG Corporate | 5.2% | 7.0% | 4.8-5.5% |
+| us-high-yield | US High Yield | 6.1% | 10.0% | 5.5-6.5% |
+| em-bonds | EM Bonds | 5.8% | 10.5% | 5.1-6.3% |
 
----
+### Alternatives
 
-## Volatility Estimates
-
-Most firms provide expected volatility alongside returns. Consensus estimates:
-
-| Asset Class | Expected Volatility |
-|-------------|---------------------|
-| US Large Cap | 15-17% |
-| US Small Cap | 19-23% |
-| US Growth | 18-20% |
-| US Value | 15-17% |
-| International Developed | 17-19% |
-| Emerging Markets | 22-26% |
-| US Aggregate Bonds | 4-6% |
-| US Treasuries | 5-7% |
-| US TIPS | 5-6% |
-| US Corporate | 6-8% |
-| US High Yield | 9-12% |
-| EM Bonds | 10-12% |
-| REITs | 18-22% |
-| Commodities | 15-18% |
-| Cash | 0.5-1% |
+| Key | Asset Class | Expected Return | Volatility | Range |
+|-----|-------------|-----------------|------------|-------|
+| us-reits | US REITs | 8.2% | 19.0% | 6.5-8.5% |
+| commodities | Commodities | 4.6% | 16.0% | 3.5-5.5% |
+| cash | Cash/Money Market | 3.2% | 0.5% | 2.5-3.8% |
 
 ---
 
-## Consensus Summary Table
+## Key Insights for Pantheon Implementation
 
-| Asset Class | Low | Consensus | High | Volatility |
-|-------------|-----|-----------|------|------------|
-| US Large Cap | 3.1% | 5.0% | 6.7% | 16.5% |
-| US Small Cap | 5.1% | 6.5% | 7.4% | 21.0% |
-| US Growth | 2.3% | 3.8% | 5.0% | 18.5% |
-| US Value | 5.8% | 6.8% | 7.8% | 16.0% |
-| Int'l Developed | 4.9% | 6.5% | 8.1% | 17.5% |
-| Emerging Markets | 7.2% | 7.8% | 9.9% | 23.0% |
-| US Agg Bonds | 3.8% | 4.5% | 4.9% | 5.5% |
-| US Treasuries | 3.8% | 4.2% | 5.2% | 6.0% |
-| US TIPS | 3.2% | 3.8% | 4.5% | 5.5% |
-| US IG Corp | 4.5% | 5.0% | 5.5% | 7.0% |
-| US High Yield | 4.3% | 5.8% | 6.1% | 10.0% |
-| EM Bonds | 5.1% | 5.8% | 6.3% | 10.5% |
-| US REITs | 5.5% | 7.0% | 8.1% | 19.0% |
-| Commodities | 2.5% | 3.5% | 4.5% | 16.0% |
-| Cash | 2.5% | 3.2% | 3.8% | 0.5% |
+### 1. Why Historical vs Expected Matters
 
----
+When users see portfolio comparison:
+- Historical shows US concentration winning big (~13% vs 5% international)
+- Expected shows diversification winning (5.5% US vs 7% international)
 
-## Key Themes Across Sources
+This explains WHY diversification recommendations make sense even when historical data looks bad.
 
-### 1. US Equity Valuations Are Stretched
-All firms cite elevated valuations (CAPE ~35) as a headwind for US large cap returns. This is the primary driver of muted US equity expectations.
+### 2. Vanguard's Ranking Is Critical
 
-### 2. International Valuations More Attractive
-Lower P/E ratios in developed international (CAPE ~18) and emerging markets suggest better forward returns. Multiple firms note potential dollar weakness would further boost USD returns.
+Quote this directly in UI:
+> "Our capital market projections show that the strongest risk-return profiles across public investments over the coming 5-to-10 years are, in order:
+> 1. High-quality U.S. fixed income
+> 2. U.S. value-oriented equities  
+> 3. Non-U.S. developed-market equities"
 
-### 3. Bonds Have Become Competitive
-Starting yields of 4-5% support reasonable bond returns. Several firms (Vanguard, Research Affiliates) expect bonds to match or beat US large cap stocks over 10 years.
+### 3. "Bonds Are Back"
 
-### 4. Small Cap and Value Favored Over Growth
-Within US equities, firms consistently prefer small caps and value stocks over large cap growth due to valuation differentials.
+Key talking point: Vanguard explicitly states bonds are back regardless of Fed policy. ~4% expected returns with lower volatility = compelling risk-adjusted returns.
 
-### 5. Real Assets Opportunity
-J.P. Morgan highlights a "generational opportunity" in real estate due to attractive entry points post-2022 correction.
+### 4. Growth Stock Warning
+
+Vanguard is "most guarded" on US growth stocks. Muted returns driven by:
+- Already-high earnings expectations
+- Creative destruction from new entrants
+- Extreme valuations
+
+### 5. AI Investment Creates Near-Term Strength
+
+Both Vanguard and JP Morgan note AI investment supports near-term earnings. But:
+- Long-term, the winners will be "consumers of AI technology"
+- Value and international should benefit more over full cycle
 
 ---
 
-## Data Quality Notes
+## Sources Bibliography
 
-1. **Time Horizons Vary:** Most use 10-year, but GMO uses 7-year and Fidelity uses 20-year
-2. **Nominal vs Real:** All figures in this document are nominal unless noted
-3. **Currency:** All returns in USD terms
-4. **Update Frequency:** Most firms update quarterly; we should refresh this data quarterly
+1. **Vanguard 2026 Economic and Market Outlook**
+   - Press Release: https://corporate.vanguard.com/content/corporatesite/us/en/corp/who-we-are/pressroom/press-release-vanguard-releases-2026-economic-and-market-outlook-121025.html
+   - Summary: https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/2026-outlook-economic-upside-stock-market-downside.html
+   - Advisor Article: https://advisors.vanguard.com/insights/article/2026-economic-and-market-outlook
+   - VCMM Forecasts: https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html
+   - Published: December 10, 2025
+
+2. **JP Morgan 2026 Long-Term Capital Market Assumptions (30th Edition)**
+   - Press Release: https://www.prnewswire.com/news-releases/jp-morgan-releases-2026-long-term-capital-market-assumptions-302589249.html
+   - Chase Summary: https://www.chase.com/personal/investments/learning-and-insights/article/2026-long-term-capital-market-assumptions
+   - Full Report: https://am.jpmorgan.com/us/en/asset-management/adv/insights/portfolio-insights/ltcma/
+   - Published: October 20, 2025
+
+3. **Research Affiliates Asset Allocation Interactive**
+   - Tool: https://interactive.researchaffiliates.com/asset-allocation
+   - 10-Year Review: https://www.researchaffiliates.com/publications/articles/1069-asset-allocation-interactive-good-bad-ugly
+   - Press Release: https://www.researchaffiliates.com/about-us/in-the-news/asset-allocation-interactive-press-release
+   - Published: January 2025 (10-year anniversary)
 
 ---
 
-## Implementation in Pantheon
+## Next Steps
 
-The data file `apps/dashboard/src/lib/capital-market-assumptions.ts` provides:
-
-1. **AssetClassCMA interface** - TypeScript type for CMA data
-2. **CAPITAL_MARKET_ASSUMPTIONS** - Record of all asset class CMAs
-3. **getCMAForTicker()** - Lookup CMA by ticker symbol
-4. **getCMAForAssetClass()** - Lookup CMA by asset class key
-5. **getPortfolioExpectedReturn()** - Calculate weighted portfolio expected return
-6. **CMA_KEY_INSIGHT** - Summary of the historical vs expected narrative flip
+1. ✅ Data file created: `apps/dashboard/src/lib/capital-market-assumptions.ts`
+2. ⏳ Build and verify TypeScript compiles
+3. ⏳ Git commit and push
+4. ⏳ Update PANTHEON-STATUS.md
+5. ⏳ Add learning to LEARNINGS.md
 
 ---
 
-## References
-
-1. Vanguard Capital Markets Model: https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html
-2. J.P. Morgan LTCMA: https://am.jpmorgan.com/us/en/asset-management/institutional/insights/portfolio-insights/ltcma/
-3. BlackRock CMAs: https://www.blackrock.com/institutions/en-us/insights/thought-leadership/capital-market-assumptions
-4. Research Affiliates: https://interactive.researchaffiliates.com/asset-allocation
-5. Schwab: https://www.schwab.com/learn/story/schwabs-long-term-capital-market-expectations
-6. Morningstar 2026 Roundup: https://www.morningstar.com/markets/experts-forecast-stock-bond-returns-2026-edition
-7. Fidelity CMAs: https://institutional.fidelity.com/app/literature/view?itemCode=9904178
+*Research conducted: February 9, 2026*

@@ -75,13 +75,13 @@ export const CAPITAL_MARKET_ASSUMPTIONS: Record<string, AssetClassCMA> = {
   'us-growth': {
     assetClass: 'US Growth',
     tickers: ['VUG', 'IWF', 'SCHG', 'QQQ'],
-    expectedReturn: 3.8,
+    expectedReturn: 4.0,
     expectedVolatility: 18.5,
-    returnRange: { low: 2.3, high: 5.0 },
-    source: 'Vanguard VCMM',
-    asOfDate: '2025-10',
+    returnRange: { low: 2.5, high: 5.0 },
+    source: 'Vanguard 2026 Outlook',
+    asOfDate: '2026-01',
     rationale:
-      'Extreme valuations in mega-cap tech create significant headwinds. Vanguard forecasts 2.3-4.3% - the lowest among US equity sub-classes.',
+      'Vanguard 2026: "We remain most guarded in our assessment of US growth stocks." Muted 4-5% US stock forecast is "nearly single-handedly driven by our risk-return assessment of large-cap technology companies." Two headwinds: already-high earnings expectations and "typical underestimation of creative destruction from new entrants."',
   },
 
   'us-value': {
@@ -159,25 +159,25 @@ export const CAPITAL_MARKET_ASSUMPTIONS: Record<string, AssetClassCMA> = {
   'us-corporate-bonds': {
     assetClass: 'US Investment Grade Corporate',
     tickers: ['LQD', 'VCIT', 'IGIB'],
-    expectedReturn: 5.0,
+    expectedReturn: 5.2,
     expectedVolatility: 7.0,
-    returnRange: { low: 4.5, high: 5.5 },
-    source: 'JP Morgan LTCMA',
-    asOfDate: '2025-09',
+    returnRange: { low: 4.8, high: 5.5 },
+    source: 'JP Morgan 2026 LTCMA',
+    asOfDate: '2026-01',
     rationale:
-      'Credit spreads offer modest premium over treasuries. Higher growth expectations support creditworthiness.',
+      'JP Morgan 2026 LTCMA: 5.2% expected. Spreads tightening due to shorter maturity debt issuance trends. Higher growth expectations support creditworthiness.',
   },
 
   'us-high-yield': {
     assetClass: 'US High Yield Bonds',
     tickers: ['HYG', 'JNK', 'USHY', 'SHYG'],
-    expectedReturn: 5.8,
+    expectedReturn: 6.1,
     expectedVolatility: 10.0,
-    returnRange: { low: 4.3, high: 6.1 },
-    source: 'Consensus (Vanguard, JP Morgan, BlackRock)',
-    asOfDate: '2025-12',
+    returnRange: { low: 5.5, high: 6.5 },
+    source: 'JP Morgan 2026 LTCMA',
+    asOfDate: '2026-01',
     rationale:
-      'Higher yields compensate for credit risk. Fair value spread ~475bps per JP Morgan. Vanguard 4.3-5.3%, JP Morgan 6.1%, BlackRock 5.7%.',
+      'JP Morgan 2026 LTCMA: 6.1% expected with fair value spread of 475bps. Higher credit quality in the HY market supports returns. Vanguard maintains high-quality bonds offer compelling real returns.',
   },
 
   'em-bonds': {
@@ -195,25 +195,25 @@ export const CAPITAL_MARKET_ASSUMPTIONS: Record<string, AssetClassCMA> = {
   'us-reits': {
     assetClass: 'US REITs',
     tickers: ['VNQ', 'IYR', 'SCHH', 'USRT'],
-    expectedReturn: 7.0,
+    expectedReturn: 8.2,
     expectedVolatility: 19.0,
-    returnRange: { low: 5.5, high: 8.1 },
-    source: 'JP Morgan LTCMA / Cohen & Steers',
-    asOfDate: '2025-12',
+    returnRange: { low: 6.5, high: 8.5 },
+    source: 'JP Morgan 2026 LTCMA',
+    asOfDate: '2026-01',
     rationale:
-      'Generationally low valuations create opportunity. JP Morgan forecasts 8.1% for US core real estate. Interest rate sensitivity remains a risk.',
+      'JP Morgan 2026 LTCMA: US core real estate 8.2%, driven by attractive entry points and higher yields. European core real estate 6.9%. Real assets recommended for diversification in "smarter portfolios." Interest rate sensitivity remains a risk.',
   },
 
   commodities: {
     assetClass: 'Commodities',
     tickers: ['DJP', 'GSG', 'PDBC', 'DBC'],
-    expectedReturn: 3.5,
+    expectedReturn: 4.6,
     expectedVolatility: 16.0,
-    returnRange: { low: 2.5, high: 4.5 },
-    source: 'JP Morgan LTCMA',
-    asOfDate: '2025-09',
+    returnRange: { low: 3.5, high: 5.5 },
+    source: 'JP Morgan 2026 LTCMA',
+    asOfDate: '2026-01',
     rationale:
-      'Energy transition and geopolitical risks create uncertainty. Serves as inflation hedge and diversifier. JP Morgan forecasts 3.8%.',
+      'JP Morgan 2026 LTCMA: Broad basket commodities 4.6%, Gold 5.5% (up from 4.5% last year). Energy transition and geopolitical risks create uncertainty. Real assets (including commodities) recommended for managing inflation volatility.',
   },
 
   cash: {
@@ -222,10 +222,10 @@ export const CAPITAL_MARKET_ASSUMPTIONS: Record<string, AssetClassCMA> = {
     expectedReturn: 3.2,
     expectedVolatility: 0.5,
     returnRange: { low: 2.5, high: 3.8 },
-    source: 'JP Morgan LTCMA',
-    asOfDate: '2025-09',
+    source: 'JP Morgan 2026 LTCMA',
+    asOfDate: '2026-01',
     rationale:
-      'Cycle-neutral cash rate forecast of 2.8% for US per JP Morgan. Current elevated rates expected to normalize over time.',
+      'Fed neutral rate 3.5% per Vanguard 2026. Current elevated short-term rates expected to normalize over time. Still-sticky inflation (>2% in 2026) limits Fed cuts.',
   },
 };
 
@@ -319,19 +319,41 @@ export function hasCMAData(ticker: string): boolean {
  * - International Developed (VXUS): ~5% annualized
  * - Emerging Markets (VWO): ~4% annualized
  *
- * Forward-looking CMAs (10-year expectations):
- * - US Large Cap: ~5% (3.1% to 6.7% range)
- * - International Developed: ~6.5% (4.9% to 8.1% range)
- * - Emerging Markets: ~7.8% (7.2% to 9.9% range)
+ * Forward-looking CMAs (10-15 year expectations per 2026 sources):
+ * - US Large Cap: ~5.5% (4.0% to 6.7% range)
+ * - US Growth: ~4.0% (Vanguard's most guarded assessment)
+ * - US Value: ~6.8% (Vanguard's 2nd best opportunity)
+ * - International Developed: ~7.0% (5.5% to 8.0% range)
+ * - Emerging Markets: ~7.8% (JP Morgan 2026 LTCMA)
+ * - US Aggregate Bonds: ~4.5% (Vanguard's #1 best opportunity!)
  *
  * The narrative FLIPS: International is expected to outperform!
+ * Even bonds may beat US large-cap growth stocks on a risk-adjusted basis.
  * This is critical for explaining diversification recommendations.
+ *
+ * Vanguard 2026 Ranking (Best to Worst Risk-Return):
+ * 1. High-quality US fixed income
+ * 2. US value-oriented equities
+ * 3. Non-US developed market equities
+ *
+ * JP Morgan 2026: 60/40 portfolio projected at 6.4% annualized.
+ * With 30% alternatives: 6.9% with 25% Sharpe ratio improvement.
  */
 export const CMA_KEY_INSIGHT = {
   usHistorical10yr: 13.0,
   intlHistorical10yr: 5.0,
-  usExpected10yr: 5.0,
-  intlExpected10yr: 6.5,
+  usExpected10yr: 5.5,
+  usGrowthExpected10yr: 4.0,
+  usValueExpected10yr: 6.8,
+  intlExpected10yr: 7.0,
+  emExpected10yr: 7.8,
+  bondsExpected10yr: 4.5,
+  portfolio6040Expected: 6.4,
   narrative:
-    'Historical returns favor US, but forward-looking expectations favor international due to valuation differences.',
+    'Historical returns favor US, but forward-looking expectations favor international and value. Vanguard 2026 ranks bonds as #1 risk-return opportunity.',
+  vanguardRanking: [
+    'High-quality US fixed income',
+    'US value-oriented equities',
+    'Non-US developed market equities',
+  ],
 };
