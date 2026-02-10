@@ -8,10 +8,13 @@ import { STRESS_SCENARIOS, calculateScenarioImpact, getWorstCaseScenario } from 
 import { SP500_ANNUAL_RETURNS } from '@/lib/historical-returns';
 import { estimateReturnFromCAPE } from '@/lib/valuation-indicators';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 import { calculateAge, calculateAllocationFromFinancials, getAllocationSummary } from '@/lib/portfolio-utils';
 
 export default function RetirementHubPage() {
-  const { financials, profile, isDemoMode } = useUserProfile();
+  const { profile, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   
   // User inputs - will be updated from profile
   const [currentAge, setCurrentAge] = useState(35);

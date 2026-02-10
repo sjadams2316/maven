@@ -9,6 +9,7 @@ import {
   StressScenario 
 } from '@/lib/stress-test-scenarios';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { 
   calculateAllocationFromFinancials, 
@@ -27,13 +28,15 @@ interface Allocation {
 }
 
 export default function StressTestPage() {
-  const { financials, isDemoMode } = useUserProfile();
+  const { profile, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [selectedScenario, setSelectedScenario] = useState<StressScenario | null>(null);
   const [manualOverride, setManualOverride] = useState(false);
   const [manualAllocation, setManualAllocation] = useState<Allocation | null>(null);
   const [portfolioValue, setPortfolioValue] = useState(500000);
   
-  // Derive allocation from actual portfolio holdings
+  // Derive allocation from actual portfolio holdings (with live prices)
   const derivedAllocation = useMemo((): Allocation => {
     if (!financials || financials.netWorth <= 0) {
       return FALLBACK_ALLOCATION as Allocation;
@@ -54,7 +57,7 @@ export default function StressTestPage() {
   // Use derived allocation unless user manually overrides
   const allocation = manualOverride && manualAllocation ? manualAllocation : derivedAllocation;
   
-  // Update portfolio value when financials load
+  // Update portfolio value when financials load (with live prices)
   useEffect(() => {
     if (financials && financials.netWorth > 0) {
       setPortfolioValue(financials.netWorth);

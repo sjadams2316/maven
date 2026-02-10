@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useUserProfile } from "@/providers/UserProvider";
+import { useLivePrices } from "@/hooks/useLivePrices";
 import Header from "@/app/components/Header";
 import DemoBanner from "@/app/components/DemoBanner";
 import { ToolExplainer } from "@/app/components/ToolExplainer";
@@ -90,6 +91,9 @@ export default function TaxHarvestingPage() {
   const [stateTaxRate, setStateTaxRate] = useState(5); // Default 5% state
   const [showWashSaleInfo, setShowWashSaleInfo] = useState(false);
   
+  // Fetch live prices to ensure holdings show current market values
+  const { livePrices } = useLivePrices(userProfile, isDemoMode);
+  
   // Calculate marginal tax rates
   const shortTermRate = (taxBracket + stateTaxRate) / 100;
   const longTermRate = (15 + stateTaxRate) / 100; // Assume 15% LTCG for most users
@@ -106,7 +110,12 @@ export default function TaxHarvestingPage() {
     // Scan retirement accounts
     userProfile.retirementAccounts?.forEach(account => {
       account.holdings?.forEach(holding => {
-        const currentValue = holding.currentValue || holding.shares * (holding.currentPrice || 0);
+        // Apply live price if available
+        const ticker = holding.ticker.toUpperCase();
+        const livePrice = livePrices[ticker];
+        const currentValue = livePrice && holding.shares > 0 
+          ? holding.shares * livePrice 
+          : (holding.currentValue || holding.shares * (holding.currentPrice || 0));
         const costBasis = holding.costBasis || 0;
         
         // Track which accounts hold each ticker (for wash sale detection)
@@ -160,7 +169,12 @@ export default function TaxHarvestingPage() {
       if (account.name.toLowerCase().includes("crypto")) return;
       
       account.holdings?.forEach(holding => {
-        const currentValue = holding.currentValue || holding.shares * (holding.currentPrice || 0);
+        // Apply live price if available
+        const ticker = holding.ticker.toUpperCase();
+        const livePrice = livePrices[ticker];
+        const currentValue = livePrice && holding.shares > 0 
+          ? holding.shares * livePrice 
+          : (holding.currentValue || holding.shares * (holding.currentPrice || 0));
         const costBasis = holding.costBasis || 0;
         
         // Track which accounts hold each ticker
@@ -259,7 +273,7 @@ export default function TaxHarvestingPage() {
           `${formatCurrency(excessLoss)} can be carried forward to future years` : null,
       },
     };
-  }, [userProfile, shortTermRate, longTermRate]);
+  }, [userProfile, shortTermRate, longTermRate, livePrices]);
 
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedOpportunities);

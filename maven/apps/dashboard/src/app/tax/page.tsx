@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import ProgressRing from '../components/ProgressRing';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 
 interface TaxScenario {
   name: string;
@@ -109,7 +110,9 @@ function getMarginalRate(taxableIncome: number): number {
 }
 
 export default function TaxPage() {
-  const { profile, financials, isLoading, isDemoMode } = useUserProfile();
+  const { profile, isLoading, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   
   // Initialize with defaults, will be updated from profile
   const [grossIncome, setGrossIncome] = useState(250000);

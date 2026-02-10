@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 
 interface FamilyMember {
   id: string;
@@ -47,7 +48,9 @@ function calculateAge(dateOfBirth?: string): number | undefined {
 }
 
 export default function FamilyPage() {
-  const { profile, financials } = useUserProfile();
+  const { profile, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
 
   // Build family members from profile

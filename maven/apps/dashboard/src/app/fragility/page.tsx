@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import FragilityGauge from '../components/FragilityGauge';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 import { calculateAllocationFromFinancials, classifyTicker } from '@/lib/portfolio-utils';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
@@ -872,12 +873,14 @@ function PortfolioImpactSection({
 
 export default function FragilityPage() {
   const router = useRouter();
-  const { profile, financials, isLoading } = useUserProfile();
+  const { profile, isLoading, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [fragilityData, setFragilityData] = useState<FragilityData | null>(null);
   const [selectedIndicator, setSelectedIndicator] = useState<string | null>(null);
   const [showAllRisks, setShowAllRisks] = useState(false);
   
-  // Calculate user's current allocation from their actual holdings
+  // Calculate user's current allocation from their actual holdings (with live prices)
   const allocation = useMemo(() => {
     if (!financials) return null;
     return calculateAllocationFromFinancials(financials);

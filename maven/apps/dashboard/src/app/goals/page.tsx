@@ -1,8 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
+import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
+import { 
+  GROWTH_GOALS, 
+  RETIREE_GOALS, 
+  getDemoVariant,
+  GROWTH_RETIREMENT_CURRENT,
+  GROWTH_RETIREMENT_TARGET,
+} from '@/lib/demo-profile';
 
 interface Goal {
   id: string;
@@ -16,69 +25,53 @@ interface Goal {
   notes?: string;
 }
 
-const MOCK_GOALS: Goal[] = [
+// Convert demo goals to page format
+function demoGoalsToPageFormat(
+  demoGoals: { name: string; current: number; target: number; icon: string }[],
+  isRetiree: boolean
+): Goal[] {
+  return demoGoals.map((g, idx) => {
+    // Determine type based on name
+    let type: Goal['type'] = 'custom';
+    if (g.name.toLowerCase().includes('retire')) type = 'retirement';
+    else if (g.name.toLowerCase().includes('house') || g.name.toLowerCase().includes('beach')) type = 'house';
+    else if (g.name.toLowerCase().includes('college') || g.name.toLowerCase().includes('education')) type = 'education';
+    else if (g.name.toLowerCase().includes('travel') || g.name.toLowerCase().includes('trip')) type = 'travel';
+    else if (g.name.toLowerCase().includes('emergency')) type = 'emergency';
+    
+    // Estimate target dates based on goal type
+    let targetYear = new Date().getFullYear() + 10;
+    if (type === 'retirement') targetYear = isRetiree ? 2029 : 2038;
+    else if (type === 'house') targetYear = 2030;
+    else if (type === 'education') targetYear = 2040;
+    else if (type === 'travel') targetYear = 2027;
+    
+    return {
+      id: `demo-${idx + 1}`,
+      name: g.name,
+      type,
+      targetAmount: g.target,
+      currentAmount: g.current,
+      targetDate: new Date(`${targetYear}-06-01`),
+      monthlyContribution: Math.max(0, Math.round((g.target - g.current) / 120)), // ~10 years
+      priority: idx === 0 ? 'high' : idx === 1 ? 'high' : 'medium',
+      notes: type === 'retirement' ? 'Target 4% withdrawal rate' : undefined,
+    };
+  });
+}
+
+// Fallback mock goals for non-demo, non-onboarded users
+const FALLBACK_GOALS: Goal[] = [
   {
     id: '1',
-    name: 'Retirement at 55',
+    name: 'Retirement',
     type: 'retirement',
-    targetAmount: 3000000,
-    currentAmount: 797500,
-    targetDate: new Date('2038-09-10'),
-    monthlyContribution: 5000,
+    targetAmount: 2000000,
+    currentAmount: 0,
+    targetDate: new Date('2050-01-01'),
+    monthlyContribution: 1000,
     priority: 'high',
-    notes: 'Target 4% withdrawal rate = $120k/year',
-  },
-  {
-    id: '2',
-    name: 'Beach House',
-    type: 'house',
-    targetAmount: 400000,
-    currentAmount: 85000,
-    targetDate: new Date('2030-06-01'),
-    monthlyContribution: 2000,
-    priority: 'medium',
-    notes: 'Looking at OBX or Rehoboth',
-  },
-  {
-    id: '3',
-    name: 'Banks College Fund',
-    type: 'education',
-    targetAmount: 200000,
-    currentAmount: 28000,
-    targetDate: new Date('2040-08-01'),
-    monthlyContribution: 500,
-    priority: 'high',
-  },
-  {
-    id: '4',
-    name: 'Navy College Fund',
-    type: 'education',
-    targetAmount: 200000,
-    currentAmount: 12000,
-    targetDate: new Date('2042-08-01'),
-    monthlyContribution: 500,
-    priority: 'high',
-  },
-  {
-    id: '5',
-    name: 'Emergency Fund',
-    type: 'emergency',
-    targetAmount: 50000,
-    currentAmount: 50000,
-    targetDate: new Date('2025-01-01'),
-    monthlyContribution: 0,
-    priority: 'high',
-    notes: '6 months expenses - COMPLETE',
-  },
-  {
-    id: '6',
-    name: 'Japan Trip 2027',
-    type: 'travel',
-    targetAmount: 15000,
-    currentAmount: 4200,
-    targetDate: new Date('2027-04-01'),
-    monthlyContribution: 400,
-    priority: 'low',
+    notes: 'Set up your profile to see personalized goals',
   },
 ];
 
@@ -128,15 +121,54 @@ function calculateProjection(goal: Goal): { onTrack: boolean; projectedAmount: n
 }
 
 export default function GoalsPage() {
+  const { profile, isDemoMode } = useUserProfile();
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   
-  const totalTarget = MOCK_GOALS.reduce((sum, g) => sum + g.targetAmount, 0);
-  const totalCurrent = MOCK_GOALS.reduce((sum, g) => sum + g.currentAmount, 0);
-  const overallProgress = (totalCurrent / totalTarget) * 100;
+  // Get goals based on mode
+  const goals = useMemo((): Goal[] => {
+    if (isDemoMode) {
+      // Use demo goals from demo-profile.ts
+      const variant = getDemoVariant();
+      const isRetiree = variant === 'retiree';
+      const demoGoals = isRetiree ? RETIREE_GOALS : GROWTH_GOALS;
+      
+      // Update retirement goal current amount with live net worth if available
+      const convertedGoals = demoGoalsToPageFormat(demoGoals, isRetiree);
+      if (financials && convertedGoals.length > 0 && convertedGoals[0].type === 'retirement') {
+        // Update the retirement goal's current amount based on live financials
+        const investedAssets = (financials.totalRetirement || 0) + (financials.totalInvestments || 0);
+        convertedGoals[0].currentAmount = Math.round(investedAssets * 0.95); // 95% toward retirement
+      }
+      
+      return convertedGoals;
+    }
+    
+    // For real users, use their profile goals
+    if (profile?.goals && profile.goals.length > 0) {
+      return profile.goals.map((g, idx) => ({
+        id: g.id,
+        name: g.name,
+        type: 'custom' as const,
+        targetAmount: g.targetAmount,
+        currentAmount: 0, // Would need to track this separately
+        targetDate: new Date(g.targetDate),
+        monthlyContribution: 0,
+        priority: g.priority,
+      }));
+    }
+    
+    // Fallback for non-onboarded users
+    return FALLBACK_GOALS;
+  }, [isDemoMode, profile?.goals, financials]);
   
-  const completedGoals = MOCK_GOALS.filter(g => g.currentAmount >= g.targetAmount);
-  const activeGoals = MOCK_GOALS.filter(g => g.currentAmount < g.targetAmount);
+  const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
+  const totalCurrent = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
+  
+  const completedGoals = goals.filter(g => g.currentAmount >= g.targetAmount);
+  const activeGoals = goals.filter(g => g.currentAmount < g.targetAmount);
   
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -168,7 +200,7 @@ export default function GoalsPage() {
             </div>
             <div className="text-right">
               <p className="text-4xl font-bold text-white">{overallProgress.toFixed(0)}%</p>
-              <p className="text-sm text-indigo-300">{completedGoals.length} of {MOCK_GOALS.length} complete</p>
+              <p className="text-sm text-indigo-300">{completedGoals.length} of {goals.length} complete</p>
             </div>
           </div>
           

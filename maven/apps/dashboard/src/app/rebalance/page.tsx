@@ -6,6 +6,7 @@ import Header from '@/app/components/Header';
 import DemoBanner from '@/app/components/DemoBanner';
 import { ThesisInsight } from '@/app/components/ThesisInsight';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 import { aggregateHoldingsByTicker, classifyTicker } from '@/lib/portfolio-utils';
 
 interface RebalanceHolding {
@@ -50,7 +51,9 @@ function getDefaultTargetWeight(ticker: string): number {
 }
 
 export default function RebalancePage() {
-  const { financials, isDemoMode } = useUserProfile();
+  const { profile, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [selectedModel, setSelectedModel] = useState('Current Target');
   const [driftThreshold, setDriftThreshold] = useState(5);
   const [taxAware, setTaxAware] = useState(true);

@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 import { calculateAge, classifyTicker } from '@/lib/portfolio-utils';
 
 interface IncomeSource {
@@ -34,7 +35,9 @@ const DIVIDEND_YIELDS: Record<string, { yield: number; treatment: 'qualified' | 
 };
 
 export default function IncomePage() {
-  const { profile, financials, isDemoMode } = useUserProfile();
+  const { profile, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   const [showRetirement, setShowRetirement] = useState(false);
   const [targetMonthlyIncome, setTargetMonthlyIncome] = useState(8000);
 

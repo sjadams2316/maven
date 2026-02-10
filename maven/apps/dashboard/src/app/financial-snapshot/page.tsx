@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import WealthJourneyChart from '../components/WealthJourneyChart';
 import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
+import { useLiveFinancials } from '@/hooks/useLivePrices';
 
 interface SelectedYearData {
   year: number;
@@ -19,7 +20,9 @@ interface SelectedYearData {
 
 export default function FinancialSnapshot() {
   const router = useRouter();
-  const { profile, financials, isLoading } = useUserProfile();
+  const { profile, isLoading, isDemoMode } = useUserProfile();
+  // Use live financials to ensure current prices are reflected
+  const { financials } = useLiveFinancials(profile, isDemoMode);
   
   // User inputs
   const [retirementAge, setRetirementAge] = useState(65);
