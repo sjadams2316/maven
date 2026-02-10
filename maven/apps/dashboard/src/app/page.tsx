@@ -58,6 +58,8 @@ export default function LandingPage() {
   const [marketData, setMarketData] = useState<any>(FALLBACK_MARKET_DATA);
   const [showDemo, setShowDemo] = useState(false);
   const [showFirstWin, setShowFirstWin] = useState(false);
+  // Track market open status in state to avoid hydration mismatch and enable periodic updates
+  const [marketOpen, setMarketOpen] = useState<boolean | null>(null);
   const { triggerMeme, MemeComponent } = useMemeRedirect();
   
   // Use centralized UserProvider
@@ -77,6 +79,19 @@ export default function LandingPage() {
 
   // No auto-redirect - let users see landing page first
   // They can click "Go to Dashboard" to proceed
+
+  // Update market status on mount and every minute (avoids hydration mismatch)
+  useEffect(() => {
+    // Set initial market status on client
+    setMarketOpen(isMarketOpen());
+    
+    // Update every minute
+    const interval = setInterval(() => {
+      setMarketOpen(isMarketOpen());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetch('/api/market-data')
@@ -284,8 +299,8 @@ export default function LandingPage() {
                 {/* Market Status */}
                 <div className="flex items-center justify-center gap-3 mb-3 text-xs text-gray-500">
                   <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${isMarketOpen() ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                    <span>{isMarketOpen() ? 'US Markets Open' : 'US Markets Closed'}</span>
+                    <span className={`w-2 h-2 rounded-full ${marketOpen === null ? 'bg-gray-500' : marketOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                    <span>{marketOpen === null ? 'Checking...' : marketOpen ? 'US Markets Open' : 'US Markets Closed'}</span>
                   </div>
                   <span className="text-gray-600">•</span>
                   <span>As of {new Date(marketData.timestamp).toLocaleString('en-US', { 

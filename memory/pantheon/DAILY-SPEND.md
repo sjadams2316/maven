@@ -14,9 +14,9 @@
 |------|-------|------|------|--------|
 | 11:27 | pantheon-fund-lookthrough | Fund look-through for global funds | ~$0.15 | ✅ Complete (L034) |
 | 13:01 | pantheon-advisor-mobile | Advisor dashboard touch targets (9 files) | ~$0.15 | ✅ Complete (L002↑) |
-| 14:44 | pantheon-oracle-history | Fix chat history persistence | ~$0.10 | 🏃 Running |
-| 14:44 | pantheon-goals-empty | Empty states for Goals page | ~$0.10 | 🏃 Running |
-| 14:44 | pantheon-holdings-sort | Holdings table sorting | ~$0.10 | 🏃 Running |
+| 14:44 | pantheon-oracle-history | Fix chat history persistence | ~$0.12 | ✅ Complete |
+| 14:44 | pantheon-goals-empty | Empty states for Goals page | ~$0.10 | ✅ Complete |
+| 14:44 | pantheon-holdings-sort | Holdings table sorting | ~$0.12 | ✅ Complete |
 
 ---
 

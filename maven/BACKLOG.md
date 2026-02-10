@@ -19,17 +19,9 @@
 
 - [x] **UX: Advisor dashboard mobile** — Touch targets 48px minimum ✅ L002↑
 
-- [ ] **BUG: Oracle conversation history** — Chat history may persist between demo sessions
-  - Files: Oracle component, localStorage handling
-  - Learning: L009
-
-- [ ] **UX: Empty states on Goals page** — No guidance when user has no goals
-  - Files: app/goals/page.tsx
-  - Learning: L014
-
-- [ ] **FEATURE: Holdings sort** — Allow sorting holdings table by value, gain/loss, name
-  - Files: portfolio-lab holdings table
-  - Learning: L006
+- [x] **BUG: Oracle conversation history** — Fixed demo mode chat isolation ✅
+- [x] **UX: Empty states on Goals page** — Added helpful guidance ✅
+- [x] **FEATURE: Holdings sort** — Sortable columns added ✅
 
 ---
 

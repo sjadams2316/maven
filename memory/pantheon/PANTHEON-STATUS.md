@@ -10,9 +10,7 @@
 
 | Agent | Task | Files | Dependencies | Started | Status |
 |-------|------|-------|--------------|---------|--------|
-| pantheon-oracle-history | Fix chat history persistence | oracle/*.tsx | None | 14:44 EST | 🏃 Running |
-| pantheon-goals-empty | Empty states for Goals page | goals/page.tsx | None | 14:44 EST | 🏃 Running |
-| pantheon-holdings-sort | Holdings table sorting | portfolio-lab/page.tsx | None | 14:44 EST | 🏃 Running |
+| — | — | — | — | — | No active agents |
 
 ---
 
