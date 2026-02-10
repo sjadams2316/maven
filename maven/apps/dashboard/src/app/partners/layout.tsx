@@ -63,7 +63,9 @@ export default function PartnersLayout({
   const navItems = [
     { href: '/partners/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/partners/clients', label: 'Clients', icon: '👥' },
+    { href: '/partners/rebalance', label: 'Rebalance', icon: '⚖️' },
     { href: '/partners/insights', label: 'Insights', icon: '💡' },
+    { href: '/partners/compliance', label: 'Compliance', icon: '✅' },
     { href: '/partners/reports', label: 'Reports', icon: '📄' },
     { href: '/partners/settings', label: 'Settings', icon: '⚙️' },
   ];

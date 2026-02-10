@@ -17,9 +17,16 @@
 | 14:44 | pantheon-oracle-history | Fix chat history persistence | ~$0.12 | ✅ Complete |
 | 14:44 | pantheon-goals-empty | Empty states for Goals page | ~$0.10 | ✅ Complete |
 | 14:44 | pantheon-holdings-sort | Holdings table sorting | ~$0.12 | ✅ Complete |
-| 15:22 | pantheon-partners-mobile | Partners mobile responsiveness | ~$0.15 | 🔄 Running |
-| 15:22 | pantheon-partners-loading | Partners loading states | ~$0.15 | 🔄 Running |
-| 15:22 | pantheon-partners-invite | Client invite link generator | ~$0.15 | 🔄 Running |
+| 15:22 | pantheon-partners-mobile | Partners mobile responsiveness | ~$0.15 | ✅ Complete |
+| 15:22 | pantheon-partners-loading | Partners loading states | ~$0.15 | ✅ Complete |
+| 15:22 | pantheon-partners-invite | Client invite link generator | ~$0.15 | ✅ Complete |
+| 15:31 | pantheon-partners-stresstest | Stress test tool | ~$0.12 | ✅ Complete |
+| 15:31 | pantheon-partners-tax | Tax planning tool | ~$0.15 | ✅ Complete |
+| 15:31 | pantheon-partners-whatif | What-if simulator | ~$0.15 | ✅ Complete |
+| 16:44 | pantheon-advisor-reports | Reports generator | ~$0.15 | 🔄 Running |
+| 16:44 | pantheon-advisor-onboarding | Client onboarding wizard | ~$0.15 | 🔄 Running |
+| 16:44 | pantheon-advisor-rebalance | Rebalancing tool | ~$0.15 | 🔄 Running |
+| 16:44 | pantheon-advisor-compliance | Compliance & audit trail | ~$0.15 | 🔄 Running |
 
 ---
 
