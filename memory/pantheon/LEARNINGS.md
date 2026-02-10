@@ -164,6 +164,34 @@
 **Anti-Pattern to Add:**
 "Thin comparison views — showing side-by-side percentages without performance metrics, risk data, or specific recommendations. Users can't make decisions without decision-grade data."
 
+### L025 Update — Critical Addition: Forward-Looking Returns (CMAs)
+**Task:** Added Capital Market Assumptions to portfolio comparison
+**Critical Insight:** **Never show only historical returns when recommending diversification.** 
+
+Historical returns make our recommendations look BAD:
+- US Large Cap historical: ~13% → Proposed (more int'l): ~10% → "You're telling me to lose 3%/year?"
+
+But forward-looking Capital Market Assumptions (CMAs) tell the real story:
+- US Large Cap expected: ~5.5% (high valuations = lower future returns)
+- International expected: ~7.5% (lower valuations = better expected returns)
+
+**The Fix:** Show BOTH historical AND expected returns with clear explanation:
+```
+HISTORICAL (Looking Back)
+  10-Year Return: Current 13.1% | Proposed 9.8% | -3.3% ⚠️
+  
+EXPECTED (Looking Forward - CMAs)
+  10-Year Expected: Current 5.5% | Proposed 6.8% | +1.3% ✓
+```
+
+**Key CMA values to use:**
+- US Large Cap: 5.5%
+- International Developed: 7.5%
+- Emerging Markets: 8.5%
+- US Bonds: 4.5%
+
+**Why CMAs matter:** Past performance ≠ future returns. US has outperformed for a decade, but current valuations (P/E ~25) suggest lower future returns. International (P/E ~15) offers better expected returns from lower starting valuations.
+
 ---
 
 ## L026 — Domain, Product
