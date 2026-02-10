@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { Term } from '../components/InfoTooltip';
 import { useUserProfile } from '@/providers/UserProvider';
+import { classifyTicker } from '@/lib/portfolio-utils';
 import { ToolExplainer } from '@/app/components/ToolExplainer';
 import { OracleShowcase } from '@/app/components/OracleShowcase';
 import { ThesisInsight, getTradeExplanation } from '@/app/components/ThesisInsight';
@@ -45,7 +46,8 @@ interface AllocationTarget {
   bonds: number;
   crypto: number;
   cash: number;
-  alternatives: number;
+  reits?: number;
+  alternatives?: number;
 }
 
 // Tab types
@@ -451,23 +453,38 @@ export default function PortfolioLab() {
     );
   }, [researchData, allHoldings]);
   
-  // Current allocation (simplified - would use fund profiles in production)
+  // Current allocation (uses shared classifyTicker for consistency with Dashboard)
   const currentAllocation = useMemo(() => {
-    const categories = { usEquity: 0, intlEquity: 0, bonds: 0, crypto: 0, cash: 0, alternatives: 0 };
-    
-    // Simple classification (would use real Morningstar data)
-    const classify = (ticker: string): keyof typeof categories => {
-      const t = ticker.toUpperCase();
-      if (['BTC', 'ETH', 'SOL', 'TAO', 'IBIT', 'FBTC', 'GBTC'].includes(t)) return 'crypto';
-      if (['CASH', 'USD', 'SPAXX', 'VMFXX', 'SWVXX'].includes(t)) return 'cash';
-      if (['BND', 'AGG', 'TLT', 'LQD', 'HYG'].includes(t)) return 'bonds';
-      if (['VXUS', 'VEA', 'VWO', 'IEFA', 'EFA'].includes(t)) return 'intlEquity';
-      return 'usEquity';
-    };
+    const categories = { usEquity: 0, intlEquity: 0, bonds: 0, crypto: 0, cash: 0, reits: 0, alternatives: 0 };
     
     allHoldings.forEach((h: Holding) => {
-      const cat = classify(h.ticker);
-      categories[cat] += h.currentValue || 0;
+      const assetClass = classifyTicker(h.ticker);
+      const value = h.currentValue || 0;
+      
+      // Map asset classes to our categories
+      switch (assetClass) {
+        case 'crypto':
+          categories.crypto += value;
+          break;
+        case 'cash':
+          categories.cash += value;
+          break;
+        case 'bonds':
+          categories.bonds += value;
+          break;
+        case 'intlEquity':
+          categories.intlEquity += value;
+          break;
+        case 'reits':
+          categories.reits += value;
+          break;
+        case 'gold':
+        case 'alternatives':
+          categories.alternatives += value;
+          break;
+        default:
+          categories.usEquity += value;
+      }
     });
     
     // Convert to percentages
@@ -478,6 +495,7 @@ export default function PortfolioLab() {
       bonds: (categories.bonds / total) * 100,
       crypto: (categories.crypto / total) * 100,
       cash: (categories.cash / total) * 100,
+      reits: (categories.reits / total) * 100,
       alternatives: (categories.alternatives / total) * 100
     };
   }, [allHoldings]);
@@ -495,7 +513,8 @@ export default function PortfolioLab() {
       bonds: currentAllocation.bonds - targetAllocation.bonds,
       crypto: currentAllocation.crypto - targetAllocation.crypto,
       cash: currentAllocation.cash - targetAllocation.cash,
-      alternatives: currentAllocation.alternatives - targetAllocation.alternatives
+      reits: currentAllocation.reits - (targetAllocation.reits || 0),
+      alternatives: currentAllocation.alternatives - (targetAllocation.alternatives || 0)
     };
   }, [currentAllocation, targetAllocation]);
   
@@ -675,9 +694,10 @@ export default function PortfolioLab() {
                     { label: 'US Equity', value: currentAllocation.usEquity, color: 'bg-blue-500' },
                     { label: "Int'l Equity", value: currentAllocation.intlEquity, color: 'bg-purple-500' },
                     { label: 'Bonds', value: currentAllocation.bonds, color: 'bg-emerald-500' },
+                    { label: 'REITs', value: currentAllocation.reits, color: 'bg-teal-500' },
                     { label: 'Crypto', value: currentAllocation.crypto, color: 'bg-orange-500' },
                     { label: 'Cash', value: currentAllocation.cash, color: 'bg-gray-400' },
-                  ].map(item => (
+                  ].filter(item => item.value > 0.5).map(item => (
                     <div key={item.label}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-400">{item.label}</span>
@@ -704,9 +724,10 @@ export default function PortfolioLab() {
                     { label: 'US Equity', value: targetAllocation.usEquity, color: 'bg-blue-500' },
                     { label: "Int'l Equity", value: targetAllocation.intlEquity, color: 'bg-purple-500' },
                     { label: 'Bonds', value: targetAllocation.bonds, color: 'bg-emerald-500' },
+                    { label: 'REITs', value: targetAllocation.reits || 0, color: 'bg-teal-500' },
                     { label: 'Crypto', value: targetAllocation.crypto, color: 'bg-orange-500' },
                     { label: 'Cash', value: targetAllocation.cash, color: 'bg-gray-400' },
-                  ].map(item => (
+                  ].filter(item => item.value > 0.5).map(item => (
                     <div key={item.label}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-400">{item.label}</span>

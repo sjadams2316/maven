@@ -47,8 +47,8 @@ const GROWTH_INSIGHTS: DemoInsight[] = [
   {
     type: 'tax',
     title: 'Tax-loss harvest opportunity',
-    description: 'VWO is showing a $4,200 unrealized loss. Harvesting could save ~$1,050 in taxes.',
-    impact: 'Save $1,050',
+    description: 'VWO is showing a $2,500 unrealized loss. Harvesting could save ~$625 in taxes.',
+    impact: 'Save $625',
     actionHref: '/tax-harvesting',
     priority: 'high',
     learnMoreText: 'Tax-loss harvesting means selling an investment at a loss, then using that loss to reduce your tax bill. You can offset gains from other investments, or deduct up to $3,000 from regular income. The key: you can immediately buy a similar (but not identical) investment to stay in the market.',
@@ -267,15 +267,18 @@ export default function DemoPage() {
       }
     });
     
-    const otherTotal = buckets.crypto + buckets.reits + buckets.other;
+    // Round individual components first, then sum for "other" so tooltip math adds up
+    const cryptoRounded = Math.round(buckets.crypto);
+    const reitsRounded = Math.round(buckets.reits);
+    const miscRounded = Math.round(buckets.other);
     
     return {
       usStocks: Math.round(buckets.usStocks),
       intlStocks: Math.round(buckets.intlStocks),
       bonds: Math.round(buckets.bonds),
-      other: Math.round(otherTotal),
-      cryptoDetail: Math.round(buckets.crypto),
-      reitsDetail: Math.round(buckets.reits),
+      other: cryptoRounded + reitsRounded + miscRounded, // Sum of rounded values so tooltip math is correct
+      cryptoDetail: cryptoRounded,
+      reitsDetail: reitsRounded,
     };
   }, [DEMO_HOLDINGS]);
   
