@@ -79,11 +79,37 @@
 **Confirmed by:** pantheon-data-health, FMP status fix
 **Insight:** Health checks must test the same endpoints the app uses. Testing `/profile/AAPL` when app uses `/quote/` gives false negatives.
 
-### L009 — Clear localStorage in Demo Mode
+### L009 — Demo Mode Needs Prop-Based Isolation
 **Tags:** `data`, `state`, `ux`
-**Confidence:** 2 ⭐⭐
-**Confirmed by:** demo-chat-history fix, demo isolation
-**Insight:** Demo mode must be completely isolated. Clear all persistence layers (localStorage, cookies, sessionStorage) on demo entry.
+**Confidence:** 3 ⭐⭐⭐
+**Confirmed by:** demo-chat-history fix, demo isolation, oracle-history-fix-2026-02-10
+**Insight:** Demo mode must be completely isolated. Components that persist state MUST receive `isDemoMode` as a prop, not rely on external useEffect cleanup. Race condition: parent component clearing localStorage AFTER child already loaded stale data.
+
+**Pattern:**
+```typescript
+// WRONG: Parent tries to clear after child mounts
+useEffect(() => {
+  if (isDemoMode) localStorage.removeItem('key'); // TOO LATE
+}, [isDemoMode]);
+<ChildThatLoadsOnMount />  // Already loaded stale data
+
+// RIGHT: Pass demo mode to child, let it decide
+<ChildComponent isDemoMode={isDemoMode} />
+
+// In child:
+useEffect(() => {
+  if (isDemoMode) {
+    localStorage.removeItem('key');
+    setState(freshState);
+    return; // Don't load persisted data
+  }
+  // Only load if NOT demo mode
+  const saved = localStorage.getItem('key');
+  ...
+}, [isDemoMode]);
+```
+
+Also: Don't SAVE in demo mode — check `isDemoMode` before any `localStorage.setItem()`.
 
 ### L010 — Parallelize Batch API Requests
 **Tags:** `api`, `performance`
@@ -112,8 +138,9 @@
 
 ### L014 — Empty States Need 3 Parts
 **Tags:** `ux`, `ui`
-**Confidence:** 1 ⭐
-**Insight:** Empty states need: (1) empathy (icon/emoji), (2) explanation (what happened), (3) guidance (what to do next).
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** pantheon-goals-empty (Goals page empty state)
+**Insight:** Empty states need: (1) empathy (icon/emoji), (2) explanation (what happened), (3) guidance (what to do next). Also add benefits of taking action (why should user care?) and suggestion chips for common starting points. CTA should be action-oriented ("Add Your First Goal" not "Get Started").
 
 ### L015 — Verify Links Before Shipping
 **Tags:** `testing`, `ux`
@@ -139,7 +166,7 @@
 
 ## Domain-Specific Injection Guide
 
-**For UI/Component tasks, inject:** L002, L005, L006, L013, L014, L017
+**For UI/Component tasks, inject:** L002, L005, L006, L013, L014, L017, L035
 **For API tasks, inject:** L001, L003, L007, L008, L010, L020
 **For Mobile tasks, inject:** L002, L006
 **For Data/Demo tasks, inject:** L004, L007, L009, L019, L020, L028
@@ -166,10 +193,10 @@
 
 ---
 
-*Last distilled: 2026-02-10 11:55 EST*
-*Total learnings: 34*
+*Last distilled: 2026-02-10 14:46 EST*
+*Total learnings: 35*
 *High-confidence: 10*
-*Medium-confidence: 8*
+*Medium-confidence: 9*
 *Needs validation: 16*
 
 ---
@@ -382,3 +409,56 @@ buckets.bonds += decomposed.bonds;
 - Vanguard, Fidelity, T. Rowe, Schwab target-date funds all covered
 
 **Pattern:** Whenever calculating portfolio allocation percentages, use `decomposeFundHolding()` not `classifyTicker()`. The function already handles fallback (returns full value in single category if fund not in FUND_COMPOSITIONS).
+
+### L035 — Sortable Tables Need Clear Affordances
+**Tags:** `ui`, `ux`, `interaction`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** pantheon-holdings-sort 2026-02-10
+**Insight:** When adding sorting to data tables, users need three clear signals:
+
+1. **Affordance:** Column headers should look clickable
+   - `cursor-pointer` class
+   - `hover:text-white` or similar hover state
+   - `transition-colors` for smooth feedback
+
+2. **Indicator:** Current sort state must be visible
+   - Arrow showing direction (↓ descending, ↑ ascending)
+   - Use accent color (e.g., `text-indigo-400`) to distinguish from column name
+   - Only show on actively sorted column
+
+3. **Interaction pattern:**
+   - Click once → sort descending (largest/newest first is most useful default)
+   - Click again → reverse to ascending
+   - Click different column → reset to descending on new column
+
+**Pattern:**
+```tsx
+// State
+const [sortColumn, setSortColumn] = useState<'value' | 'name'>('value');
+const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
+
+// Click handler
+const handleSort = (col: typeof sortColumn) => {
+  if (sortColumn === col) {
+    setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
+  } else {
+    setSortColumn(col);
+    setSortDirection('desc'); // Reset to desc for new column
+  }
+};
+
+// Header
+<th onClick={() => handleSort('value')} 
+    className="cursor-pointer hover:text-white transition-colors">
+  <div className="flex items-center gap-1">
+    Value
+    {sortColumn === 'value' && (
+      <span className="text-indigo-400">
+        {sortDirection === 'desc' ? '↓' : '↑'}
+      </span>
+    )}
+  </div>
+</th>
+```
+
+**Connects to:** L006 (interactive elements need clear affordances and feedback)

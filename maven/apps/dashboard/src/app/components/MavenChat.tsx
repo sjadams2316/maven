@@ -18,6 +18,7 @@ interface MavenChatProps {
   userProfile?: any;
   mode?: 'floating' | 'embedded' | 'fullscreen';
   showContext?: boolean;
+  isDemoMode?: boolean;
 }
 
 const CHAT_STORAGE_KEY = 'maven_chat_history';
@@ -27,7 +28,7 @@ const MAX_STORED_MESSAGES = 100;
 const VOICE_ENABLED_KEY = 'maven_voice_enabled';
 const SPEAKER_ENABLED_KEY = 'maven_speaker_enabled';
 
-export default function MavenChat({ userProfile, mode = 'floating', showContext = false }: MavenChatProps) {
+export default function MavenChat({ userProfile, mode = 'floating', showContext = false, isDemoMode = false }: MavenChatProps) {
   const [isOpen, setIsOpen] = useState(mode !== 'floating');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -109,10 +110,21 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
     }
   }, [userProfile]);
 
-  // Load chat history
+  // Load chat history (skip in demo mode - always start fresh)
   useEffect(() => {
     if (historyLoaded) return;
     
+    // In demo mode: clear any existing history and start fresh
+    if (isDemoMode) {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      localStorage.removeItem(CONVERSATION_ID_KEY);
+      setMessages([]);
+      setConversationId(null);
+      setHistoryLoaded(true);
+      return;
+    }
+    
+    // For real users: load saved history
     try {
       const savedHistory = localStorage.getItem(CHAT_STORAGE_KEY);
       const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
@@ -130,11 +142,11 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
     }
     
     setHistoryLoaded(true);
-  }, [historyLoaded]);
+  }, [historyLoaded, isDemoMode]);
 
-  // Save chat history
+  // Save chat history (skip in demo mode - don't persist demo conversations)
   useEffect(() => {
-    if (!historyLoaded || messages.length === 0) return;
+    if (!historyLoaded || messages.length === 0 || isDemoMode) return;
     
     try {
       const toStore: StoredMessage[] = messages.slice(-MAX_STORED_MESSAGES).map(m => ({
@@ -146,7 +158,7 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
     } catch (e) {
       console.error('Failed to save chat history:', e);
     }
-  }, [messages, historyLoaded]);
+  }, [messages, historyLoaded, isDemoMode]);
 
   useEffect(() => {
     if (conversationId) {

@@ -284,6 +284,11 @@ export default function PortfolioLab() {
   const [researchError, setResearchError] = useState<string | null>(null);
   const [priceTarget, setPriceTarget] = useState<number | null>(null);
   
+  // Holdings table sorting state
+  type HoldingSortColumn = 'name' | 'value' | 'pct' | 'gain';
+  const [holdingsSortColumn, setHoldingsSortColumn] = useState<HoldingSortColumn>('value');
+  const [holdingsSortDirection, setHoldingsSortDirection] = useState<'asc' | 'desc'>('desc');
+  
   // Fetch live prices in demo mode (to match /demo page values)
   useEffect(() => {
     if (!isDemoMode) return;
@@ -444,6 +449,42 @@ export default function PortfolioLab() {
     allHoldings.reduce((sum: number, h: Holding) => sum + (h.currentValue || 0), 0),
     [allHoldings]
   );
+  
+  // Sorted holdings for the table
+  const sortedHoldings = useMemo(() => {
+    const direction = holdingsSortDirection === 'desc' ? -1 : 1;
+    
+    return [...allHoldings].sort((a: Holding, b: Holding) => {
+      switch (holdingsSortColumn) {
+        case 'name':
+          return direction * (a.ticker || '').localeCompare(b.ticker || '');
+        case 'value':
+          return direction * ((a.currentValue || 0) - (b.currentValue || 0));
+        case 'pct':
+          // Same as value since percentage is derived from value
+          return direction * ((a.currentValue || 0) - (b.currentValue || 0));
+        case 'gain':
+          const gainA = a.costBasis && a.costBasis > 0 ? (a.currentValue || 0) - a.costBasis : 0;
+          const gainB = b.costBasis && b.costBasis > 0 ? (b.currentValue || 0) - b.costBasis : 0;
+          // Sort by gain percentage for better comparison
+          const gainPctA = a.costBasis && a.costBasis > 0 ? gainA / a.costBasis : 0;
+          const gainPctB = b.costBasis && b.costBasis > 0 ? gainB / b.costBasis : 0;
+          return direction * (gainPctA - gainPctB);
+        default:
+          return 0;
+      }
+    });
+  }, [allHoldings, holdingsSortColumn, holdingsSortDirection]);
+  
+  // Handle holdings sort click
+  const handleHoldingsSort = (column: HoldingSortColumn) => {
+    if (holdingsSortColumn === column) {
+      setHoldingsSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
+    } else {
+      setHoldingsSortColumn(column);
+      setHoldingsSortDirection('desc');
+    }
+  };
   
   // Check if user holds the researched stock
   const userHolding = useMemo(() => {
@@ -775,16 +816,55 @@ export default function PortfolioLab() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-500 border-b border-white/10">
-                      <th className="pb-3">Holding</th>
-                      <th className="pb-3 text-right">Value</th>
-                      <th className="pb-3 text-right">% of Portfolio</th>
+                      <th 
+                        className="pb-3 cursor-pointer hover:text-white transition-colors select-none"
+                        onClick={() => handleHoldingsSort('name')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Holding
+                          {holdingsSortColumn === 'name' && (
+                            <span className="text-indigo-400">{holdingsSortDirection === 'desc' ? '↓' : '↑'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="pb-3 text-right cursor-pointer hover:text-white transition-colors select-none"
+                        onClick={() => handleHoldingsSort('value')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Value
+                          {holdingsSortColumn === 'value' && (
+                            <span className="text-indigo-400">{holdingsSortDirection === 'desc' ? '↓' : '↑'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="pb-3 text-right cursor-pointer hover:text-white transition-colors select-none"
+                        onClick={() => handleHoldingsSort('pct')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          % of Portfolio
+                          {holdingsSortColumn === 'pct' && (
+                            <span className="text-indigo-400">{holdingsSortDirection === 'desc' ? '↓' : '↑'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="pb-3 text-right"><Term id="cost-basis">Cost Basis</Term></th>
-                      <th className="pb-3 text-right"><Term id="unrealized-gains">Gain/Loss</Term></th>
+                      <th 
+                        className="pb-3 text-right cursor-pointer hover:text-white transition-colors select-none"
+                        onClick={() => handleHoldingsSort('gain')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          <Term id="unrealized-gains">Gain/Loss</Term>
+                          {holdingsSortColumn === 'gain' && (
+                            <span className="text-indigo-400">{holdingsSortDirection === 'desc' ? '↓' : '↑'}</span>
+                          )}
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {allHoldings
-                      .sort((a: Holding, b: Holding) => (b.currentValue || 0) - (a.currentValue || 0))
+                    {sortedHoldings
                       .slice(0, 10)
                       .map((h: Holding, idx: number) => {
                         const pct = ((h.currentValue || 0) / totalValue) * 100;

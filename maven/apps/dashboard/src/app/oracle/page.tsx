@@ -12,22 +12,15 @@ export default function OraclePage() {
   const { profile, isLoading, isDemoMode } = useUserProfile();
   const [insights, setInsights] = useState<any[]>([]);
 
-  // Clear chat history on page load - always fresh in demo mode, or if corrupted
+  // Clear corrupted/old chat history for real users (demo mode handled by MavenChat)
   useEffect(() => {
+    if (isDemoMode) return; // MavenChat handles demo mode clearing
+    
     const savedHistory = localStorage.getItem('maven_chat_history');
-    
-    // In demo mode, always start fresh so demo visitors see clean slate
-    if (isDemoMode) {
-      localStorage.removeItem('maven_chat_history');
-      localStorage.removeItem('maven_conversation_id');
-      return;
-    }
-    
-    // For real users, only clear if there's corrupted/old data
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory);
-        // If history is very old or malformed, clear it
+        // If history is malformed or too large, clear it
         if (!Array.isArray(parsed) || parsed.length > 50) {
           localStorage.removeItem('maven_chat_history');
           localStorage.removeItem('maven_conversation_id');
@@ -73,6 +66,7 @@ export default function OraclePage() {
               userProfile={profile} 
               mode="fullscreen" 
               showContext={true}
+              isDemoMode={isDemoMode}
             />
           </div>
 

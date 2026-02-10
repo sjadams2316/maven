@@ -60,20 +60,72 @@ function demoGoalsToPageFormat(
   });
 }
 
-// Fallback mock goals for non-demo, non-onboarded users
-const FALLBACK_GOALS: Goal[] = [
-  {
-    id: '1',
-    name: 'Retirement',
-    type: 'retirement',
-    targetAmount: 2000000,
-    currentAmount: 0,
-    targetDate: new Date('2050-01-01'),
-    monthlyContribution: 1000,
-    priority: 'high',
-    notes: 'Set up your profile to see personalized goals',
-  },
-];
+// Empty state component for users with no goals
+function EmptyGoalsState({ onAddGoal }: { onAddGoal: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      {/* Empathetic icon */}
+      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center mb-6">
+        <span className="text-5xl">🎯</span>
+      </div>
+      
+      {/* Explanation */}
+      <h2 className="text-2xl font-bold text-white mb-3 text-center">
+        Set Your Financial Goals
+      </h2>
+      <p className="text-gray-400 text-center max-w-md mb-8 leading-relaxed">
+        Goals help you visualize your financial future and track progress toward what matters most. 
+        Whether it&apos;s retirement, a dream home, or your child&apos;s education — 
+        having clear goals keeps you motivated and on track.
+      </p>
+      
+      {/* Benefits list */}
+      <div className="grid sm:grid-cols-3 gap-4 mb-8 max-w-2xl w-full">
+        {[
+          { icon: '📊', title: 'Track Progress', desc: 'See how close you are to each milestone' },
+          { icon: '💡', title: 'Get Insights', desc: 'Know if you\'re on track or need adjustments' },
+          { icon: '🎉', title: 'Celebrate Wins', desc: 'Watch your goals turn into achievements' },
+        ].map((benefit, idx) => (
+          <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+            <span className="text-2xl block mb-2">{benefit.icon}</span>
+            <h3 className="text-white font-medium mb-1">{benefit.title}</h3>
+            <p className="text-gray-500 text-sm">{benefit.desc}</p>
+          </div>
+        ))}
+      </div>
+      
+      {/* Primary CTA */}
+      <button
+        onClick={onAddGoal}
+        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition font-semibold text-lg flex items-center gap-3 min-h-[48px]"
+      >
+        <span className="text-xl">+</span>
+        <span>Add Your First Goal</span>
+      </button>
+      
+      {/* Suggestion chips */}
+      <p className="text-gray-500 text-sm mt-6 mb-3">Popular goals to get started:</p>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {[
+          { icon: '🏖️', label: 'Retirement' },
+          { icon: '🏠', label: 'Buy a Home' },
+          { icon: '🎓', label: 'Education' },
+          { icon: '🛡️', label: 'Emergency Fund' },
+          { icon: '✈️', label: 'Travel' },
+        ].map((suggestion, idx) => (
+          <button
+            key={idx}
+            onClick={onAddGoal}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-gray-300 hover:border-indigo-500/50 hover:text-white transition text-sm flex items-center gap-2"
+          >
+            <span>{suggestion.icon}</span>
+            <span>{suggestion.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const TYPE_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
   retirement: { icon: '🏖️', color: 'from-amber-500 to-orange-500', label: 'Retirement' },
@@ -145,7 +197,7 @@ export default function GoalsPage() {
       return convertedGoals;
     }
     
-    // For real users, use their profile goals
+    // For real users, use their profile goals (or empty array if none)
     if (profile?.goals && profile.goals.length > 0) {
       return profile.goals.map((g, idx) => ({
         id: g.id,
@@ -159,9 +211,12 @@ export default function GoalsPage() {
       }));
     }
     
-    // Fallback for non-onboarded users
-    return FALLBACK_GOALS;
+    // Return empty array - let empty state UI handle this
+    return [];
   }, [isDemoMode, profile?.goals, financials]);
+  
+  // Check if we should show empty state (non-demo users with no goals)
+  const showEmptyState = !isDemoMode && goals.length === 0;
   
   const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalCurrent = goals.reduce((sum, g) => sum + g.currentAmount, 0);
@@ -191,125 +246,134 @@ export default function GoalsPage() {
           </button>
         </div>
         
-        {/* Overall Progress */}
-        <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <div>
-              <p className="text-indigo-300 text-sm">Overall Progress</p>
-              <p className="text-3xl font-bold text-white">{formatCurrency(totalCurrent)} <span className="text-lg text-gray-400">/ {formatCurrency(totalTarget)}</span></p>
-            </div>
-            <div className="text-right">
-              <p className="text-4xl font-bold text-white">{overallProgress.toFixed(0)}%</p>
-              <p className="text-sm text-indigo-300">{completedGoals.length} of {goals.length} complete</p>
-            </div>
+        {/* Empty State - shown when user has no goals */}
+        {showEmptyState ? (
+          <div className="bg-[#12121a] border border-white/10 rounded-2xl">
+            <EmptyGoalsState onAddGoal={() => setShowAddModal(true)} />
           </div>
-          
-          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
-              style={{ width: `${Math.min(100, overallProgress)}%` }}
-            />
-          </div>
-        </div>
-        
-        {/* Active Goals */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Active Goals ({activeGoals.length})</h2>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeGoals.map(goal => {
-              const config = TYPE_CONFIG[goal.type];
-              const progress = (goal.currentAmount / goal.targetAmount) * 100;
-              const projection = calculateProjection(goal);
-              
-              return (
-                <div
-                  key={goal.id}
-                  onClick={() => setSelectedGoal(goal)}
-                  className="bg-[#12121a] border border-white/10 rounded-2xl p-5 hover:border-indigo-500/30 transition cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-2xl`}>
-                      {config.icon}
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      goal.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                      goal.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      {goal.priority}
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-semibold text-white mb-1 group-hover:text-indigo-400 transition">{goal.name}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{getTimeRemaining(goal.targetDate)} remaining</p>
-                  
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-400">{formatCurrency(goal.currentAmount)}</span>
-                      <span className="text-white font-medium">{formatCurrency(goal.targetAmount)}</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${projection.onTrack ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                        style={{ width: `${Math.min(100, progress)}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">{formatCurrency(goal.monthlyContribution)}/mo</span>
-                    <span className={projection.onTrack ? 'text-emerald-400' : 'text-amber-400'}>
-                      {projection.onTrack ? '✓ On track' : `${formatCurrency(projection.shortfall)} short`}
-                    </span>
-                  </div>
+        ) : (
+          <>
+            {/* Overall Progress */}
+            <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-6 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <p className="text-indigo-300 text-sm">Overall Progress</p>
+                  <p className="text-3xl font-bold text-white">{formatCurrency(totalCurrent)} <span className="text-lg text-gray-400">/ {formatCurrency(totalTarget)}</span></p>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        {/* Completed Goals */}
-        {completedGoals.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <span>🎉</span> Completed Goals ({completedGoals.length})
-            </h2>
-            
-            <div className="bg-[#12121a] border border-white/10 rounded-xl divide-y divide-white/5">
-              {completedGoals.map(goal => {
-                const config = TYPE_CONFIG[goal.type];
-                
-                return (
-                  <div key={goal.id} className="flex items-center gap-4 p-4">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-xl`}>
-                      {config.icon}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-white">{goal.name}</p>
-                      <p className="text-sm text-gray-500">{config.label}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-emerald-400">{formatCurrency(goal.targetAmount)}</p>
-                      <p className="text-xs text-gray-500">Completed</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      ✓
-                    </div>
-                  </div>
-                );
-              })}
+                <div className="text-right">
+                  <p className="text-4xl font-bold text-white">{overallProgress.toFixed(0)}%</p>
+                  <p className="text-sm text-indigo-300">{completedGoals.length} of {goals.length} complete</p>
+                </div>
+              </div>
+              
+              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, overallProgress)}%` }}
+                />
+              </div>
             </div>
-          </div>
+            
+            {/* Active Goals */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-white mb-4">Active Goals ({activeGoals.length})</h2>
+              
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeGoals.map(goal => {
+                  const config = TYPE_CONFIG[goal.type];
+                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const projection = calculateProjection(goal);
+                  
+                  return (
+                    <div
+                      key={goal.id}
+                      onClick={() => setSelectedGoal(goal)}
+                      className="bg-[#12121a] border border-white/10 rounded-2xl p-5 hover:border-indigo-500/30 transition cursor-pointer group"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-2xl`}>
+                          {config.icon}
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          goal.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                          goal.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {goal.priority}
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-semibold text-white mb-1 group-hover:text-indigo-400 transition">{goal.name}</h3>
+                      <p className="text-sm text-gray-500 mb-3">{getTimeRemaining(goal.targetDate)} remaining</p>
+                      
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-gray-400">{formatCurrency(goal.currentAmount)}</span>
+                          <span className="text-white font-medium">{formatCurrency(goal.targetAmount)}</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${projection.onTrack ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                            style={{ width: `${Math.min(100, progress)}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500">{formatCurrency(goal.monthlyContribution)}/mo</span>
+                        <span className={projection.onTrack ? 'text-emerald-400' : 'text-amber-400'}>
+                          {projection.onTrack ? '✓ On track' : `${formatCurrency(projection.shortfall)} short`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Completed Goals */}
+            {completedGoals.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span>🎉</span> Completed Goals ({completedGoals.length})
+                </h2>
+                
+                <div className="bg-[#12121a] border border-white/10 rounded-xl divide-y divide-white/5">
+                  {completedGoals.map(goal => {
+                    const config = TYPE_CONFIG[goal.type];
+                    
+                    return (
+                      <div key={goal.id} className="flex items-center gap-4 p-4">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-xl`}>
+                          {config.icon}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-white">{goal.name}</p>
+                          <p className="text-sm text-gray-500">{config.label}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-emerald-400">{formatCurrency(goal.targetAmount)}</p>
+                          <p className="text-xs text-gray-500">Completed</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                          ✓
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {/* Tips */}
+            <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl">
+              <p className="text-sm text-gray-400">
+                💡 <strong className="text-white">Tip:</strong> Goals with higher priority should be funded first. 
+                Consider automating monthly contributions to stay on track.
+              </p>
+            </div>
+          </>
         )}
-        
-        {/* Tips */}
-        <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl">
-          <p className="text-sm text-gray-400">
-            💡 <strong className="text-white">Tip:</strong> Goals with higher priority should be funded first. 
-            Consider automating monthly contributions to stay on track.
-          </p>
-        </div>
       </main>
       
       {/* Goal Detail Modal */}
