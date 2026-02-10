@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import InteractivePortfolioChart, { Holding } from '@/components/InteractivePortfolioChart';
 
 // Demo clients data
 const DEMO_CLIENTS = [
@@ -436,86 +437,110 @@ export default function RebalancePage() {
 
         {/* Right Column: Allocation View & Trades */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Current vs Target Allocation */}
+          {/* Current Allocation Chart + Drift Details */}
           {primaryClient && (
-            <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-                <h2 className="text-lg font-semibold text-white">
-                  Allocation: {primaryClient.name}
-                </h2>
-                <div className="text-gray-400 text-sm">
-                  Total: {formatCurrency(primaryClient.aum)}
-                </div>
+            <div className="space-y-6">
+              {/* Interactive Portfolio Chart */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+                <InteractivePortfolioChart
+                  holdings={primaryClient.holdings.map(h => ({
+                    ticker: h.ticker,
+                    name: h.name,
+                    value: h.value,
+                    costBasis: h.costBasis,
+                    category: h.ticker === 'VTI' || h.ticker === 'VOO' ? 'US Equity' :
+                              h.ticker === 'VXUS' ? 'International' :
+                              h.ticker === 'BND' ? 'Bonds' :
+                              h.ticker === 'VNQ' ? 'Real Estate' :
+                              h.ticker === 'Cash' ? 'Cash' : 'Individual Stocks',
+                    subCategory: h.name,
+                  } as Holding))}
+                  totalValue={primaryClient.aum}
+                  title={`Current Allocation: ${primaryClient.name}`}
+                  height={280}
+                />
               </div>
 
-              <div className="space-y-4">
-                {primaryClient.holdings.map(holding => {
-                  const drift = holding.currentAlloc - holding.targetAlloc;
-                  const isOutsideTolerance = Math.abs(drift) >= driftThreshold;
-
-                  return (
-                    <div key={holding.ticker} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">{holding.ticker}</span>
-                          {isOutsideTolerance && (
-                            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs">
-                              {formatPercent(drift)} drift
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          {formatCurrency(holding.value)}
-                        </div>
-                      </div>
-                      
-                      {/* Allocation Bars */}
-                      <div className="relative h-8 bg-white/5 rounded-lg overflow-hidden">
-                        {/* Current Allocation Bar */}
-                        <div
-                          className={`absolute top-0 left-0 h-4 rounded-t transition-all ${
-                            isOutsideTolerance ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(holding.currentAlloc, 100)}%` }}
-                        />
-                        {/* Target Allocation Bar */}
-                        <div
-                          className="absolute bottom-0 left-0 h-4 bg-white/20 rounded-b"
-                          style={{ width: `${Math.min(holding.targetAlloc, 100)}%` }}
-                        />
-                        {/* Target Marker */}
-                        <div
-                          className="absolute top-0 bottom-0 w-0.5 bg-white"
-                          style={{ left: `${holding.targetAlloc}%` }}
-                        />
-                      </div>
-                      
-                      <div className="flex justify-between text-xs">
-                        <span className={isOutsideTolerance ? 'text-amber-400' : 'text-emerald-400'}>
-                          Current: {holding.currentAlloc}%
-                        </span>
-                        <span className="text-gray-400">
-                          Target: {holding.targetAlloc}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Legend */}
-              <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-white/10 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-emerald-500 rounded" />
-                  <span className="text-gray-400">Within tolerance</span>
+              {/* Drift Analysis */}
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                  <h2 className="text-lg font-semibold text-white">
+                    Drift Analysis
+                  </h2>
+                  <div className="text-gray-400 text-sm">
+                    Total: {formatCurrency(primaryClient.aum)}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded" />
-                  <span className="text-gray-400">Outside tolerance</span>
+
+                <div className="space-y-4">
+                  {primaryClient.holdings.map(holding => {
+                    const drift = holding.currentAlloc - holding.targetAlloc;
+                    const isOutsideTolerance = Math.abs(drift) >= driftThreshold;
+
+                    return (
+                      <div key={holding.ticker} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">{holding.ticker}</span>
+                            {isOutsideTolerance && (
+                              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs">
+                                {formatPercent(drift)} drift
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-gray-400 text-sm">
+                            {formatCurrency(holding.value)}
+                          </div>
+                        </div>
+                        
+                        {/* Allocation Bars */}
+                        <div className="relative h-8 bg-white/5 rounded-lg overflow-hidden">
+                          {/* Current Allocation Bar */}
+                          <div
+                            className={`absolute top-0 left-0 h-4 rounded-t transition-all ${
+                              isOutsideTolerance ? 'bg-amber-500' : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(holding.currentAlloc, 100)}%` }}
+                          />
+                          {/* Target Allocation Bar */}
+                          <div
+                            className="absolute bottom-0 left-0 h-4 bg-white/20 rounded-b"
+                            style={{ width: `${Math.min(holding.targetAlloc, 100)}%` }}
+                          />
+                          {/* Target Marker */}
+                          <div
+                            className="absolute top-0 bottom-0 w-0.5 bg-white"
+                            style={{ left: `${holding.targetAlloc}%` }}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-between text-xs">
+                          <span className={isOutsideTolerance ? 'text-amber-400' : 'text-emerald-400'}>
+                            Current: {holding.currentAlloc}%
+                          </span>
+                          <span className="text-gray-400">
+                            Target: {holding.targetAlloc}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-white/20 rounded" />
-                  <span className="text-gray-400">Target</span>
+
+                {/* Legend */}
+                <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-white/10 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-emerald-500 rounded" />
+                    <span className="text-gray-400">Within tolerance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-amber-500 rounded" />
+                    <span className="text-gray-400">Outside tolerance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-white/20 rounded" />
+                    <span className="text-gray-400">Target</span>
+                  </div>
                 </div>
               </div>
             </div>

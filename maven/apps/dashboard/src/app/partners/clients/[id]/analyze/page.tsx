@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import InteractivePortfolioChart, { Holding } from '@/components/InteractivePortfolioChart';
 
 // Demo client data - in production, fetch based on ID
 const DEMO_CLIENT = {
@@ -90,13 +91,23 @@ export default function ClientAnalyze() {
   );
 }
 
+// Portfolio data for the analysis charts
+const ANALYSIS_HOLDINGS: Holding[] = [
+  { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 425000, costBasis: 380000, category: 'US Equity', subCategory: 'US Total Market' },
+  { ticker: 'VXUS', name: 'Vanguard Total International', value: 187500, costBasis: 195000, category: 'International', subCategory: 'Intl Developed' },
+  { ticker: 'BND', name: 'Vanguard Total Bond', value: 250000, costBasis: 245000, category: 'Bonds', subCategory: 'US Aggregate' },
+  { ticker: 'AAPL', name: 'Apple Inc', value: 156250, costBasis: 120000, category: 'Individual Stocks', subCategory: 'Technology' },
+  { ticker: 'MSFT', name: 'Microsoft Corp', value: 125000, costBasis: 100000, category: 'Individual Stocks', subCategory: 'Technology' },
+  { ticker: 'Cash', name: 'Cash & Equivalents', value: 106250, costBasis: 106250, category: 'Cash', subCategory: 'Money Market' },
+];
+
 function AnalysisTab() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-white">Portfolio Analysis</h2>
       
       {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white/5 rounded-xl p-4">
           <div className="text-gray-400 text-sm">Risk Score</div>
           <div className="text-2xl font-bold text-amber-400">72</div>
@@ -119,52 +130,47 @@ function AnalysisTab() {
         </div>
       </div>
 
-      {/* Allocation */}
-      <div className="grid grid-cols-2 gap-6">
+      {/* Interactive Allocation Chart + Key Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white/5 rounded-xl p-6">
-          <h3 className="text-white font-medium mb-4">Asset Allocation</h3>
-          <div className="space-y-3">
-            {[
-              { label: 'US Stocks', pct: 48, color: 'bg-blue-500' },
-              { label: 'International', pct: 18, color: 'bg-emerald-500' },
-              { label: 'Bonds', pct: 20, color: 'bg-amber-500' },
-              { label: 'Individual Stocks', pct: 14, color: 'bg-purple-500' },
-            ].map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-300">{item.label}</span>
-                  <span className="text-white">{item.pct}%</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <InteractivePortfolioChart
+            holdings={ANALYSIS_HOLDINGS}
+            totalValue={DEMO_CLIENT.aum}
+            title="Asset Allocation"
+            height={320}
+            onHoldingClick={(holding) => console.log('Research:', holding)}
+          />
         </div>
 
         <div className="bg-white/5 rounded-xl p-6">
           <h3 className="text-white font-medium mb-4">Key Insights</h3>
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg min-h-[56px]">
               <span className="text-amber-500">⚠️</span>
               <div>
                 <div className="text-white text-sm font-medium">Concentration Risk</div>
                 <div className="text-gray-400 text-xs">AAPL + MSFT = 22.5% of portfolio</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+            <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg min-h-[56px]">
               <span className="text-emerald-500">✓</span>
               <div>
                 <div className="text-white text-sm font-medium">Low Fees</div>
                 <div className="text-gray-400 text-xs">Expense ratio below benchmark</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg min-h-[56px]">
               <span className="text-blue-500">💡</span>
               <div>
                 <div className="text-white text-sm font-medium">Tax-Loss Opportunity</div>
                 <div className="text-gray-400 text-xs">VXUS has $8,200 harvestable loss</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg min-h-[56px]">
+              <span className="text-purple-500">📊</span>
+              <div>
+                <div className="text-white text-sm font-medium">Strong Performance</div>
+                <div className="text-gray-400 text-xs">Individual stocks up 36% avg on cost</div>
               </div>
             </div>
           </div>

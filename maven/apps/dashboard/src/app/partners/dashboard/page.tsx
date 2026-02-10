@@ -3,6 +3,27 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+// Quick action definitions
+const QUICK_ACTIONS = [
+  { id: 'add-client', icon: '➕', label: 'Add Client', shortcut: '⌘N', href: '/partners/clients/new' },
+  { id: 'run-analysis', icon: '📊', label: 'Run Analysis', shortcut: '⌘A', href: '/partners/analysis' },
+  { id: 'generate-report', icon: '📄', label: 'Generate Report', shortcut: '⌘R', href: '/partners/reports/new' },
+  { id: 'record-trade', icon: '💰', label: 'Record Trade', shortcut: '⌘T', href: '/partners/trades/new' },
+  { id: 'log-meeting', icon: '📞', label: 'Log Meeting', shortcut: '⌘M', href: '/partners/meetings/new' },
+  { id: 'rebalance', icon: '⚖️', label: 'Rebalance', shortcut: '⌘B', href: '/partners/rebalance' },
+  { id: 'compliance', icon: '📋', label: 'Compliance Check', shortcut: '⌘K', href: '/partners/compliance' },
+  { id: 'send-alert', icon: '🔔', label: 'Send Alert', shortcut: '⌘L', href: '/partners/alerts/new' },
+];
+
+// Demo recent actions
+const DEMO_RECENT_ACTIONS = [
+  { id: '1', action: 'Generated Q4 report', client: 'Robert Chen', time: '2 hours ago', icon: '📄' },
+  { id: '2', action: 'Ran portfolio analysis', client: 'Morrison Trust', time: '4 hours ago', icon: '📊' },
+  { id: '3', action: 'Recorded trade', client: 'Jennifer Walsh', time: 'Yesterday', icon: '💰' },
+  { id: '4', action: 'Logged meeting notes', client: 'Michael Thompson', time: 'Yesterday', icon: '📞' },
+  { id: '5', action: 'Sent rebalance alert', client: 'Sarah Park', time: '2 days ago', icon: '🔔' },
+];
+
 // Demo data for advisor dashboard
 const DEMO_STATS = {
   totalAUM: 12500000,
@@ -131,6 +152,54 @@ export default function PartnersDashboard() {
                 No meetings scheduled
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-6 md:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {QUICK_ACTIONS.map((action) => (
+              <Link
+                key={action.id}
+                href={action.href}
+                className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
+                style={{ minWidth: '48px', minHeight: '48px' }}
+              >
+                <span className="text-2xl">{action.icon}</span>
+                <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
+                {/* Keyboard shortcut tooltip */}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  {action.shortcut}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Actions */}
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-lg md:text-xl font-semibold text-white">Recent Activity</h2>
+            <Link href="/partners/activity" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
+              View all →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {DEMO_RECENT_ACTIONS.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-start gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <span className="text-lg flex-shrink-0">{activity.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white text-sm font-medium truncate">{activity.action}</div>
+                  <div className="text-gray-500 text-xs">{activity.client} · {activity.time}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

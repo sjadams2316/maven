@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import InteractivePortfolioChart, { Holding } from '@/components/InteractivePortfolioChart';
 
 // Demo client data
 const DEMO_CLIENT = {
@@ -18,12 +19,12 @@ const DEMO_CLIENT = {
   riskTolerance: 'Moderate',
   investmentGoal: 'Retirement',
   holdings: [
-    { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 425000, allocation: 34, change: 2.8 },
-    { ticker: 'VXUS', name: 'Vanguard Total International', value: 187500, allocation: 15, change: -0.5 },
-    { ticker: 'BND', name: 'Vanguard Total Bond', value: 250000, allocation: 20, change: 0.3 },
-    { ticker: 'AAPL', name: 'Apple Inc', value: 156250, allocation: 12.5, change: 4.2 },
-    { ticker: 'MSFT', name: 'Microsoft Corp', value: 125000, allocation: 10, change: 3.9 },
-    { ticker: 'Cash', name: 'Cash & Equivalents', value: 106250, allocation: 8.5, change: 0 },
+    { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 425000, allocation: 34, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 380000 },
+    { ticker: 'VXUS', name: 'Vanguard Total International', value: 187500, allocation: 15, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 195000 },
+    { ticker: 'BND', name: 'Vanguard Total Bond', value: 250000, allocation: 20, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 245000 },
+    { ticker: 'AAPL', name: 'Apple Inc', value: 156250, allocation: 12.5, change: 4.2, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 120000 },
+    { ticker: 'MSFT', name: 'Microsoft Corp', value: 125000, allocation: 10, change: 3.9, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 100000 },
+    { ticker: 'Cash', name: 'Cash & Equivalents', value: 106250, allocation: 8.5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 106250 },
   ],
   insights: [
     { id: '1', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning', enabled: true },
@@ -213,61 +214,81 @@ export default function ClientDetail() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-          <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Holdings</h2>
-          
-          {/* Mobile: Card layout */}
-          <div className="md:hidden space-y-3">
-            {DEMO_CLIENT.holdings.map((holding) => (
-              <div key={holding.ticker} className="p-3 bg-white/5 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <div className="text-white font-medium">{holding.ticker}</div>
-                    <div className="text-gray-500 text-xs">{holding.name}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-white">{formatCurrency(holding.value)}</div>
-                    <div className="text-gray-400 text-xs">{holding.allocation}%</div>
-                  </div>
-                </div>
-                <div className={`text-xs ${
-                  holding.change > 0 ? 'text-emerald-500' : holding.change < 0 ? 'text-red-500' : 'text-gray-500'
-                }`}>
-                  {holding.change > 0 ? '+' : ''}{holding.change}% MTD
-                </div>
-              </div>
-            ))}
+        <div className="space-y-6">
+          {/* Interactive Portfolio Chart */}
+          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+            <InteractivePortfolioChart
+              holdings={DEMO_CLIENT.holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                value: h.value,
+                costBasis: h.costBasis,
+                category: h.category,
+                subCategory: h.subCategory,
+              } as Holding))}
+              totalValue={DEMO_CLIENT.aum}
+              title="Asset Allocation"
+              onHoldingClick={(holding) => console.log('Clicked holding:', holding)}
+            />
           </div>
 
-          {/* Desktop: Table layout */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-gray-500 text-sm border-b border-white/10">
-                  <th className="pb-4 font-medium">Holding</th>
-                  <th className="pb-4 font-medium text-right">Value</th>
-                  <th className="pb-4 font-medium text-right">Allocation</th>
-                  <th className="pb-4 font-medium text-right">MTD Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_CLIENT.holdings.map((holding) => (
-                  <tr key={holding.ticker} className="border-b border-white/5">
-                    <td className="py-4">
+          {/* Holdings Table */}
+          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Holdings</h2>
+            
+            {/* Mobile: Card layout */}
+            <div className="md:hidden space-y-3">
+              {DEMO_CLIENT.holdings.map((holding) => (
+                <div key={holding.ticker} className="p-3 bg-white/5 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
                       <div className="text-white font-medium">{holding.ticker}</div>
-                      <div className="text-gray-500 text-sm">{holding.name}</div>
-                    </td>
-                    <td className="py-4 text-right text-white">{formatCurrency(holding.value)}</td>
-                    <td className="py-4 text-right text-gray-400">{holding.allocation}%</td>
-                    <td className={`py-4 text-right ${
-                      holding.change > 0 ? 'text-emerald-500' : holding.change < 0 ? 'text-red-500' : 'text-gray-500'
-                    }`}>
-                      {holding.change > 0 ? '+' : ''}{holding.change}%
-                    </td>
+                      <div className="text-gray-500 text-xs">{holding.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-white">{formatCurrency(holding.value)}</div>
+                      <div className="text-gray-400 text-xs">{holding.allocation}%</div>
+                    </div>
+                  </div>
+                  <div className={`text-xs ${
+                    holding.change > 0 ? 'text-emerald-500' : holding.change < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    {holding.change > 0 ? '+' : ''}{holding.change}% MTD
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Table layout */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-gray-500 text-sm border-b border-white/10">
+                    <th className="pb-4 font-medium">Holding</th>
+                    <th className="pb-4 font-medium text-right">Value</th>
+                    <th className="pb-4 font-medium text-right">Allocation</th>
+                    <th className="pb-4 font-medium text-right">MTD Change</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {DEMO_CLIENT.holdings.map((holding) => (
+                    <tr key={holding.ticker} className="border-b border-white/5">
+                      <td className="py-4">
+                        <div className="text-white font-medium">{holding.ticker}</div>
+                        <div className="text-gray-500 text-sm">{holding.name}</div>
+                      </td>
+                      <td className="py-4 text-right text-white">{formatCurrency(holding.value)}</td>
+                      <td className="py-4 text-right text-gray-400">{holding.allocation}%</td>
+                      <td className={`py-4 text-right ${
+                        holding.change > 0 ? 'text-emerald-500' : holding.change < 0 ? 'text-red-500' : 'text-gray-500'
+                      }`}>
+                        {holding.change > 0 ? '+' : ''}{holding.change}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
