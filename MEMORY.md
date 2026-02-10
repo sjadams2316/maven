@@ -233,9 +233,10 @@ Full spec: `maven/docs/TIERING.md`
 
 **First Full Production Run (2026-02-09):**
 - **20+ features shipped in ~4 hours**
-- Cost: ~$15-30 in API credits
+- Cost: ~$300 in API credits (full day of heavy usage)
 - Equivalent traditional dev cost: $30-50K+
-- ROI: ~1000x
+- ROI: ~100-150x on API spend
+- **GitHub Actions auto-deploy fixed** — pushes to main now auto-deploy
 
 **Compounding System (Built 2026-02-09 afternoon):**
 - **LEARNINGS.md** — Every agent captures one insight
