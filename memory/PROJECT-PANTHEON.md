@@ -1,9 +1,9 @@
 # Project Pantheon — Multi-Agent Architecture for Maven
 
 *Created: 2026-02-09*
-*Last Updated: 2026-02-09 19:25 EST*
-*Status: Fully Autonomous + Compounding*
-*Version: 3.0 — Autonomous Thinking Layer Added*
+*Last Updated: 2026-02-09 19:35 EST*
+*Status: Fully Autonomous + Compounding + Oracle Integration*
+*Version: 3.1 — Oracle Design Principles + Skeptic Agent Added*
 
 ---
 
@@ -117,6 +117,70 @@ The new way: Agent receives task → thinks "what else should I learn?" → expa
 **The Goal:** After research completes, knowledge should be COMPREHENSIVE — better than any single source because we synthesize all of them.
 
 See: `memory/pantheon/PANTHEON-PROTOCOL.md` → "Research Agent Protocol" section
+
+### Knowledge Quality: Confidence + Evidence (v3.1 — NEW)
+
+All learnings now require structured metadata:
+
+```markdown
+**Confidence:** [low | medium | high]
+**Evidence Source:** production-bug | user-feedback | simulation | research | inference
+**Review By:** [YYYY-MM-DD or "evergreen"]
+```
+
+**Why:** Prevents early or incorrect assumptions from becoming permanent system truth. Keeps knowledge adaptive and auditable.
+
+See: `memory/pantheon/LEARNING-FORMAT.md`
+
+### Weekly Skeptic Agent (v3.1 — NEW)
+
+**Schedule:** Sunday 11am (after Weekly Learning Review)
+
+A scheduled agent whose role is to CHALLENGE, not change:
+
+**Responsibilities:**
+- Review top assumptions, patterns, and domain rules
+- Flag outdated beliefs, contradictory evidence, overconfident conclusions
+- Add `SKEPTIC:` annotations instead of deleting content
+
+**Output:** Notes added to knowledge files, flagging items for human review.
+
+**Why:** Avoids institutional dogma. Keeps Pantheon intellectually honest as conditions change.
+
+### Oracle ↔ Pantheon Integration (v3.1 — NEW)
+
+**The Complete Loop:**
+
+```
+User asks Oracle
+    ↓
+Oracle responds (grounded in data, receipted)
+    ↓
+Interaction logged
+    ↓
+Pantheon analyzes:
+  - New learnings?
+  - User confusion?
+  - Missing tools?
+  - Bad assumptions?
+    ↓
+Knowledge updated
+    ↓
+Oracle improves
+    ↓
+User gets better answers
+```
+
+**Oracle Design Principles:**
+1. **Explicit Mode** — Classify intent (Explain, Compare, Simulate, Execute, Audit)
+2. **Forced Tool Grounding** — No hallucinated financial advice
+3. **Decision Receipts** — Structured audit trail for every meaningful action
+4. **Disagree When Appropriate** — Advisor, not yes-machine
+5. **Scoped Memory** — Personalization without creepiness
+
+See: `memory/pantheon/ORACLE-DESIGN-PRINCIPLES.md`
+
+**Key Insight:** Oracle teaches Pantheon. Pantheon improves Oracle. Intelligence compounds.
 
 ### Automated Data Validation (Cron)
 
