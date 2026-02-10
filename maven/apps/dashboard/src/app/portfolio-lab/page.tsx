@@ -263,7 +263,7 @@ const STRESS_SCENARIOS: StressScenario[] = [
 
 export default function PortfolioLab() {
   const router = useRouter();
-  const { profile, financials, isLoading } = useUserProfile();
+  const { profile, financials, isLoading, isDemoMode } = useUserProfile();
   
   const [activeTab, setActiveTab] = useState<Tab>('analysis');
   const [customTarget, setCustomTarget] = useState<AllocationTarget | null>(null);
@@ -272,12 +272,58 @@ export default function PortfolioLab() {
   const [annualContribution, setAnnualContribution] = useState(20000);
   const [expectedReturn, setExpectedReturn] = useState(7);
   
+  // Live prices for demo mode (to sync with /demo page)
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  
   // Research tab state
   const [researchQuery, setResearchQuery] = useState('');
   const [researchData, setResearchData] = useState<ResearchData | null>(null);
   const [researchLoading, setResearchLoading] = useState(false);
   const [researchError, setResearchError] = useState<string | null>(null);
   const [priceTarget, setPriceTarget] = useState<number | null>(null);
+  
+  // Fetch live prices in demo mode (to match /demo page values)
+  useEffect(() => {
+    if (!isDemoMode) return;
+    
+    const fetchLivePrices = async () => {
+      try {
+        // Get all unique tickers from profile holdings
+        const allTickers = [...(profile?.retirementAccounts || []), ...(profile?.investmentAccounts || [])]
+          .flatMap((a: any) => a.holdings || [])
+          .map((h: any) => h.ticker.toUpperCase())
+          .filter((t, i, arr) => arr.indexOf(t) === i);
+        
+        if (allTickers.length === 0) return;
+        
+        const response = await fetch('/api/stock-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbols: allTickers }),
+        });
+        
+        if (response.ok) {
+          const { quotes } = await response.json();
+          const newPrices: Record<string, number> = {};
+          
+          for (const [symbol, quoteData] of Object.entries(quotes)) {
+            const q = quoteData as { price: number };
+            if (q.price > 0) {
+              newPrices[symbol.toUpperCase()] = q.price;
+            }
+          }
+          
+          setLivePrices(newPrices);
+        }
+      } catch (error) {
+        console.error('Error fetching live prices:', error);
+      }
+    };
+    
+    fetchLivePrices();
+    const interval = setInterval(fetchLivePrices, 60000);
+    return () => clearInterval(interval);
+  }, [isDemoMode, profile]);
   
   // Fetch research data
   const fetchResearch = async (symbol: string) => {
@@ -313,13 +359,30 @@ export default function PortfolioLab() {
   }, [profile?.dateOfBirth]);
   
   // Get all holdings from profile, consolidating same tickers across accounts
+  // In demo mode, apply live prices to match /demo page values
   const allHoldings = useMemo(() => {
     if (!profile) return [];
     
     // Get all raw holdings from all accounts
-    const rawHoldings = [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
+    let rawHoldings = [...(profile.retirementAccounts || []), ...(profile.investmentAccounts || [])]
       .flatMap((a: any) => a.holdings || [])
       .filter((h: Holding) => h.currentValue && h.currentValue > 0);
+    
+    // In demo mode, update holding values with live prices
+    if (isDemoMode && Object.keys(livePrices).length > 0) {
+      rawHoldings = rawHoldings.map((h: Holding) => {
+        const ticker = h.ticker.toUpperCase();
+        const livePrice = livePrices[ticker];
+        if (livePrice && h.shares) {
+          return {
+            ...h,
+            currentPrice: livePrice,
+            currentValue: h.shares * livePrice,
+          };
+        }
+        return h;
+      });
+    }
     
     // Cash-like tickers to consolidate
     const CASH_TICKERS = ['CASH', 'USD', 'SPAXX', 'VMFXX', 'SWVXX', 'FDRXX', 'SPRXX', 'FTEXX', 'VMMXX'];
@@ -373,7 +436,7 @@ export default function PortfolioLab() {
     }
     
     return consolidatedHoldings;
-  }, [profile]);
+  }, [profile, isDemoMode, livePrices]);
   
   const totalValue = useMemo(() => 
     allHoldings.reduce((sum: number, h: Holding) => sum + (h.currentValue || 0), 0),
