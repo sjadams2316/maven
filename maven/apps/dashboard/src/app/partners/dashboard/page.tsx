@@ -41,63 +41,63 @@ export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Good afternoon</h1>
-        <p className="text-gray-400">Here's what's happening with your practice today.</p>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Good afternoon</h1>
+        <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <div className="text-gray-400 text-sm mb-2">Total AUM</div>
-          <div className="text-3xl font-bold text-white">{formatCurrency(DEMO_STATS.totalAUM)}</div>
-          <div className="text-emerald-500 text-sm mt-1">+{DEMO_STATS.monthlyGrowth}% this month</div>
+      {/* Stats Grid - Stack on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Total AUM</div>
+          <div className="text-xl md:text-3xl font-bold text-white">{formatCurrency(DEMO_STATS.totalAUM)}</div>
+          <div className="text-emerald-500 text-xs md:text-sm mt-1">+{DEMO_STATS.monthlyGrowth}% this month</div>
         </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <div className="text-gray-400 text-sm mb-2">Clients</div>
-          <div className="text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
-          <div className="text-gray-500 text-sm mt-1">Avg {formatCurrency(DEMO_STATS.avgClientAUM)}</div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
+          <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DEMO_STATS.avgClientAUM)}</div>
         </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <div className="text-gray-400 text-sm mb-2">Alerts</div>
-          <div className="text-3xl font-bold text-amber-500">{DEMO_ALERTS.length}</div>
-          <div className="text-gray-500 text-sm mt-1">Require attention</div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Alerts</div>
+          <div className="text-xl md:text-3xl font-bold text-amber-500">{DEMO_ALERTS.length}</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Require attention</div>
         </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <div className="text-gray-400 text-sm mb-2">Today's Meetings</div>
-          <div className="text-3xl font-bold text-white">{DEMO_MEETINGS.length}</div>
-          <div className="text-gray-500 text-sm mt-1">Next: {DEMO_MEETINGS[0]?.time || 'None'}</div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Today's Meetings</div>
+          <div className="text-xl md:text-3xl font-bold text-white">{DEMO_MEETINGS.length}</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Next: {DEMO_MEETINGS[0]?.time || 'None'}</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Alerts */}
-        <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Action Required</h2>
-            <Link href="/partners/insights" className="text-amber-500 text-sm hover:text-amber-400">
+        <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-lg md:text-xl font-semibold text-white">Action Required</h2>
+            <Link href="/partners/insights" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
               View all →
             </Link>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {DEMO_ALERTS.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors cursor-pointer"
+                className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors cursor-pointer"
               >
-                <div className={`w-2 h-2 rounded-full mt-2 ${
+                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                   alert.severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
                 }`} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-medium">{alert.client}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-white font-medium text-sm md:text-base">{alert.client}</span>
                     <span className="text-xs px-2 py-0.5 bg-white/10 rounded text-gray-400">{alert.type}</span>
                   </div>
-                  <p className="text-gray-400 text-sm">{alert.message}</p>
+                  <p className="text-gray-400 text-xs md:text-sm">{alert.message}</p>
                 </div>
-                <button className="text-gray-500 hover:text-white transition-colors">
+                <button className="text-gray-500 hover:text-white transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center">
                   →
                 </button>
               </div>
@@ -106,22 +106,22 @@ export default function PartnersDashboard() {
         </div>
 
         {/* Today's Schedule */}
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">Today's Schedule</h2>
-          <div className="space-y-4">
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Today's Schedule</h2>
+          <div className="space-y-3 md:space-y-4">
             {DEMO_MEETINGS.map((meeting) => (
               <div
                 key={meeting.id}
-                className="p-4 bg-white/5 rounded-xl border border-white/5"
+                className="p-3 md:p-4 bg-white/5 rounded-xl border border-white/5"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-amber-500 font-medium">{meeting.time}</span>
+                  <span className="text-amber-500 font-medium text-sm md:text-base">{meeting.time}</span>
                   <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded">
                     {meeting.type}
                   </span>
                 </div>
-                <div className="text-white">{meeting.client}</div>
-                <button className="mt-3 w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-colors">
+                <div className="text-white text-sm md:text-base">{meeting.client}</div>
+                <button className="mt-3 w-full py-3 md:py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-colors min-h-[48px]">
                   Prep Meeting
                 </button>
               </div>
@@ -136,14 +136,42 @@ export default function PartnersDashboard() {
       </div>
 
       {/* Top Clients */}
-      <div className="mt-8 bg-[#12121a] border border-white/10 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">Top Clients by AUM</h2>
-          <Link href="/partners/clients" className="text-amber-500 text-sm hover:text-amber-400">
+      <div className="mt-6 md:mt-8 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-semibold text-white">Top Clients by AUM</h2>
+          <Link href="/partners/clients" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
             View all →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+        
+        {/* Mobile: Card layout */}
+        <div className="md:hidden space-y-3">
+          {DEMO_CLIENTS.map((client) => (
+            <Link
+              key={client.id}
+              href={`/partners/clients/${client.id}`}
+              className="block p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white font-medium">{client.name}</span>
+                {client.alerts > 0 && (
+                  <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">
+                    {client.alerts} alert{client.alerts > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">{formatCurrency(client.aum)}</span>
+                <span className={client.change >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                  {client.change >= 0 ? '+' : ''}{client.change}%
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Desktop: Table layout */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-gray-500 text-sm border-b border-white/10">
@@ -178,7 +206,7 @@ export default function PartnersDashboard() {
                   <td className="py-4 text-right">
                     <Link
                       href={`/partners/clients/${client.id}`}
-                      className="text-gray-500 hover:text-white transition-colors"
+                      className="text-gray-500 hover:text-white transition-colors inline-flex items-center justify-center min-w-[48px] min-h-[48px]"
                     >
                       →
                     </Link>
