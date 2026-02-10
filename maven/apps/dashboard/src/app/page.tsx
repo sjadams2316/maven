@@ -26,19 +26,25 @@ const FALLBACK_MARKET_DATA = {
 // Check if US stock market is currently open
 // Market hours: 9:30 AM - 4:00 PM ET, Monday-Friday (excluding holidays)
 function isMarketOpen(): boolean {
-  const now = new Date();
+  // Get current time in Eastern Time using Intl API
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+    weekday: 'short',
+  });
   
-  // Convert to Eastern Time
-  const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const hours = etTime.getHours();
-  const minutes = etTime.getMinutes();
-  const day = etTime.getDay(); // 0 = Sunday, 6 = Saturday
+  const parts = formatter.formatToParts(new Date());
+  const weekday = parts.find(p => p.type === 'weekday')?.value || '';
+  const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+  const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
   
   // Weekend check
-  if (day === 0 || day === 6) return false;
+  if (weekday === 'Sat' || weekday === 'Sun') return false;
   
   // Convert to minutes since midnight for easier comparison
-  const currentMinutes = hours * 60 + minutes;
+  const currentMinutes = hour * 60 + minute;
   const marketOpen = 9 * 60 + 30;  // 9:30 AM = 570 minutes
   const marketClose = 16 * 60;      // 4:00 PM = 960 minutes
   
