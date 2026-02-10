@@ -49,6 +49,40 @@ const price = data?.chart?.result?.[0]?.meta?.price || 0;
 3. Reference the Domain-Specific Injection Guide in LEARNINGS-v2.md
 4. NEVER say "read all learnings" — always be selective
 
+### ❌ Using estimated/cached prices for calculations
+**What happened:** Demo portfolio showed wildly wrong values because I used stale price estimates
+**Example:** Estimated IREN at $12.80, actual was $46.15 (260% wrong!)
+**Why it failed:** Prices change. Old estimates become fantasy numbers.
+**Do instead:** 
+```bash
+# ALWAYS fetch current price before calculating
+curl -s "https://yourapi.com/stock-quote?symbol=IREN" | jq '.price'
+# THEN do your math
+```
+
+### ❌ Disabling live data to "fix" inconsistencies
+**What happened:** Demo showed different values across pages. First fix was to disable live prices.
+**Why it failed:** The problem wasn't live prices — it was that static fallback values were fantasy numbers.
+**Do instead:** Keep live data features. Fix the underlying static data to be realistic at current prices.
+
+### ❌ Accepting "build passes" as proof of correctness
+**What happened:** Agent reported "10 pages fixed" with passing build. Data was still wrong.
+**Why it failed:** TypeScript compilation doesn't verify business logic or data correctness.
+**Do instead:** After agent completes:
+1. Open browser
+2. Navigate to affected pages
+3. Verify ACTUAL displayed values
+4. Compare across pages if data consistency matters
+
+### ❌ Pushing multiple commits without checking deploy status
+**What happened:** Pushed 3 commits, assumed they deployed, kept "fixing" the same bug
+**Why it failed:** Vercel deploys were failing. No code was reaching production.
+**Do instead:** After push, verify deploy succeeded before pushing more code:
+1. Check Vercel/Netlify dashboard
+2. Wait for "Ready" status
+3. Verify change is live
+4. THEN continue
+
 **Savings:** ~70% reduction in learning context tokens per agent
 
 ---

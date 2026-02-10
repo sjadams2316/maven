@@ -19,6 +19,15 @@
 ### 3. File Locks ✓
 - [ ] Check PANTHEON-STATUS.md — any agents touching same files?
 
+### 4. Deploy Pipeline ✓ (NEW)
+- [ ] Check Vercel dashboard — are recent deploys succeeding?
+- [ ] If deploys are failing, FIX THAT FIRST before spawning
+
+### 5. Real Data ✓ (NEW)
+- [ ] Does this task involve external data (prices, rates, etc.)?
+- [ ] If yes, have I fetched CURRENT values to include in the task?
+- [ ] Never pass estimated/cached values — always live data
+
 ---
 
 ## Spawn Template (Copy-Paste)

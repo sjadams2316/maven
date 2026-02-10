@@ -279,3 +279,46 @@ Never accept "build passes" as proof of correctness. "Works" ≠ "Correct."
 3. Verify the ACTUAL user-facing result
 4. Compare across pages if data consistency is involved
 5. Only then report success
+
+### L030 — Fetch REAL Data Before Making Calculations
+**Tags:** `data`, `api`, `demo`
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** Demo portfolio disaster 2026-02-10 — used stale estimates, some 260% wrong
+**Insight:** When setting values that depend on external data (stock prices, exchange rates, etc.), ALWAYS fetch the actual current values first. Never use estimates, cached values, or "what I remember."
+
+**The Failure:**
+- I estimated CIFR at $6.45 → actual was $16.76 (160% wrong)
+- I estimated IREN at $12.80 → actual was $46.15 (260% wrong)
+- I estimated VTI at $289 → actual was $342.64 (19% wrong)
+
+**Pattern:** Before ANY calculation involving external data:
+```bash
+# Fetch actual prices FIRST
+curl -s "https://api.example.com/price?symbol=XXX" | jq '.price'
+```
+Then calculate. Never assume.
+
+### L031 — Don't Disable Features to Fix Data Problems
+**Tags:** `architecture`, `debugging`
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** Sam's pushback 2026-02-10 — "Who cares if crypto is volatile? We NEED live prices."
+**Insight:** When live data causes inconsistencies, the problem is usually the static fallback data, not the live data feature. Fix the data, don't disable the feature.
+
+**The Mistake:** I disabled live prices because TAO at $156 broke the demo (which assumed $3,380). Wrong fix.
+**The Right Fix:** Update the demo to have realistic share counts that work with real prices.
+
+**Principle:** Features that show real data are CREDIBILITY. Removing them destroys trust. Fix the underlying data instead.
+
+### L032 — Verify Deploy Pipeline Before Assuming Success
+**Tags:** `deployment`, `verification`
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** Vercel deploy failures 2026-02-10 — pushed 3 commits, none deployed
+**Insight:** A successful local build ≠ successful production deploy. Always verify the deploy pipeline is actually working before moving on.
+
+**Pattern:** After git push:
+1. Check GitHub Actions status (if applicable)
+2. Check Vercel/Netlify/etc dashboard for deploy status
+3. Wait for "Ready" status before verifying live site
+4. If deploy fails, debug THAT before pushing more code
+
+**Red Flag:** If you push 3 commits and the site hasn't changed, STOP and check the deploy pipeline.
