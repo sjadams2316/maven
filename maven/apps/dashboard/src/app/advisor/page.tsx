@@ -248,7 +248,7 @@ export default function AdvisorDashboard() {
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                   <span>📅</span> Upcoming Meetings
                 </h2>
-                <Link href="/advisor/clients" className="text-sm text-indigo-400 hover:text-indigo-300">
+                <Link href="/advisor/clients" className="text-sm text-indigo-400 hover:text-indigo-300 min-h-[48px] flex items-center px-2">
                   View all →
                 </Link>
               </div>
@@ -274,13 +274,13 @@ export default function AdvisorDashboard() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/advisor/clients/${client.id}/prep`}
-                          className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm rounded-lg transition"
+                          className="px-4 py-2 min-h-[48px] flex items-center bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm rounded-lg transition"
                         >
                           Prep
                         </Link>
                         <Link
                           href={`/advisor/clients/${client.id}`}
-                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-gray-300 text-sm rounded-lg transition"
+                          className="px-4 py-2 min-h-[48px] flex items-center bg-white/10 hover:bg-white/20 text-gray-300 text-sm rounded-lg transition"
                         >
                           View
                         </Link>
@@ -299,7 +299,7 @@ export default function AdvisorDashboard() {
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                   <span>⚡</span> Insights Requiring Attention
                 </h2>
-                <Link href="/advisor/insights" className="text-sm text-indigo-400 hover:text-indigo-300">
+                <Link href="/advisor/insights" className="text-sm text-indigo-400 hover:text-indigo-300 min-h-[48px] flex items-center px-2">
                   View all →
                 </Link>
               </div>
@@ -309,7 +309,7 @@ export default function AdvisorDashboard() {
                   <Link
                     key={insight.id}
                     href={`/advisor/clients/${insight.clientId}`}
-                    className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition group"
+                    className="block p-4 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition group"
                   >
                     <div className="flex items-start gap-3">
                       <div className={`w-2 h-2 rounded-full mt-2 ${
@@ -350,49 +350,49 @@ export default function AdvisorDashboard() {
               <div className="space-y-2">
                 <Link
                   href="/advisor/clients/invite"
-                  className="flex items-center gap-3 p-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl transition"
                 >
                   <span className="text-xl">✉️</span>
                   <span className="text-white font-medium">Invite New Client</span>
                 </Link>
                 <Link
                   href="/advisor/clients"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">👥</span>
                   <span className="text-white">View All Clients</span>
                 </Link>
                 <Link
                   href="/collaborate"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">🤝</span>
                   <span className="text-white">Start Planning Session</span>
                 </Link>
                 <Link
                   href="/fragility"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">📊</span>
                   <span className="text-white">Check Fragility Index</span>
                 </Link>
                 <Link
                   href="/oracle"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">🔮</span>
                   <span className="text-white">Ask Maven Oracle</span>
                 </Link>
                 <Link
                   href="/advisor/analytics"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">📊</span>
                   <span className="text-white">Practice Analytics</span>
                 </Link>
                 <Link
                   href="/advisor/settings"
-                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 min-h-[48px] bg-white/5 hover:bg-white/10 rounded-xl transition"
                 >
                   <span className="text-xl">⚙️</span>
                   <span className="text-white">Settings</span>
@@ -411,7 +411,7 @@ export default function AdvisorDashboard() {
                   <Link
                     key={activity.id}
                     href={`/advisor/clients/${activity.clientId}`}
-                    className="block group"
+                    className="block group min-h-[48px] py-2"
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs text-gray-400 flex-shrink-0">

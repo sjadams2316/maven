@@ -35,9 +35,9 @@
 
 ### L002 — Touch Targets 48px Minimum
 **Tags:** `mobile`, `ui`, `ux`
-**Confidence:** 4 ⭐⭐⭐⭐
-**Confirmed by:** pantheon-mobile, pantheon-mobile-qa-v2, accessibility audit
-**Insight:** Touch targets must be 48px minimum. Use `min-h-[48px] min-w-[48px]` on all tappable elements. Pattern: `min-h-[44px] sm:min-h-0` for responsive (larger on mobile, compact on desktop).
+**Confidence:** 5 ⭐⭐⭐⭐⭐
+**Confirmed by:** pantheon-mobile, pantheon-mobile-qa-v2, accessibility audit, pantheon-advisor-mobile
+**Insight:** Touch targets must be 48px minimum. Use `min-h-[48px] min-w-[48px]` on all tappable elements. Pattern: `min-h-[44px] sm:min-h-0` for responsive (larger on mobile, compact on desktop). Also enlargened toggle switches from `w-12 h-6` to `w-14 h-8` for easier tapping.
 
 ### L003 — 4-Part Error Responses
 **Tags:** `api`, `error`, `ux`

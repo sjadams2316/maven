@@ -122,12 +122,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, emailOnClientJoin: !settings.emailOnClientJoin })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.emailOnClientJoin ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.emailOnClientJoin ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.emailOnClientJoin ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -139,12 +139,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, emailOnHighPriorityInsight: !settings.emailOnHighPriorityInsight })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.emailOnHighPriorityInsight ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.emailOnHighPriorityInsight ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.emailOnHighPriorityInsight ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -156,12 +156,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, emailOnMeetingReminder: !settings.emailOnMeetingReminder })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.emailOnMeetingReminder ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.emailOnMeetingReminder ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.emailOnMeetingReminder ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -171,7 +171,7 @@ export default function AdvisorSettingsPage() {
                 <select
                   value={settings.emailDigestFrequency}
                   onChange={(e) => setSettings({ ...settings, emailDigestFrequency: e.target.value })}
-                  className="w-full sm:w-64 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
+                  className="w-full sm:w-64 px-4 py-3 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
                 >
                   <option value="realtime">Real-time</option>
                   <option value="daily">Daily digest</option>
@@ -201,7 +201,7 @@ export default function AdvisorSettingsPage() {
                     <button
                       key={option.value}
                       onClick={() => setSettings({ ...settings, defaultClientTone: option.value })}
-                      className={`p-3 rounded-xl border transition text-center ${
+                      className={`p-3 min-h-[48px] rounded-xl border transition text-center ${
                         settings.defaultClientTone === option.value
                           ? 'bg-indigo-600/20 border-indigo-500 text-white'
                           : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
@@ -221,12 +221,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, autoShowTaxInsights: !settings.autoShowTaxInsights })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.autoShowTaxInsights ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.autoShowTaxInsights ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.autoShowTaxInsights ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -238,12 +238,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, autoShowRebalanceInsights: !settings.autoShowRebalanceInsights })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.autoShowRebalanceInsights ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.autoShowRebalanceInsights ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.autoShowRebalanceInsights ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -264,12 +264,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, showAUMOnDashboard: !settings.showAUMOnDashboard })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.showAUMOnDashboard ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.showAUMOnDashboard ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.showAUMOnDashboard ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -281,12 +281,12 @@ export default function AdvisorSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, showClientActivity: !settings.showClientActivity })}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-14 h-8 min-h-[48px] min-w-[48px] rounded-full transition-colors ${
                     settings.showClientActivity ? 'bg-indigo-600' : 'bg-gray-700'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.showClientActivity ? 'translate-x-6' : 'translate-x-0.5'
+                  <div className={`w-6 h-6 rounded-full bg-white transition-transform ${
+                    settings.showClientActivity ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
@@ -297,7 +297,7 @@ export default function AdvisorSettingsPage() {
           <div className="flex justify-end">
             <button
               onClick={handleSave}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition"
+              className="px-6 py-3 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition"
             >
               Save Settings
             </button>

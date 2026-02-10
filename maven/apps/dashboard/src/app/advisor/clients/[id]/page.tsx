@@ -311,7 +311,7 @@ export default function ClientDetailPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setViewAsClient(!viewAsClient)}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 ${
+              className={`px-4 py-2 min-h-[48px] rounded-xl transition flex items-center gap-2 ${
                 viewAsClient 
                   ? 'bg-amber-600 hover:bg-amber-500 text-white' 
                   : 'bg-white/10 hover:bg-white/20 text-gray-300'
@@ -322,7 +322,7 @@ export default function ClientDetailPage() {
             </button>
             <Link
               href={`/advisor/clients/${clientId}/prep`}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
+              className="px-4 py-2 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
             >
               <span>📋</span>
               <span>Prep Meeting</span>
@@ -379,7 +379,7 @@ export default function ClientDetailPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 min-h-[48px] rounded-xl transition whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
@@ -573,7 +573,7 @@ export default function ClientDetailPage() {
                               <select
                                 value={insight.visibility}
                                 onChange={(e) => updateInsightVisibility(insight.id, e.target.value as VisibilityType)}
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
+                                className="w-full px-3 py-2 min-h-[48px] bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
                               >
                                 <option value="show">Show to client</option>
                                 <option value="show_with_context">Show with "Advisor aware" badge</option>
@@ -589,7 +589,7 @@ export default function ClientDetailPage() {
                                 value={insight.advisorNote}
                                 onChange={(e) => updateInsightNote(insight.id, e.target.value)}
                                 placeholder="Add internal note..."
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+                                className="w-full px-3 py-2 min-h-[48px] bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500"
                               />
                             </div>
                           </div>
@@ -655,7 +655,7 @@ export default function ClientDetailPage() {
                 className="w-full h-64 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 resize-none"
               />
               <div className="flex justify-end mt-4">
-                <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition">
+                <button className="px-4 py-2 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition">
                   Save Notes
                 </button>
               </div>
@@ -679,7 +679,7 @@ export default function ClientDetailPage() {
                         <button
                           key={tone}
                           onClick={() => setClientTone(tone)}
-                          className={`flex-1 p-4 rounded-xl border transition ${
+                          className={`flex-1 p-4 min-h-[48px] rounded-xl border transition ${
                             clientTone === tone
                               ? 'bg-indigo-600/20 border-indigo-500 text-white'
                               : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'

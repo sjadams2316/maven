@@ -15,13 +15,9 @@
 ## P1 — High (auto-build during window)
 *Bugs, UX fixes, small features*
 
-- [ ] **BUG: Fund look-through** — Global funds (VTWAX, VT) should show US/Int'l breakdown, not just "US Stock"
-  - Files: Likely asset classification logic
-  - Learning: L004, L019
+- [x] **BUG: Fund look-through** — Global funds (VTWAX, VT) should show US/Int'l breakdown ✅ L034
 
-- [ ] **UX: Advisor dashboard mobile** — Touch targets need 48px minimum on advisor pages
-  - Files: app/advisor/*.tsx
-  - Learning: L002, L006
+- [x] **UX: Advisor dashboard mobile** — Touch targets 48px minimum ✅ L002↑
 
 - [ ] **BUG: Oracle conversation history** — Chat history may persist between demo sessions
   - Files: Oracle component, localStorage handling

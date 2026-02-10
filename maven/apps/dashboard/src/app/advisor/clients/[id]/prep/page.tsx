@@ -222,7 +222,7 @@ export default function MeetingPrepPage() {
               <button 
                 onClick={generatePDF}
                 disabled={generating}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 min-h-[48px] bg-white/10 hover:bg-white/20 text-white rounded-xl transition flex items-center gap-2 disabled:opacity-50"
               >
                 {generating ? (
                   <>
@@ -369,7 +369,7 @@ export default function MeetingPrepPage() {
                 <div 
                   key={idx}
                   onClick={() => toggleActionItem(idx)}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${
+                  className={`flex items-center gap-3 p-3 min-h-[48px] rounded-xl cursor-pointer transition ${
                     item.completed ? 'bg-emerald-500/10' : 'bg-white/5 hover:bg-white/10'
                   }`}
                 >
@@ -399,11 +399,11 @@ export default function MeetingPrepPage() {
                 onChange={(e) => setNewActionItem(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addActionItem()}
                 placeholder="Add new action item..."
-                className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+                className="flex-1 px-4 py-2 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
               />
               <button
                 onClick={addActionItem}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition"
+                className="px-4 py-2 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition"
               >
                 Add
               </button>
@@ -453,7 +453,7 @@ export default function MeetingPrepPage() {
             
             <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
               <span className="text-gray-400">Total meeting time: ~45 minutes</span>
-              <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2">
+              <button className="px-4 py-2 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2">
                 <span>📧</span>
                 <span>Email to Client</span>
               </button>

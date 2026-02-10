@@ -73,7 +73,7 @@ export default function InviteClientPage() {
         <div className="flex items-center justify-center gap-4 mb-8">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition ${
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition ${
                 step >= s 
                   ? 'bg-indigo-600 text-white' 
                   : 'bg-white/10 text-gray-500'
@@ -148,7 +148,7 @@ export default function InviteClientPage() {
                 <button
                   onClick={() => setStep(2)}
                   disabled={!formData.firstName || !formData.lastName || !formData.email}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-xl transition"
+                  className="w-full py-3 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-xl transition"
                 >
                   Continue
                 </button>
@@ -194,7 +194,7 @@ export default function InviteClientPage() {
                     <button
                       key={option.value}
                       onClick={() => setFormData({ ...formData, riskTolerance: option.value })}
-                      className={`p-4 rounded-xl border transition text-center ${
+                      className={`p-4 min-h-[48px] rounded-xl border transition text-center ${
                         formData.riskTolerance === option.value
                           ? 'bg-indigo-600/20 border-indigo-500 text-white'
                           : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
@@ -238,13 +238,13 @@ export default function InviteClientPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition"
+                  className="flex-1 py-3 min-h-[48px] bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition"
+                  className="flex-1 py-3 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition"
                 >
                   Generate Invite
                 </button>
@@ -280,11 +280,11 @@ export default function InviteClientPage() {
                   type="text"
                   readOnly
                   value={inviteLink}
-                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono"
+                  className="flex-1 px-4 py-3 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono"
                 />
                 <button
                   onClick={copyInviteLink}
-                  className={`px-4 py-3 rounded-xl transition flex items-center gap-2 ${
+                  className={`px-4 py-3 min-h-[48px] rounded-xl transition flex items-center gap-2 ${
                     copied 
                       ? 'bg-emerald-600 text-white' 
                       : 'bg-white/10 hover:bg-white/20 text-white'
@@ -332,7 +332,7 @@ export default function InviteClientPage() {
                   // In production, this would send an email
                   alert(`Email invite would be sent to ${formData.email}`);
                 }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition flex items-center justify-center gap-2"
               >
                 <span>📧</span>
                 <span>Email Invite to {formData.firstName}</span>
@@ -354,13 +354,13 @@ export default function InviteClientPage() {
                     });
                     setInviteCode('');
                   }}
-                  className="py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition"
+                  className="py-3 min-h-[48px] bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition"
                 >
                   Invite Another
                 </button>
                 <Link
                   href="/advisor/clients"
-                  className="py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition text-center"
+                  className="py-3 min-h-[48px] bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition text-center flex items-center justify-center"
                 >
                   View All Clients
                 </Link>

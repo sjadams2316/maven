@@ -13,6 +13,7 @@
 | Time | Agent | Task | Cost | Status |
 |------|-------|------|------|--------|
 | 11:27 | pantheon-fund-lookthrough | Fund look-through for global funds | ~$0.15 | ✅ Complete (L034) |
+| 13:01 | pantheon-advisor-mobile | Advisor dashboard touch targets (9 files) | ~$0.15 | ✅ Complete (L002↑) |
 
 ---
 

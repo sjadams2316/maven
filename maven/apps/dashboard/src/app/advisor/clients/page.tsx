@@ -217,7 +217,7 @@ export default function ClientsListPage() {
           
           <Link 
             href="/advisor/clients/invite"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
+            className="px-4 py-2 min-h-[48px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition flex items-center gap-2"
           >
             <span>+</span>
             <span>Invite Client</span>
@@ -237,7 +237,7 @@ export default function ClientsListPage() {
                 placeholder="Search clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
+                className="w-full pl-10 pr-4 py-2.5 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
               />
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function ClientsListPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterType)}
-            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
+            className="px-4 py-2.5 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
           >
             <option value="all">All Clients</option>
             <option value="needs_attention">Needs Attention</option>
@@ -261,7 +261,7 @@ export default function ClientsListPage() {
               setSortField(field as SortField);
               setSortDirection(dir as 'asc' | 'desc');
             }}
-            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
+            className="px-4 py-2.5 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
           >
             <option value="aum-desc">AUM (High to Low)</option>
             <option value="aum-asc">AUM (Low to High)</option>
@@ -291,7 +291,7 @@ export default function ClientsListPage() {
               <Link
                 key={client.id}
                 href={`/advisor/clients/${client.id}`}
-                className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-white/5 transition group"
+                className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 px-4 sm:px-6 py-4 min-h-[48px] hover:bg-white/5 transition group"
               >
                 {/* Client Info */}
                 <div className="sm:col-span-4 flex items-center gap-3">

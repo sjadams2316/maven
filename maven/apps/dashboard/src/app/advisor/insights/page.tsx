@@ -271,7 +271,7 @@ export default function InsightsPage() {
                 placeholder="Search insights or clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
+                className="w-full pl-10 pr-4 py-2.5 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
               />
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function InsightsPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as InsightType)}
-            className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
+            className="px-4 py-2.5 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition appearance-none cursor-pointer"
           >
             <option value="all">All Types</option>
             <option value="tax_harvest">Tax Harvest</option>
@@ -299,7 +299,7 @@ export default function InsightsPage() {
             <Link
               key={insight.id}
               href={`/advisor/clients/${insight.clientId}`}
-              className={`block p-5 rounded-xl border transition group ${
+              className={`block p-5 min-h-[48px] rounded-xl border transition group ${
                 insight.visibility === 'advisor_only'
                   ? 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
                   : 'bg-[#12121a] border-white/10 hover:border-white/20'

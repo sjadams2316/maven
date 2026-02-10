@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
+            className="px-4 py-2 min-h-[48px] bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
           >
             <option value="1m">Last Month</option>
             <option value="3m">Last 3 Months</option>
@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
             {MOCK_CLIENT_ENGAGEMENT.map((client, idx) => (
               <div 
                 key={idx}
-                className="flex items-center gap-4 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition"
+                className="flex items-center gap-4 p-3 min-h-[48px] bg-white/5 rounded-xl hover:bg-white/10 transition"
               >
                 <div className="w-8 text-center">
                   {idx === 0 && <span className="text-xl">🥇</span>}
