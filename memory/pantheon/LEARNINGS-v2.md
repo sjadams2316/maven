@@ -225,3 +225,15 @@ Vanguard 2026 explicitly ranks best opportunities:
 Pattern: When displaying portfolio recommendations, ALWAYS show expected returns alongside historical. Users need context to understand why diversification makes sense despite past underperformance.
 
 Sources: Vanguard VCMM (Dec 2025), JP Morgan 2026 LTCMA (Oct 2025), Research Affiliates AAI
+
+### L027 — Dollar Projections Need Both Historical AND Expected Basis
+**Tags:** `data`, `finance`, `ux`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** cma-integrate agent
+**Insight:** When showing "projected portfolio value in 10 years," ALWAYS show both:
+1. Based on historical returns: $340K → $253K (diversified looks worse)
+2. Based on expected returns: $163K → $182K (diversified wins ✓)
+
+This visual contrast crystallizes the CMA narrative. Users see the same $100K starting point grows to dramatically different amounts depending on assumptions. Historical makes US look like the obvious winner. Expected shows why advisors recommend diversification.
+
+Pattern: Show both projections side-by-side with checkmarks on expected improvements and amber warnings on historical trade-offs. Include the "why they differ" explainer with CMA sources.

@@ -71,6 +71,12 @@ CMAs are forward-looking expected returns published by major asset managers. The
 - FactSet
 - Bloomberg Terminal
 
+### Internal/Special Access
+5. **Capital Group** (Sam's employer)
+   - URL: https://www.capitalgroup.com/advisor/insights.html
+   - Proprietary research, American Funds perspective
+   - May have internal access to deeper research
+
 ---
 
 ## How to Display in UI

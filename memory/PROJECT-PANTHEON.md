@@ -1,9 +1,9 @@
 # Project Pantheon — Multi-Agent Architecture for Maven
 
 *Created: 2026-02-09*
-*Last Updated: 2026-02-09 15:45 EST*
-*Status: Compounding System Live*
-*Version: 2.5 — Learning Loop Verified*
+*Last Updated: 2026-02-09 19:25 EST*
+*Status: Fully Autonomous + Compounding*
+*Version: 3.0 — Autonomous Thinking Layer Added*
 
 ---
 
@@ -72,6 +72,51 @@ To prevent work loss from API credit exhaustion:
 1. Move agent to "Recently Completed"
 2. Release file locks
 3. Spawn QA agent if code was committed
+
+### Autonomous Thinking (v3.0 — NEW)
+
+**Research agents are now programmed to THINK FOR THEMSELVES.**
+
+The old way: Agent receives task → completes exact task → stops.
+
+The new way: Agent receives task → thinks "what else should I learn?" → expands scope → delivers comprehensive knowledge.
+
+**Autonomous Thinking Protocol:**
+
+1. **Go Deep, Not Just Wide**
+   - Don't grab headline numbers — read FULL methodology
+   - Capture reasoning, assumptions, caveats
+   - Extract quotes that explain the thinking
+
+2. **Think: "Who Else?"**
+   - If researching Vanguard CMAs, also check JP Morgan, BlackRock, Capital Group, Research Affiliates
+   - Don't wait to be asked — just do it
+
+3. **Compare and Contrast**
+   - Where do sources agree?
+   - Where do they disagree? Why?
+   - What's the consensus vs outlier view?
+
+4. **Capture the "Why"**
+   - Numbers without reasoning are useless
+   - WHY does Vanguard expect 5.5%?
+   - WHAT assumptions drive that?
+   - HOW confident are they?
+
+**Mandatory CMA Sources:**
+| Source | Why |
+|--------|-----|
+| Vanguard | Most-cited, conservative |
+| JP Morgan | 30+ year track record |
+| BlackRock | Largest asset manager |
+| Capital Group | Sam's employer, insider view |
+| Research Affiliates | Contrarian, valuation-focused |
+| Schwab | Retail perspective |
+| Morningstar | Independent research |
+
+**The Goal:** After research completes, knowledge should be COMPREHENSIVE — better than any single source because we synthesize all of them.
+
+See: `memory/pantheon/PANTHEON-PROTOCOL.md` → "Research Agent Protocol" section
 
 ### Automated Data Validation (Cron)
 

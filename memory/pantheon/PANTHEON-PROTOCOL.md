@@ -225,4 +225,107 @@ domain/KNOWLEDGE.md (specialized)
 
 ---
 
+## Research Agent Protocol (AUTONOMOUS THINKING)
+
+**Research agents must be CURIOUS, not just task-completers.**
+
+### The Mindset
+
+When given a research task, don't just do the minimum. Think:
+- "What else should I learn while I'm here?"
+- "What adjacent knowledge would make this more complete?"
+- "What would a domain expert want to know?"
+
+### Mandatory Research Behavior
+
+**1. Go Deep, Not Just Wide**
+When researching CMAs from Vanguard:
+- Don't just grab the headline numbers
+- Read the FULL methodology section
+- Capture their reasoning and assumptions
+- Note any caveats or confidence intervals
+- Extract quotes that explain their thinking
+
+**2. Think: "Who Else?"**
+If the task says "research Vanguard CMAs", the agent should ALSO think:
+- "I should also check JP Morgan's LTCMA"
+- "BlackRock publishes CMAs too"
+- "Capital Group (the user's employer) has research"
+- "Research Affiliates has a different methodology"
+- "What does Morningstar say?"
+
+Then DO those additional lookups without being asked.
+
+**3. Compare and Contrast**
+Don't just collect data — synthesize:
+- Where do sources agree?
+- Where do they disagree?
+- Why might they differ?
+- What's the consensus view?
+- What are the outlier predictions?
+
+**4. Capture the "Why"**
+Numbers without reasoning are useless. Always capture:
+- WHY does Vanguard expect 5.5% for US Large Cap?
+- WHAT assumptions drive that (CAPE, earnings growth, etc)?
+- HOW confident are they (range estimates)?
+- WHEN was this published (freshness)?
+
+### CMA Research: Mandatory Sources
+
+When researching Capital Market Assumptions, ALWAYS check:
+
+| Source | Why Important | URL Pattern |
+|--------|---------------|-------------|
+| **Vanguard** | Most-cited, conservative | Search "Vanguard economic market outlook [year]" |
+| **JP Morgan** | 30+ year track record | Search "JP Morgan LTCMA [year]" |
+| **BlackRock** | Largest asset manager | Search "BlackRock capital market assumptions" |
+| **Capital Group** | Sam's employer, insider view | Search "Capital Group market outlook" |
+| **Research Affiliates** | Contrarian, valuation-focused | interactive.researchaffiliates.com |
+| **Schwab** | Retail-focused perspective | Search "Schwab market outlook [year]" |
+| **Morningstar** | Independent research | Search "Morningstar expected returns" |
+
+**Don't stop at one source. The goal is COMPREHENSIVE domain knowledge.**
+
+### Research Output Format
+
+Every research task should produce:
+
+```markdown
+## [Topic] Research — [Date]
+
+### Sources Consulted
+1. [Source] — [URL] — [Date published]
+2. ...
+
+### Key Findings
+- [Finding with citation]
+- ...
+
+### Consensus View
+[What most sources agree on]
+
+### Divergent Views
+[Where sources disagree and why]
+
+### Methodology Notes
+[How different sources calculate their estimates]
+
+### Questions for Follow-up
+[What we still don't know]
+
+### Implications for Maven
+[How this affects our product/recommendations]
+```
+
+### The Goal
+
+After a research task completes, the knowledge base should be so complete that:
+- Any future agent can understand the domain deeply
+- We could write authoritative content on the topic
+- We know what we know AND what we don't know
+- The research compounds — next time we just update, not restart
+
+---
+
 *Update this protocol as we learn. The goal: consistent, high-quality, fast iteration.*

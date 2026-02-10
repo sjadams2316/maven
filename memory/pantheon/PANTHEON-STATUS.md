@@ -2,7 +2,7 @@
 
 *Live status of running agents, file locks, and dependencies. Check before spawning.*
 
-**Last Updated:** 2026-02-09 19:12 EST
+**Last Updated:** 2026-02-09 19:17 EST
 
 ---
 
@@ -10,8 +10,7 @@
 
 | Agent | Task | Files | Dependencies | Started | Status |
 |-------|------|-------|--------------|---------|--------|
-| compare-enhance | Rich portfolio comparison | portfolio-optimizer/page.tsx | None | 19:10 EST | ✅ Complete |
-| cma-research | Capital Market Assumptions | lib/capital-market-assumptions.ts | None | 19:15 EST | ✅ Complete |
+| — | — | — | — | — | No active agents |
 
 ---
 
@@ -49,6 +48,7 @@ Example:
 
 | Agent | Task | Result | Completed | Learning |
 |-------|------|--------|-----------|----------|
+| cma-integrate | CMA forward-looking projections in compare UI | ✅ | 19:17 EST | L027 |
 | cma-research | Capital Market Assumptions data (14 asset classes) | ✅ | 19:12 EST | L026 |
 | compare-enhance | Enhanced portfolio compare with metrics, tickers, charts | ✅ | 19:10 EST | L025 |
 | pantheon-demo-unify | Unified demo data sources | ✅ | 16:40 EST | L004 |
