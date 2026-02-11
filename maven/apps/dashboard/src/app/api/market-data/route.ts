@@ -266,7 +266,6 @@ export async function GET(request: NextRequest) {
     stockData.push({
       symbol,
       name: STOCK_NAMES[symbol] || symbol,
-      shortName: STOCK_SHORT_NAMES[symbol] || symbol,
       price: price.price,
       change: price.change,
       changePercent: price.changePercent,
