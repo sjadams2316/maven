@@ -9,6 +9,7 @@
 
 import { classifyAndRoute, quickClassify } from './router';
 import { chutesQuery, isChutesConfigured, CHUTES_MODELS } from './providers/chutes';
+import { groqQuery, isGroqConfigured, GROQ_MODELS } from './providers/groq';
 import type { QueryClassification, RoutingDecision, RoutingPath } from './types';
 
 // Feature flags
@@ -89,49 +90,59 @@ export async function athenaOracleQuery(
   // Classify and route the query
   const { classification, routing } = await classifyAndRoute(query);
   
-  // Select model based on routing path
+  // Select provider and model based on routing path
+  let provider: 'groq' | 'chutes' = 'chutes';
   let model: string;
-  switch (routing.primaryPath) {
-    case 'speed':
-      model = CHUTES_MODELS.cheap; // Mistral - fastest
-      break;
-    case 'cost':
-      model = CHUTES_MODELS.balanced; // DeepSeek R1 - good balance
-      break;
-    case 'deep':
-      model = CHUTES_MODELS.reasoning; // Qwen3 - best reasoning
-      break;
-    default:
-      model = CHUTES_MODELS.balanced;
+  
+  // Use Groq for speed path if available (sub-second latency)
+  if (routing.primaryPath === 'speed' && isGroqConfigured()) {
+    provider = 'groq';
+    model = GROQ_MODELS.llama3_70b;
+  } else {
+    // Fall back to Chutes
+    switch (routing.primaryPath) {
+      case 'speed':
+        model = CHUTES_MODELS.cheap; // Mistral - fastest on Chutes
+        break;
+      case 'cost':
+        model = CHUTES_MODELS.balanced; // DeepSeek R1 - good balance
+        break;
+      case 'deep':
+        model = CHUTES_MODELS.reasoning; // Qwen3 - best reasoning
+        break;
+      default:
+        model = CHUTES_MODELS.balanced;
+    }
   }
-  
-  // Build messages for Chutes
-  const messages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
-  
-  // Add history if provided
-  if (options?.history) {
-    messages.push(...options.history);
-  }
-  
-  // Add current query
-  messages.push({ role: 'user', content: query });
   
   try {
-    const response = await chutesQuery(query, {
-      model,
-      systemPrompt,
-      maxTokens: 2048,
-    });
+    let response: string;
+    
+    if (provider === 'groq') {
+      // Use Groq for ultra-fast inference
+      response = await groqQuery(query, {
+        model,
+        systemPrompt,
+        maxTokens: 2048,
+      });
+    } else {
+      // Use Chutes for cost-effective inference
+      response = await chutesQuery(query, {
+        model,
+        systemPrompt,
+        maxTokens: 2048,
+      });
+    }
     
     const latencyMs = Date.now() - startTime;
     
-    // Estimate cost (rough, based on Chutes pricing)
-    const estimatedCost = routing.estimatedCostUsd || 0.0001;
+    // Estimate cost (Groq is free tier, Chutes is ~$0.0001/query)
+    const estimatedCost = provider === 'groq' ? 0 : (routing.estimatedCostUsd || 0.0001);
     
     return {
       response,
       provider: 'athena',
-      model,
+      model: `${provider}/${model}`,
       classification,
       routing,
       latencyMs,
