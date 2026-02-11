@@ -25,9 +25,18 @@ function PartnersLayoutInner({
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentPath, setCurrentPath] = useState('');
   
   // Check for demo mode via query param
   const isDemoMode = searchParams.get('demo') === 'true';
+  
+  // Track current path (needed for SSR/hydration)
+  useEffect(() => {
+    setCurrentPath(window.location.pathname);
+  }, []);
+  
+  // Check if we're on the public landing page (/partners exactly)
+  const isPublicLanding = currentPath === '/partners' || currentPath === '/partners/';
 
   // Detect mobile viewport
   useEffect(() => {
@@ -46,12 +55,12 @@ function PartnersLayoutInner({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Redirect to sign-in if not authenticated AND not in demo mode
+  // Redirect to sign-in if not authenticated AND not in demo mode AND not on public landing
   useEffect(() => {
-    if (isLoaded && !isSignedIn && !isDemoMode) {
+    if (isLoaded && !isSignedIn && !isDemoMode && !isPublicLanding) {
       router.push('/sign-in?redirect_url=/partners/dashboard');
     }
-  }, [isLoaded, isSignedIn, isDemoMode, router]);
+  }, [isLoaded, isSignedIn, isDemoMode, isPublicLanding, router]);
 
   // Close sidebar when navigating on mobile
   const handleNavClick = () => {
@@ -74,8 +83,8 @@ function PartnersLayoutInner({
     );
   }
 
-  // Not signed in and not demo mode - will redirect
-  if (!isDemoMode && !isSignedIn) {
+  // Not signed in and not demo mode and not on public landing - will redirect
+  if (!isDemoMode && !isSignedIn && !isPublicLanding) {
     return null;
   }
 
