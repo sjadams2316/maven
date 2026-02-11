@@ -7,37 +7,183 @@ import InteractivePortfolioChart, { Holding } from '@/components/InteractivePort
 import RiskGauge from '@/components/RiskGauge';
 import Sparkline from '@/components/Sparkline';
 
-// Demo client data
-const DEMO_CLIENT = {
-  id: '1',
-  name: 'Robert & Linda Chen',
-  email: 'robert.chen@email.com',
-  phone: '(555) 123-4567',
-  aum: 1250000,
-  change: 3.2,
-  status: 'active',
-  joinedDate: 'March 2024',
-  lastLogin: '2 hours ago',
-  riskTolerance: 'Moderate',
-  investmentGoal: 'Retirement',
-  holdings: [
-    { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 425000, allocation: 34, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 380000 },
-    { ticker: 'VXUS', name: 'Vanguard Total International', value: 187500, allocation: 15, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 195000 },
-    { ticker: 'BND', name: 'Vanguard Total Bond', value: 250000, allocation: 20, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 245000 },
-    { ticker: 'AAPL', name: 'Apple Inc', value: 156250, allocation: 12.5, change: 4.2, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 120000 },
-    { ticker: 'MSFT', name: 'Microsoft Corp', value: 125000, allocation: 10, change: 3.9, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 100000 },
-    { ticker: 'Cash', name: 'Cash & Equivalents', value: 106250, allocation: 8.5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 106250 },
-  ],
-  insights: [
-    { id: '1', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning', enabled: true },
-    { id: '2', type: 'tax', message: 'Potential tax-loss harvesting: $8,200 in VXUS', severity: 'info', enabled: true },
-    { id: '3', type: 'concentration', message: 'Tech sector at 22.5% (above 20% target)', severity: 'warning', enabled: false },
-  ],
-  notes: [
-    { date: '2026-02-08', text: 'Discussed retirement timeline, targeting 2035. Wants to maintain current allocation.' },
-    { date: '2026-01-15', text: 'Quarterly review completed. Happy with performance.' },
-  ],
+// Client data type
+interface ClientData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  aum: number;
+  change: number;
+  status: string;
+  joinedDate: string;
+  lastLogin: string;
+  riskTolerance: string;
+  investmentGoal: string;
+  holdings: Array<{
+    ticker: string;
+    name: string;
+    value: number;
+    allocation: number;
+    change: number;
+    category: string;
+    subCategory: string;
+    costBasis: number;
+  }>;
+  insights: Array<{
+    id: string;
+    type: string;
+    message: string;
+    severity: string;
+    enabled: boolean;
+  }>;
+  notes: Array<{
+    date: string;
+    text: string;
+  }>;
+}
+
+// Demo clients data - keyed by ID for proper routing
+const DEMO_CLIENTS: Record<string, ClientData> = {
+  '1': {
+    id: '1',
+    name: 'Robert & Linda Chen',
+    email: 'robert.chen@email.com',
+    phone: '(555) 123-4567',
+    aum: 1250000,
+    change: 3.2,
+    status: 'active',
+    joinedDate: 'March 2024',
+    lastLogin: '2 hours ago',
+    riskTolerance: 'Moderate',
+    investmentGoal: 'Retirement',
+    holdings: [
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 425000, allocation: 34, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 380000 },
+      { ticker: 'VXUS', name: 'Vanguard Total International', value: 187500, allocation: 15, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 195000 },
+      { ticker: 'BND', name: 'Vanguard Total Bond', value: 250000, allocation: 20, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 245000 },
+      { ticker: 'AAPL', name: 'Apple Inc', value: 156250, allocation: 12.5, change: 4.2, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 120000 },
+      { ticker: 'MSFT', name: 'Microsoft Corp', value: 125000, allocation: 10, change: 3.9, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 100000 },
+      { ticker: 'Cash', name: 'Cash & Equivalents', value: 106250, allocation: 8.5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 106250 },
+    ],
+    insights: [
+      { id: '1', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning', enabled: true },
+      { id: '2', type: 'tax', message: 'Potential tax-loss harvesting: $8,200 in VXUS', severity: 'info', enabled: true },
+      { id: '3', type: 'concentration', message: 'Tech sector at 22.5% (above 20% target)', severity: 'warning', enabled: false },
+    ],
+    notes: [
+      { date: '2026-02-08', text: 'Discussed retirement timeline, targeting 2035. Wants to maintain current allocation.' },
+      { date: '2026-01-15', text: 'Quarterly review completed. Happy with performance.' },
+    ],
+  },
+  '2': {
+    id: '2',
+    name: 'The Morrison Family Trust',
+    email: 'morrison.trust@email.com',
+    phone: '(555) 234-5678',
+    aum: 890000,
+    change: -1.1,
+    status: 'active',
+    joinedDate: 'January 2023',
+    lastLogin: '1 day ago',
+    riskTolerance: 'Conservative',
+    investmentGoal: 'Wealth Preservation',
+    holdings: [
+      { ticker: 'BND', name: 'Vanguard Total Bond', value: 356000, allocation: 40, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 350000 },
+      { ticker: 'VTIP', name: 'Vanguard TIPS', value: 178000, allocation: 20, change: 0.1, category: 'Bonds', subCategory: 'Inflation Protected', costBasis: 175000 },
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 222500, allocation: 25, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 200000 },
+      { ticker: 'VNQ', name: 'Vanguard Real Estate', value: 89000, allocation: 10, change: -1.2, category: 'Real Estate', subCategory: 'REITs', costBasis: 95000 },
+      { ticker: 'Cash', name: 'Cash & Equivalents', value: 44500, allocation: 5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 44500 },
+    ],
+    insights: [
+      { id: '1', type: 'info', message: 'Trust annual review due next month', severity: 'info', enabled: true },
+    ],
+    notes: [
+      { date: '2026-02-01', text: 'Trust beneficiaries reviewed. No changes needed.' },
+    ],
+  },
+  '3': {
+    id: '3',
+    name: 'Jennifer Walsh',
+    email: 'jennifer.walsh@email.com',
+    phone: '(555) 345-6789',
+    aum: 675000,
+    change: 2.8,
+    status: 'active',
+    joinedDate: 'June 2024',
+    lastLogin: '5 hours ago',
+    riskTolerance: 'Aggressive',
+    investmentGoal: 'Growth',
+    holdings: [
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 270000, allocation: 40, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 240000 },
+      { ticker: 'QQQ', name: 'Invesco QQQ Trust', value: 202500, allocation: 30, change: 4.1, category: 'US Equity', subCategory: 'Technology', costBasis: 175000 },
+      { ticker: 'NVDA', name: 'NVIDIA Corporation', value: 121500, allocation: 18, change: 8.2, category: 'Individual Stocks', subCategory: 'Technology', costBasis: 80000 },
+      { ticker: 'VXUS', name: 'Vanguard Total International', value: 47250, allocation: 7, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 50000 },
+      { ticker: 'Cash', name: 'Cash & Equivalents', value: 33750, allocation: 5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 33750 },
+    ],
+    insights: [
+      { id: '1', type: 'concentration', message: 'NVDA at 18% - concentrated position', severity: 'warning', enabled: true },
+      { id: '2', type: 'tax', message: 'Tax-loss harvesting opportunity: $2,750 in VXUS', severity: 'info', enabled: true },
+    ],
+    notes: [
+      { date: '2026-02-05', text: 'Discussed NVDA concentration. Client comfortable with risk.' },
+    ],
+  },
+  '4': {
+    id: '4',
+    name: 'Michael Thompson',
+    email: 'michael.thompson@email.com',
+    phone: '(555) 456-7890',
+    aum: 520000,
+    change: 4.1,
+    status: 'active',
+    joinedDate: 'September 2024',
+    lastLogin: '3 hours ago',
+    riskTolerance: 'Moderate',
+    investmentGoal: 'Balanced Growth',
+    holdings: [
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 208000, allocation: 40, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 190000 },
+      { ticker: 'VXUS', name: 'Vanguard Total International', value: 104000, allocation: 20, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 110000 },
+      { ticker: 'BND', name: 'Vanguard Total Bond', value: 130000, allocation: 25, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 128000 },
+      { ticker: 'VNQ', name: 'Vanguard Real Estate', value: 52000, allocation: 10, change: -1.2, category: 'Real Estate', subCategory: 'REITs', costBasis: 55000 },
+      { ticker: 'Cash', name: 'Cash & Equivalents', value: 26000, allocation: 5, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 26000 },
+    ],
+    insights: [],
+    notes: [
+      { date: '2026-01-20', text: 'New client onboarding complete. Set up automatic contributions.' },
+    ],
+  },
+  '5': {
+    id: '5',
+    name: 'Sarah & David Park',
+    email: 'park.family@email.com',
+    phone: '(555) 567-8901',
+    aum: 445000,
+    change: 1.9,
+    status: 'active',
+    joinedDate: 'November 2024',
+    lastLogin: '1 hour ago',
+    riskTolerance: 'Moderate',
+    investmentGoal: 'Education Savings',
+    holdings: [
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market', value: 178000, allocation: 40, change: 2.8, category: 'US Equity', subCategory: 'US Total Market', costBasis: 165000 },
+      { ticker: 'VXUS', name: 'Vanguard Total International', value: 66750, allocation: 15, change: -0.5, category: 'International', subCategory: 'Intl Developed', costBasis: 70000 },
+      { ticker: 'BND', name: 'Vanguard Total Bond', value: 111250, allocation: 25, change: 0.3, category: 'Bonds', subCategory: 'US Aggregate', costBasis: 110000 },
+      { ticker: 'VGIT', name: 'Vanguard Intermediate Treasury', value: 44500, allocation: 10, change: 0.2, category: 'Bonds', subCategory: 'Treasury', costBasis: 44000 },
+      { ticker: 'Cash', name: 'Cash & Equivalents', value: 44500, allocation: 10, change: 0, category: 'Cash', subCategory: 'Money Market', costBasis: 44500 },
+    ],
+    insights: [
+      { id: '1', type: 'info', message: '529 contribution deadline approaching', severity: 'info', enabled: true },
+      { id: '2', type: 'rebalance', message: 'Minor drift in bond allocation', severity: 'info', enabled: true },
+      { id: '3', type: 'tax', message: 'Tax-loss harvesting opportunity: $3,250 in VXUS', severity: 'info', enabled: true },
+    ],
+    notes: [
+      { date: '2026-02-03', text: 'Discussed 529 plan for children. Will increase contributions.' },
+    ],
+  },
 };
+
+// Default client for fallback
+const DEFAULT_CLIENT = DEMO_CLIENTS['1'];
 
 // Client performance data (L025: Show both historical AND expected returns)
 const CLIENT_PERFORMANCE = {
@@ -81,9 +227,12 @@ function formatCurrency(value: number): string {
 
 export default function ClientDetail() {
   const params = useParams();
+  const clientId = typeof params.id === 'string' ? params.id : '1';
+  const client = DEMO_CLIENTS[clientId] || DEFAULT_CLIENT;
+  
   const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'access' | 'notes'>('overview');
   const [enabledFeatures, setEnabledFeatures] = useState<string[]>(['dashboard', 'goals', 'retirement']);
-  const [clientInsights, setClientInsights] = useState(DEMO_CLIENT.insights);
+  const [clientInsights, setClientInsights] = useState(client.insights);
   const [newNote, setNewNote] = useState('');
   const [showMeetingPrep, setShowMeetingPrep] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
@@ -123,13 +272,13 @@ export default function ClientDetail() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{DEMO_CLIENT.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{client.name}</h1>
           <div className="flex flex-wrap items-center gap-2 md:gap-4 text-gray-400 text-sm md:text-base">
-            <span className="break-all">{DEMO_CLIENT.email}</span>
+            <span className="break-all">{client.email}</span>
             <span className="hidden md:inline">•</span>
-            <span>{DEMO_CLIENT.phone}</span>
+            <span>{client.phone}</span>
             <span className="hidden md:inline">•</span>
-            <span className="text-emerald-500">Active since {DEMO_CLIENT.joinedDate}</span>
+            <span className="text-emerald-500">Active since {client.joinedDate}</span>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
@@ -145,7 +294,7 @@ export default function ClientDetail() {
             <span className="sm:inline">Message</span>
           </button>
           <Link
-            href={`/c/DEMO-${DEMO_CLIENT.id}?preview=true&advisor=true`}
+            href={`/c/DEMO-${client.id}?preview=true&advisor=true`}
             target="_blank"
             className="w-full sm:w-auto px-4 py-3 md:py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors font-medium min-h-[48px] text-sm md:text-base flex items-center justify-center gap-2"
           >
@@ -159,19 +308,19 @@ export default function ClientDetail() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="text-gray-400 text-xs md:text-sm">Total AUM</div>
-          <div className="text-lg md:text-2xl font-bold text-white">{formatCurrency(DEMO_CLIENT.aum)}</div>
-          <div className={`text-xs md:text-sm ${DEMO_CLIENT.change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-            {DEMO_CLIENT.change >= 0 ? '+' : ''}{DEMO_CLIENT.change}% MTD
+          <div className="text-lg md:text-2xl font-bold text-white">{formatCurrency(client.aum)}</div>
+          <div className={`text-xs md:text-sm ${client.change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            {client.change >= 0 ? '+' : ''}{client.change}% MTD
           </div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="text-gray-400 text-xs md:text-sm">Risk Profile</div>
-          <div className="text-lg md:text-2xl font-bold text-white">{DEMO_CLIENT.riskTolerance}</div>
-          <div className="text-gray-500 text-xs md:text-sm">{DEMO_CLIENT.investmentGoal}</div>
+          <div className="text-lg md:text-2xl font-bold text-white">{client.riskTolerance}</div>
+          <div className="text-gray-500 text-xs md:text-sm">{client.investmentGoal}</div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="text-gray-400 text-xs md:text-sm">Last Login</div>
-          <div className="text-lg md:text-2xl font-bold text-white truncate">{DEMO_CLIENT.lastLogin}</div>
+          <div className="text-lg md:text-2xl font-bold text-white truncate">{client.lastLogin}</div>
           <div className="text-gray-500 text-xs md:text-sm">Client portal</div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
@@ -358,7 +507,7 @@ export default function ClientDetail() {
           {/* Interactive Portfolio Chart */}
           <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
             <InteractivePortfolioChart
-              holdings={DEMO_CLIENT.holdings.map(h => ({
+              holdings={client.holdings.map(h => ({
                 ticker: h.ticker,
                 name: h.name,
                 value: h.value,
@@ -366,7 +515,7 @@ export default function ClientDetail() {
                 category: h.category,
                 subCategory: h.subCategory,
               } as Holding))}
-              totalValue={DEMO_CLIENT.aum}
+              totalValue={client.aum}
               title="Asset Allocation (Click to Drill Down)"
               onHoldingClick={handleHoldingClick}
             />
@@ -429,7 +578,7 @@ export default function ClientDetail() {
             
             {/* Mobile: Card layout */}
             <div className="md:hidden space-y-3">
-              {DEMO_CLIENT.holdings.map((holding) => (
+              {client.holdings.map((holding) => (
                 <div key={holding.ticker} className="p-3 bg-white/5 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
                     <div>
@@ -462,7 +611,7 @@ export default function ClientDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {DEMO_CLIENT.holdings.map((holding) => (
+                  {client.holdings.map((holding) => (
                     <tr key={holding.ticker} className="border-b border-white/5">
                       <td className="py-4">
                         <div className="text-white font-medium">{holding.ticker}</div>
@@ -600,7 +749,7 @@ export default function ClientDetail() {
 
           {/* Notes list */}
           <div className="space-y-3 md:space-y-4">
-            {DEMO_CLIENT.notes.map((note, idx) => (
+            {client.notes.map((note, idx) => (
               <div key={idx} className="p-3 md:p-4 bg-white/5 rounded-xl border border-white/5">
                 <div className="text-gray-500 text-xs md:text-sm mb-2">{note.date}</div>
                 <p className="text-white text-sm md:text-base">{note.text}</p>
@@ -615,7 +764,7 @@ export default function ClientDetail() {
         <div className="fixed inset-0 bg-black/80 flex items-end md:items-center justify-center z-50 p-0 md:p-4">
           <div className="bg-[#12121a] border-t md:border border-white/10 rounded-t-2xl md:rounded-2xl p-6 md:p-8 w-full md:max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-white">Meeting Prep: {DEMO_CLIENT.name}</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-white">Meeting Prep: {client.name}</h2>
               <button
                 onClick={() => setShowMeetingPrep(false)}
                 className="text-gray-400 hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center"
@@ -628,8 +777,8 @@ export default function ClientDetail() {
               <div>
                 <h3 className="text-amber-500 font-medium mb-2 md:mb-3 text-sm md:text-base">📊 Portfolio Summary</h3>
                 <ul className="text-gray-300 space-y-1 md:space-y-2 ml-4 text-sm md:text-base">
-                  <li>• AUM: {formatCurrency(DEMO_CLIENT.aum)} ({DEMO_CLIENT.change > 0 ? '+' : ''}{DEMO_CLIENT.change}% MTD)</li>
-                  <li>• Risk Score: {CLIENT_PERFORMANCE.riskScore}/10 ({DEMO_CLIENT.riskTolerance})</li>
+                  <li>• AUM: {formatCurrency(client.aum)} ({client.change > 0 ? '+' : ''}{client.change}% MTD)</li>
+                  <li>• Risk Score: {CLIENT_PERFORMANCE.riskScore}/10 ({client.riskTolerance})</li>
                   <li>• YTD Return: {CLIENT_PERFORMANCE.ytdReturn}% (vs {CLIENT_PERFORMANCE.ytdReturn - CLIENT_PERFORMANCE.benchmarkDiff}% S&P)</li>
                   <li>• Top Holding: VTI at 34% allocation</li>
                 </ul>
@@ -655,7 +804,7 @@ export default function ClientDetail() {
 
               <div>
                 <h3 className="text-amber-500 font-medium mb-2 md:mb-3 text-sm md:text-base">📝 Recent Notes</h3>
-                <p className="text-gray-300 ml-4 text-sm md:text-base">{DEMO_CLIENT.notes[0]?.text}</p>
+                <p className="text-gray-300 ml-4 text-sm md:text-base">{client.notes[0]?.text}</p>
               </div>
 
               <div>
