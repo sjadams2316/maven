@@ -207,6 +207,14 @@ export default function LandingPage() {
             )}
             
             <div className="flex items-center gap-2 sm:gap-4">
+              {/* Maven Partners link - prominent in header */}
+              <Link
+                href="/partners"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-400 hover:text-amber-300 transition-all text-sm font-medium"
+              >
+                <span className="w-4 h-4 bg-gradient-to-br from-amber-500 to-amber-700 rounded text-[10px] flex items-center justify-center text-white font-bold">M</span>
+                Partners
+              </Link>
               <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-purple-500/20 text-purple-300 rounded-full">Private Beta</span>
               
               {isLoaded && (
