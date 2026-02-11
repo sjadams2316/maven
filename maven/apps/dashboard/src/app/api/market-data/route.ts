@@ -121,6 +121,56 @@ interface ExtendedMarketPrice extends MarketPrice {
   afterHoursChangePercent?: number; // After-hours change percent
 }
 
+// ETF symbols for after-hours proxy (indices don't trade after hours, ETFs do)
+const INDEX_TO_ETF: Record<string, string> = {
+  '^GSPC': 'SPY',  // S&P 500 → SPY ETF
+  '^DJI': 'DIA',   // Dow Jones → DIA ETF
+  '^IXIC': 'QQQ',  // Nasdaq → QQQ ETF (actually Nasdaq 100, close enough)
+  '^RUT': 'IWM',   // Russell 2000 → IWM ETF
+};
+
+/**
+ * Fetch after-hours data for an ETF from Yahoo Finance
+ * Returns just the after-hours change info
+ */
+async function fetchETFAfterHours(etfSymbol: string): Promise<{ afterHoursPrice: number; afterHoursChange: number; afterHoursChangePercent: number } | null> {
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${etfSymbol}?interval=1d&range=1d`,
+      {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+        },
+      }
+    );
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+    
+    // Yahoo provides postMarketPrice for ETFs
+    if (meta?.postMarketPrice && meta?.regularMarketPrice) {
+      const afterHoursPrice = meta.postMarketPrice;
+      const regularClose = meta.regularMarketPrice;
+      const afterHoursChange = afterHoursPrice - regularClose;
+      const afterHoursChangePercent = (afterHoursChange / regularClose) * 100;
+      
+      return {
+        afterHoursPrice,
+        afterHoursChange,
+        afterHoursChangePercent,
+      };
+    }
+  } catch (err) {
+    console.error(`ETF after-hours fetch error for ${etfSymbol}:`, err instanceof Error ? err.message : err);
+  }
+  
+  return null;
+}
+
 /**
  * Fetch actual index values from Yahoo Finance
  * Uses ^GSPC, ^DJI, ^IXIC, ^RUT for real index values (not ETFs)
@@ -468,17 +518,31 @@ export async function GET(request: NextRequest) {
     // Cast to ExtendedMarketPrice to access after-hours fields
     const extPrice = price as ExtendedMarketPrice;
     
+    // During after-hours, fetch ETF data for extended hours pricing
+    // Indices don't trade after hours, but their ETFs (SPY, DIA, QQQ) do
+    let afterHoursData: { afterHoursPrice: number; afterHoursChange: number; afterHoursChangePercent: number } | null = null;
+    
+    if (marketSession.session === 'after-hours' || marketSession.session === 'pre-market') {
+      const etfSymbol = INDEX_TO_ETF[symbol];
+      if (etfSymbol) {
+        afterHoursData = await fetchETFAfterHours(etfSymbol);
+        if (afterHoursData) {
+          diagnostics.sources.push(`yahoo:${etfSymbol}:afterhours`);
+        }
+      }
+    }
+    
     stockData.push({
       symbol: INDEX_CLEAN_SYMBOLS[symbol] || symbol,
       name: INDEX_NAMES[symbol] || symbol,
       price: price.price,
       change: price.change,
       changePercent: price.changePercent,
-      // After-hours data (if available)
-      ...(extPrice.afterHoursPrice && {
-        afterHoursPrice: extPrice.afterHoursPrice,
-        afterHoursChange: extPrice.afterHoursChange,
-        afterHoursChangePercent: extPrice.afterHoursChangePercent,
+      // After-hours data from ETF proxy (if available)
+      ...(afterHoursData && {
+        afterHoursPrice: afterHoursData.afterHoursPrice,
+        afterHoursChange: afterHoursData.afterHoursChange,
+        afterHoursChangePercent: afterHoursData.afterHoursChangePercent,
       }),
     });
   }
