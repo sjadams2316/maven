@@ -287,11 +287,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const financials = profile ? calculateFinancials(profile) : null;
   const isOnboarded = profile?.onboardingComplete ?? false;
   
-  // Check for demo mode on mount
+  // Check for demo mode on mount - set profile IMMEDIATELY if enabled
+  // This ensures demo profile is available before Clerk finishes loading
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const demoEnabled = isDemoModeEnabled();
-      setIsDemoMode(demoEnabled);
+      if (demoEnabled) {
+        setIsDemoMode(true);
+        setProfile(DEMO_PROFILE);
+        setIsLoading(false);
+      }
     }
   }, []);
 
