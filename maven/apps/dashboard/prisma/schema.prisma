@@ -33,15 +33,20 @@ model User {
   profileData        Json?
   
   // Relations
-  plaidItems      PlaidItem[]
-  accounts        Account[]
-  holdings        Holding[]
-  transactions    Transaction[]
-  taxLots         TaxLot[]
-  conversations   Conversation[]
-  insights        Insight[]
-  taxAlphaEvents  TaxAlphaEvent[]
-  oracleMemories  OracleMemory[]
+  plaidItems          PlaidItem[]
+  accounts            Account[]
+  holdings            Holding[]
+  transactions        Transaction[]
+  taxLots             TaxLot[]
+  conversations       Conversation[]
+  insights            Insight[]
+  taxAlphaEvents      TaxAlphaEvent[]
+  oracleMemories      OracleMemory[]
+  
+  // Advisor/Client relations
+  advisor             Advisor?               // If user is an advisor
+  clientRelationships ClientRelationship[]   // If user is a client (advisory relationships)
+  bridgeFTConnection  BridgeFTConnection?    // Data aggregation connection
 }
 
 // ============================================
@@ -362,6 +367,9 @@ model Insight {
   expiresAt   DateTime?
   createdAt   DateTime @default(now())
   
+  // Relations
+  curations   InsightCuration[]
+  
   @@index([userId])
   @@index([createdAt])
 }
@@ -447,6 +455,189 @@ model TaxAlphaSummary {
 
   @@unique([userId, taxYear])
   @@index([userId])
+}
+
+// ============================================
+// ADVISOR/RIA MODELS
+// ============================================
+
+model Advisor {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Firm details
+  firmName          String
+  firmLogo          String?
+  crdNumber         String?  // FINRA CRD number
+  adv2Url           String?  // Link to ADV Part 2
+  
+  // Settings
+  defaultClientTone String   @default("moderate")  // conservative, moderate, engaged
+  enabledFeatures   String[] @default(["portfolio", "retirement", "tax"])
+  
+  // Branding
+  primaryColor      String?  // Hex color for client portal
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  clients           ClientRelationship[]
+  insightOverrides  InsightOverride[]
+  
+  @@index([userId])
+}
+
+model ClientRelationship {
+  id                String   @id @default(cuid())
+  advisorId         String
+  advisor           Advisor  @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  // Client portal access
+  portalCode        String   @unique  // For /c/[code] access
+  portalEnabled     Boolean  @default(true)
+  lastPortalAccess  DateTime?
+  
+  // Personalization
+  tonePreference    String   @default("moderate")  // conservative, moderate, engaged
+  enabledFeatures   String[] @default(["portfolio", "retirement"])  // Subset of advisor's features
+  
+  // Notes
+  internalNotes     String?  // Advisor-only notes
+  
+  // Status
+  status            String   @default("active")  // active, prospect, churned
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  insightCurations  InsightCuration[]
+  meetings          Meeting[]
+  
+  @@unique([advisorId, clientId])
+  @@index([advisorId])
+  @@index([clientId])
+  @@index([portalCode])
+}
+
+model InsightCuration {
+  id                String   @id @default(cuid())
+  relationshipId    String
+  relationship      ClientRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  
+  insightId         String
+  insight           Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
+  
+  // Advisor curation
+  showToClient      Boolean  @default(true)
+  advisorContext    String?  // Added context from advisor
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([relationshipId, insightId])
+  @@index([relationshipId])
+}
+
+model InsightOverride {
+  id                String   @id @default(cuid())
+  advisorId         String
+  advisor           Advisor  @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  
+  // Global overrides (applies to all clients unless overridden per-client)
+  insightType       String   // tax_loss_harvest, rebalance, etc.
+  defaultShow       Boolean  @default(true)
+  defaultContext    String?  // Default context to add
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([advisorId, insightType])
+  @@index([advisorId])
+}
+
+model Meeting {
+  id                String   @id @default(cuid())
+  relationshipId    String
+  relationship      ClientRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  
+  // Meeting details
+  title             String
+  scheduledAt       DateTime
+  duration          Int      @default(60)  // minutes
+  location          String?  // "Zoom", "In-person", etc.
+  
+  // Prep
+  talkingPoints     Json?    // Generated or manual talking points
+  agenda            String?
+  
+  // Post-meeting
+  notes             String?
+  followUps         Json?    // Action items
+  completedAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([relationshipId])
+  @@index([scheduledAt])
+}
+
+// ============================================
+// DATA AGGREGATION CONNECTIONS
+// ============================================
+
+model BridgeFTConnection {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // BridgeFT identifiers
+  bridgeftClientId  String   @unique
+  accessToken       String   // ENCRYPTED
+  refreshToken      String?  // ENCRYPTED
+  
+  // Sync state
+  status            String   @default("active")  // active, error, pending_reauth
+  errorCode         String?
+  lastSyncedAt      DateTime?
+  
+  // Linked accounts (stored for quick reference)
+  linkedAccountIds  String[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// ============================================
+// CLIENT PORTAL INVITES
+// ============================================
+
+model ClientInvite {
+  id                String   @id @default(cuid())
+  advisorId         String
+  
+  // Invite details
+  code              String   @unique  // Random invite code
+  email             String?  // Pre-filled email (optional)
+  name              String?  // Pre-filled name (optional)
+  
+  // Status
+  status            String   @default("pending")  // pending, accepted, expired
+  expiresAt         DateTime
+  acceptedAt        DateTime?
+  acceptedByUserId  String?  // User who accepted
+  
+  createdAt         DateTime @default(now())
+  
+  @@index([advisorId])
+  @@index([code])
 }
 
 // ============================================
