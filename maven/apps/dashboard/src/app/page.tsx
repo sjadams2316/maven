@@ -18,7 +18,7 @@ const FALLBACK_MARKET_DATA = {
     dow: { price: 501, changePercent: 0.04 },
   },
   crypto: {
-    BTC: { price: 70000, changePercent: -0.68 },
+    BTC: { price: 66700, changePercent: -0.6 },
   },
   timestamp: new Date().toISOString(),
 };

@@ -19,10 +19,11 @@ const FALLBACK_PRICES: Record<string, { price: number; change: number; changePer
 };
 
 // Crypto fallback prices - used when CoinGecko is unavailable
-// Updated: Feb 10, 2026 - Update these periodically to keep fallbacks reasonable
+// Updated: Feb 11, 2026 - Update these periodically to keep fallbacks reasonable
+// TODO: Implement dynamic caching of last known good prices instead of hardcoded fallbacks
 const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePercent: number }> = {
-  BTC: { price: 69000, change: -1700, changePercent: -2.4 },
-  TAO: { price: 154, change: -7, changePercent: -4.5 },
+  BTC: { price: 66700, change: -400, changePercent: -0.6 },
+  TAO: { price: 147, change: -8, changePercent: -5.2 },
 };
 
 export async function GET(request: NextRequest) {
