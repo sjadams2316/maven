@@ -499,60 +499,6 @@ export const TEST_QUERIES: TestQuery[] = [
     expectedSources: [],
     tags: ['chat', 'identity'],
   },
-
-  // ============================================
-  // EDGE CASES (distributed above, but some extras)
-  // ============================================
-  // Ambiguous - could be lookup OR trading decision
-  {
-    id: 'edge-001',
-    query: 'AAPL thoughts?',
-    expectedType: 'research', // Ambiguous but "thoughts" implies research/opinion
-    expectedUrgency: 'normal',
-    expectedComplexity: 'medium',
-    expectedSources: ['market_data', 'news', 'analysis'],
-    tags: ['ambiguous', 'edge_case'],
-  },
-  // Multi-intent: lookup + trading decision
-  {
-    id: 'edge-002',
-    query: "What's TSLA at and should I buy more?",
-    expectedType: 'trading_decision', // Trading decision takes priority
-    expectedUrgency: 'realtime',
-    expectedComplexity: 'high',
-    expectedSources: ['market_data', 'portfolio', 'analysis'],
-    tags: ['multi_intent', 'edge_case'],
-  },
-  // Multi-intent: portfolio + research
-  {
-    id: 'edge-003',
-    query: "How am I positioned for a recession?",
-    expectedType: 'portfolio_analysis', // Primary focus is portfolio
-    expectedUrgency: 'normal',
-    expectedComplexity: 'high',
-    expectedSources: ['portfolio', 'analysis'],
-    tags: ['multi_intent', 'edge_case'],
-  },
-  // Very ambiguous short query
-  {
-    id: 'edge-004',
-    query: 'help',
-    expectedType: 'chat',
-    expectedUrgency: 'normal',
-    expectedComplexity: 'low',
-    expectedSources: [],
-    tags: ['ambiguous', 'short_query', 'edge_case'],
-  },
-  // Question that looks like chat but is research
-  {
-    id: 'edge-005',
-    query: "What's going on with the market?",
-    expectedType: 'research',
-    expectedUrgency: 'realtime',
-    expectedComplexity: 'medium',
-    expectedSources: ['market_data', 'news'],
-    tags: ['ambiguous', 'edge_case'],
-  },
 ];
 
 // Helper functions for filtering

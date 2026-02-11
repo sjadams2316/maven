@@ -1,14 +1,13 @@
 /**
  * Athena Type Definitions
- * 
- * Core types for Maven's hybrid intelligence layer.
+ * Maven's Hybrid Intelligence Layer
  */
 
-// ============================================================================
-// QUERY TYPES
-// ============================================================================
+// =============================================================================
+// Query Classification
+// =============================================================================
 
-export type QueryType = 
+export type QueryType =
   | 'chat'
   | 'trading_decision'
   | 'portfolio_analysis'
@@ -23,268 +22,125 @@ export interface QueryClassification {
   type: QueryType;
   urgency: Urgency;
   complexity: Complexity;
-  dataSources: DataSource[];
-  reasoning?: string;
+  dataSources: DataSourceId[];
+  confidence: number; // 0-1 how confident are we in this classification
+  reasoning?: string; // optional explanation for debugging
 }
 
-// ============================================================================
-// DATA SOURCES
-// ============================================================================
+// =============================================================================
+// Data Sources & Providers
+// =============================================================================
 
-export type DataSource = 
-  // Centralized
-  | 'groq'       // Speed path
-  | 'chutes'     // Cost path  
-  | 'claude'     // Complex reasoning
-  | 'perplexity' // Research with citations
-  // Decentralized (Bittensor)
-  | 'vanta'      // SN8 - Trading signals
-  | 'precog'     // SN55 - BTC forecasting
-  | 'desearch'   // SN22 - Sentiment
-  | 'mantis'     // SN123 - Multi-asset forecasting
-  | 'bitquant';  // SN15 - DeFi analysis
+export type DataSourceId =
+  // Centralized (Speed + Reasoning)
+  | 'groq'
+  | 'claude'
+  | 'perplexity'
+  // Decentralized Bittensor (Signals + Cost)
+  | 'chutes' // SN64 - Cheap inference
+  | 'vanta' // SN8 - Taoshi trading signals
+  | 'precog' // SN55 - BTC price forecasting
+  | 'desearch' // SN22 - Social sentiment
+  | 'mantis' // SN123 - Multi-asset forecast
+  | 'bitquant' // SN15 - DeFi analysis
+  | 'numinous' // SN6 - Event forecasting
+  | 'gopher'; // SN42 - Real-time scraping
+
+export type ProviderCategory = 'centralized' | 'decentralized';
 
 export interface DataSourceConfig {
-  name: DataSource;
-  type: 'centralized' | 'decentralized';
-  purpose: string;
-  latencyMs: number;  // Expected latency
-  costPer1M: number;  // Cost per 1M tokens/requests
-  available: boolean;
-  fallback?: DataSource;
+  id: DataSourceId;
+  name: string;
+  category: ProviderCategory;
+  subnet?: number; // Bittensor subnet number
+  description: string;
+  capabilities: string[];
+  latencyMs: { min: number; max: number; typical: number };
+  costPer1MTokens: { min: number; max: number };
+  reliability: number; // 0-1 historical uptime
+  enabled: boolean;
 }
 
-// ============================================================================
-// ROUTING
-// ============================================================================
+// =============================================================================
+// Routing
+// =============================================================================
 
 export type RoutingPath = 'speed' | 'cost' | 'deep' | 'reasoning';
 
 export interface RoutingDecision {
-  path: RoutingPath;
-  primaryProvider: DataSource;
-  enrichmentSources: DataSource[];
-  expectedLatencyMs: number;
-  expectedCost: number;
-  reasoning: string;
+  primaryPath: RoutingPath;
+  dataSources: DataSourceId[];
+  estimatedLatencyMs: number;
+  estimatedCostUsd: number;
+  parallelizable: boolean;
+  fallbacks: DataSourceId[];
 }
 
-// ============================================================================
-// SIGNALS
-// ============================================================================
-
-export interface TradingSignal {
-  source: DataSource;
-  symbol: string;
-  signal: number;        // -1 (bearish) to +1 (bullish)
-  confidence: number;    // 0 to 1
-  signalType: 'momentum' | 'sentiment' | 'forecast' | 'analysis';
-  metadata: {
-    sharpeRatio?: number;
-    timeframe?: string;
-    dataPoints?: number;
-    [key: string]: unknown;
-  };
-  timestamp: number;
-  raw?: unknown;         // Original response for audit
-}
-
-export interface SignalSet {
-  symbol: string;
-  signals: TradingSignal[];
-  fetchedAt: number;
-  sources: {
-    available: DataSource[];
-    unavailable: DataSource[];
-    degraded: DataSource[];
-  };
-}
-
-// ============================================================================
-// LLM RESPONSES
-// ============================================================================
-
-export interface LLMResponse {
-  provider: DataSource;
-  model: string;
-  content: string;
-  latencyMs: number;
-  tokensUsed: {
-    input: number;
-    output: number;
-  };
-  cost: number;
-  raw?: unknown;
-}
-
-export interface LLMResponseWithCitations extends LLMResponse {
-  citations: {
-    url: string;
-    title: string;
-    snippet: string;
-  }[];
-}
-
-// ============================================================================
-// SYNTHESIS
-// ============================================================================
-
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
-export type AgreementLevel = 'high' | 'medium' | 'low';
-
-export interface SynthesisResult {
-  // User-facing
-  recommendation: string;
-  confidence: number;
-  confidenceLevel: ConfidenceLevel;
-  explanation: string;
-  actionItems: string[];
-  flags: string[];
-  
-  // Transparency
-  signalSummary: {
-    weightedScore: number;
-    agreementLevel: AgreementLevel;
-    sourcesUsed: DataSource[];
-    sourcesMissing: DataSource[];
-  };
-  
-  // Audit
-  audit: AuditRecord;
-}
-
-// ============================================================================
-// AUDIT & COMPLIANCE
-// ============================================================================
-
-export interface AuditRecord {
-  queryId: string;
-  timestamp: string;
-  
-  // Input
-  query: string;
-  queryType: QueryType;
-  clientId?: string;      // Hashed for privacy
-  
-  // Routing
-  routingDecision: RoutingDecision;
-  
-  // Sources
-  sourceResponses: {
-    source: DataSource;
-    latencyMs: number;
-    success: boolean;
-    error?: string;
-    raw?: unknown;
-  }[];
-  
-  // Synthesis
-  synthesis: {
-    weights: Record<DataSource, number>;
-    normalizedSignals: Record<DataSource, number>;
-    weightedScore: number;
-    disagreementLevel: AgreementLevel;
-    confidencePenalty: number;
-    finalConfidence: number;
-  };
-  
-  // Output
-  recommendation: string;
-  
-  // Integrity
-  hash: string;           // SHA256 of the entire record
-}
-
-// ============================================================================
-// CLIENT CONTEXT
-// ============================================================================
+// =============================================================================
+// Client Context
+// =============================================================================
 
 export interface ClientContext {
   clientId?: string;
+  advisorId?: string;
+  holdings?: string[]; // ticker symbols
   riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
-  investmentHorizon?: 'short' | 'medium' | 'long';
-  
-  // Position info
-  hasPosition?: boolean;
-  positionSize?: number;
-  positionPct?: number;   // Percentage of portfolio
-  costBasis?: number;
-  holdingPeriod?: 'short_term' | 'long_term';
-  
-  // Tax situation
-  taxBracket?: number;
-  harvestablelosses?: number;
-  
-  // Preferences
-  preferredTone?: 'detailed' | 'concise';
-  showSources?: boolean;
+  previousQueries?: string[];
+  sessionId?: string;
+  preferredResponseStyle?: 'detailed' | 'concise';
 }
 
-// ============================================================================
-// HEALTH & MONITORING
-// ============================================================================
+// =============================================================================
+// Responses
+// =============================================================================
 
-export interface AthenaHealth {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  
-  sources: {
-    source: DataSource;
-    status: 'online' | 'degraded' | 'offline';
-    latencyMs?: number;
-    lastCheck: number;
-    errorRate?: number;
-  }[];
-  
-  cache: {
-    type: 'redis' | 'memory';
-    hitRate: number;
-    size: number;
-  };
-  
-  performance: {
-    avgLatencyMs: number;
-    p95LatencyMs: number;
-    queriesPerMinute: number;
-    errorRate: number;
-  };
-  
-  alerts: string[];
+export interface SourceContribution {
+  sourceId: DataSourceId;
+  response: string;
+  latencyMs: number;
+  confidence: number;
+  metadata?: Record<string, unknown>;
 }
 
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
+export interface AthenaResponse {
+  answer: string;
+  confidence: number; // 0-1 overall confidence
+  sources: SourceContribution[];
+  classification: QueryClassification;
+  routing: RoutingDecision;
+  totalLatencyMs: number;
+  totalCostUsd: number;
+  metadata?: {
+    synthesisMethod?: string;
+    disagreements?: string[];
+    actionItems?: string[];
+  };
+}
 
-export interface AthenaConfig {
-  // Source weights (can be overridden per query type)
-  defaultWeights: Record<DataSource, number>;
-  queryTypeWeights: Record<QueryType, Record<DataSource, number>>;
-  
-  // Thresholds
-  disagreementThresholds: {
-    low: number;
-    medium: number;
-    high: number;
+// =============================================================================
+// Learning Layer (Future)
+// =============================================================================
+
+export interface QueryOutcome {
+  queryId: string;
+  query: string;
+  classification: QueryClassification;
+  routing: RoutingDecision;
+  response: AthenaResponse;
+  timestamp: Date;
+  feedback?: {
+    helpful: boolean;
+    advisorRating?: number; // 1-5
+    pnlImpact?: number; // $ impact if tracked
+    notes?: string;
   };
-  
-  // Confidence
-  baseConfidence: {
-    allAgree: number;
-    majorityAgree: number;
-    split: number;
-    minority: number;
-  };
-  
-  // Degradation
-  degradation: {
-    singleSourcePenalty: number;
-    staleDataThresholdMs: number;
-    minSourcesForTrading: number;
-  };
-  
-  // Routing
-  routing: {
-    realtimeLatencyThresholdMs: number;
-    costOptimizationTarget: number;
-  };
+}
+
+export interface SourceReputation {
+  sourceId: DataSourceId;
+  totalQueries: number;
+  successRate: number;
+  averageLatencyMs: number;
+  accuracyByQueryType: Partial<Record<QueryType, number>>;
+  lastUpdated: Date;
 }

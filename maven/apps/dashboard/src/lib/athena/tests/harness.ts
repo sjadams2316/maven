@@ -182,6 +182,10 @@ export async function runTestHarness(
         byField.urgency.passed++;
         byField.complexity.passed++;
         byField.sources.passed++;
+        
+        if (verbose) {
+          console.log(`✅ ${testQuery.id}: ${testQuery.query.slice(0, 50)}...`);
+        }
       } else {
         allFailures.push(...failures);
         
@@ -200,8 +204,6 @@ export async function runTestHarness(
         }
 
         if (stopOnFail) break;
-      } else if (verbose) {
-        console.log(`✅ ${testQuery.id}: ${testQuery.query.slice(0, 50)}...`);
       }
     } catch (error) {
       // Router threw an error - count as failure

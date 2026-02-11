@@ -15,11 +15,21 @@ import { getCachedPrice, setCachedPrice, MarketPrice } from '@/lib/cache';
 
 const STOCK_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
 
+// Note: We use ETFs as proxies for indices because they have better data availability
+// Labels indicate this to users for accuracy
 const STOCK_NAMES: Record<string, string> = {
+  SPY: 'S&P 500 ETF',
+  QQQ: 'Nasdaq 100 ETF',
+  DIA: 'Dow 30 ETF',
+  IWM: 'Russell 2000 ETF',
+};
+
+// Short names for compact displays (market ticker)
+const STOCK_SHORT_NAMES: Record<string, string> = {
   SPY: 'S&P 500',
-  QQQ: 'Nasdaq 100',
-  DIA: 'Dow Jones',
-  IWM: 'Russell 2000',
+  QQQ: 'Nasdaq',
+  DIA: 'Dow',
+  IWM: 'Russell',
 };
 
 // ============================================================================
@@ -256,6 +266,7 @@ export async function GET(request: NextRequest) {
     stockData.push({
       symbol,
       name: STOCK_NAMES[symbol] || symbol,
+      shortName: STOCK_SHORT_NAMES[symbol] || symbol,
       price: price.price,
       change: price.change,
       changePercent: price.changePercent,

@@ -131,7 +131,7 @@ export default function LandingPage() {
             {marketData && (
               <div className="inline-flex items-center gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">S&P 500</span>
+                  <span className="text-sm text-gray-500">SPY</span>
                   <span className="font-semibold">{marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   <span className={`text-sm ${marketData.indices?.sp500?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {marketData.indices?.sp500?.changePercent >= 0 ? '+' : ''}{marketData.indices?.sp500?.changePercent?.toFixed(2)}%
