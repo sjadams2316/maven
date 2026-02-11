@@ -485,8 +485,28 @@ model Advisor {
   // Relations
   clients           ClientRelationship[]
   insightOverrides  InsightOverride[]
+  households        Household[]
   
   @@index([userId])
+}
+
+model Household {
+  id            String   @id @default(cuid())
+  advisorId     String
+  advisor       Advisor  @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  
+  name          String   // "The Smith Family"
+  
+  // Aggregated stats (cached, updated on sync)
+  totalAum      Decimal? @db.Decimal(19, 4)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  members       ClientRelationship[]
+  
+  @@index([advisorId])
 }
 
 model ClientRelationship {
@@ -496,6 +516,10 @@ model ClientRelationship {
   clientId          String
   client            User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
   
+  // Household (optional — for couples/families)
+  householdId       String?
+  household         Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  
   // Client portal access
   portalCode        String   @unique  // For /c/[code] access
   portalEnabled     Boolean  @default(true)
@@ -504,6 +528,18 @@ model ClientRelationship {
   // Personalization
   tonePreference    String   @default("moderate")  // conservative, moderate, engaged
   enabledFeatures   String[] @default(["portfolio", "retirement"])  // Subset of advisor's features
+  
+  // AUM & Fees
+  aum               Decimal? @db.Decimal(19, 4)
+  lastAumUpdate     DateTime?
+  feeType           String   @default("aum")  // aum, flat, hourly
+  feeRate           Decimal? @db.Decimal(5, 4)  // 0.01 = 1%
+  
+  // Compliance (regulatory requirements)
+  agreementSignedAt     DateTime?
+  lastSuitabilityReview DateTime?
+  lastRiskAssessment    DateTime?
+  advDeliveredAt        DateTime?
   
   // Notes
   internalNotes     String?  // Advisor-only notes
@@ -522,6 +558,7 @@ model ClientRelationship {
   @@index([advisorId])
   @@index([clientId])
   @@index([portalCode])
+  @@index([householdId])
 }
 
 model InsightCuration {
