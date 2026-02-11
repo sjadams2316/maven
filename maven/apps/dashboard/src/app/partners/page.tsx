@@ -281,7 +281,7 @@ export default function PartnersPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
-            href="/partners/dashboard"
+            href="/partners/dashboard?demo=true"
             className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl transition-colors min-h-[48px] flex items-center justify-center"
           >
             Advisor Demo →
