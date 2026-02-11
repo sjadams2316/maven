@@ -112,9 +112,8 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
 
   // Load chat history (skip in demo mode - always start fresh)
   useEffect(() => {
-    if (historyLoaded) return;
-    
-    // In demo mode: clear any existing history and start fresh
+    // In demo mode: ALWAYS clear history, even if already loaded
+    // This handles the race condition where history loads before isDemoMode is set
     if (isDemoMode) {
       localStorage.removeItem(CHAT_STORAGE_KEY);
       localStorage.removeItem(CONVERSATION_ID_KEY);
@@ -123,6 +122,8 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
       setHistoryLoaded(true);
       return;
     }
+    
+    if (historyLoaded) return;
     
     // For real users: load saved history
     try {
