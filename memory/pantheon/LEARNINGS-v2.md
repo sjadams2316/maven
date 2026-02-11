@@ -572,3 +572,23 @@ catch (error) {
 - [ ] Color accent (Tailwind classes: `teal-400`, `teal-500`, etc.)
 - [ ] Shadow colors (`shadow-teal-500/20`)
 - [ ] Demo data objects (advisor.firm, advisor.name)
+
+### L030: Dynamic routes must USE the URL parameter
+**Tags:** [partners] [routing] [data]
+**Confidence:** high
+**Evidence:** production-bug (cron caught 2026-02-10)
+
+When building dynamic routes like `/clients/[id]`, the `useParams()` hook returns the ID but you must actually USE it to fetch/select the correct data. Don't just define a param and ignore it.
+
+**Pattern:**
+```typescript
+const params = useParams();
+const clientId = typeof params.id === 'string' ? params.id : '1';
+const client = DEMO_CLIENTS[clientId] || DEFAULT_CLIENT;
+```
+
+**Anti-pattern:**
+```typescript
+const params = useParams(); // Fetched but never used!
+const client = DEMO_CLIENT;  // Always returns same hardcoded data
+```
