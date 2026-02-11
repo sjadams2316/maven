@@ -24,6 +24,7 @@ export interface ClientPortalSections {
   messages: boolean;
   portfolio: boolean;    // Holdings view
   goals: boolean;        // Goal progress
+  explore: boolean;      // Research investments, ask Maven
 }
 
 export interface ClientPortalSettings {
@@ -68,6 +69,7 @@ export const LIFE_STAGE_PRESETS: Record<LifeStagePreset, Omit<ClientPortalSettin
       messages: true,          // Communication
       portfolio: true,         // Core feature
       goals: true,             // Visualize progress
+      explore: true,           // Young investors love research
     },
     showNetWorth: true,
     showPerformance: true,     // Young investors can handle volatility
@@ -88,6 +90,7 @@ export const LIFE_STAGE_PRESETS: Record<LifeStagePreset, Omit<ClientPortalSettin
       messages: true,          // Communication
       portfolio: true,         // Core feature
       goals: true,             // Education, house, etc.
+      explore: true,           // Engaged investors
     },
     showNetWorth: true,
     showPerformance: true,
@@ -108,6 +111,7 @@ export const LIFE_STAGE_PRESETS: Record<LifeStagePreset, Omit<ClientPortalSettin
       messages: true,          // Communication
       portfolio: true,         // Core feature
       goals: true,             // Retirement countdown
+      explore: true,           // Research new opportunities
     },
     showNetWorth: true,
     showPerformance: true,     // But may want to hide for anxious clients
@@ -128,6 +132,7 @@ export const LIFE_STAGE_PRESETS: Record<LifeStagePreset, Omit<ClientPortalSettin
       messages: true,          // Communication
       portfolio: true,         // Monitor distributions
       goals: true,             // Legacy, travel, etc.
+      explore: false,          // Less active trading, advisor-led
     },
     showNetWorth: true,
     showPerformance: false,    // Often causes anxiety
@@ -346,6 +351,7 @@ export const SECTION_PATH_MAP: Record<keyof ClientPortalSections, string> = {
   messages: '/messages',
   portfolio: '/portfolio',
   goals: '/goals',
+  explore: '/explore',
 };
 
 /**
@@ -396,4 +402,5 @@ export const SECTION_DISPLAY_NAMES: Record<keyof ClientPortalSections, string> =
   messages: 'Messages',
   portfolio: 'Portfolio',
   goals: 'Goals',
+  explore: 'Explore Investments',
 };

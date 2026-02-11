@@ -300,10 +300,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     async function loadProfile() {
       setIsLoading(true);
       
-      // Check if demo mode is active
+      // Check if demo mode is active - PRIORITIZE demo mode over auth state
+      // This ensures demo works even with stale Clerk sessions
       const demoEnabled = isDemoModeEnabled();
-      if (demoEnabled && !isSignedIn) {
-        // DEMO MODE: Use demo profile
+      if (demoEnabled) {
+        // DEMO MODE: Use demo profile regardless of auth state
         setProfile(DEMO_PROFILE);
         setIsDemoMode(true);
         setIsLoading(false);
@@ -312,11 +313,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       
       if (isSignedIn) {
         // SIGNED IN: Database is source of truth
-        // Also exit demo mode if signed in
-        if (demoEnabled) {
-          disableDemoMode();
-          setIsDemoMode(false);
-        }
         
         try {
           const res = await fetch('/api/user/profile');
