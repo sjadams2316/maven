@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
@@ -23,20 +23,16 @@ function PartnersLayoutInner({
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPath, setCurrentPath] = useState('');
   
   // Check for demo mode via query param
   const isDemoMode = searchParams.get('demo') === 'true';
   
-  // Track current path (needed for SSR/hydration)
-  useEffect(() => {
-    setCurrentPath(window.location.pathname);
-  }, []);
-  
   // Check if we're on the public landing page (/partners exactly)
-  const isPublicLanding = currentPath === '/partners' || currentPath === '/partners/';
+  // usePathname is available immediately, no race condition
+  const isPublicLanding = pathname === '/partners' || pathname === '/partners/';
 
   // Detect mobile viewport
   useEffect(() => {
