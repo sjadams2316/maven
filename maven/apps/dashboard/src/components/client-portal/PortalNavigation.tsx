@@ -16,7 +16,8 @@ import {
   X,
   Menu,
   Target,
-  EyeOff
+  EyeOff,
+  Search
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -40,6 +41,7 @@ const navSections: NavSection[] = [
   { icon: Users, label: 'Family', path: '/family', description: 'Household members', sectionKey: 'family' },
   { icon: PieChart, label: 'Portfolio', path: '/portfolio', description: 'Holdings & performance', sectionKey: 'portfolio' },
   { icon: Target, label: 'Goals', path: '/goals', description: 'Track your progress', sectionKey: 'goals' },
+  { icon: Search, label: 'Explore', path: '/explore', description: 'Research investments', sectionKey: 'explore' },
   { icon: Shield, label: 'Social Security', path: '/social-security', description: 'Benefits & strategy', sectionKey: 'socialSecurity' },
   { icon: Landmark, label: 'Estate', path: '/estate', description: 'Beneficiaries & planning', sectionKey: 'estate' },
   { icon: Receipt, label: 'Tax', path: '/tax', description: 'Projections & planning', sectionKey: 'taxPlanning' },

@@ -153,6 +153,7 @@ export const LIFE_STAGE_PRESETS: Record<LifeStagePreset, Omit<ClientPortalSettin
       messages: true,          // White-glove service
       portfolio: true,         // Core feature
       goals: true,             // Legacy, impact
+      explore: true,           // Sophisticated, engaged
     },
     showNetWorth: true,
     showPerformance: true,     // Sophisticated investors
@@ -185,6 +186,7 @@ export const DEMO_PORTAL_SETTINGS: Record<string, ClientPortalSettings> = {
       messages: true,
       portfolio: true,
       goals: true,
+      explore: true,           // Research investments
     },
     showNetWorth: true,
     showPerformance: true,
@@ -207,6 +209,7 @@ export const DEMO_PORTAL_SETTINGS: Record<string, ClientPortalSettings> = {
       messages: true,
       portfolio: true,
       goals: true,
+      explore: true,           // Research investments
     },
     showNetWorth: true,
     showPerformance: true,
@@ -228,6 +231,7 @@ export const DEMO_PORTAL_SETTINGS: Record<string, ClientPortalSettings> = {
       messages: true,
       portfolio: true,
       goals: true,
+      explore: true,           // Sophisticated investor
     },
     showNetWorth: true,
     showPerformance: true,
@@ -250,6 +254,7 @@ export const DEMO_PORTAL_SETTINGS: Record<string, ClientPortalSettings> = {
       messages: true,
       portfolio: true,
       goals: true,             // Motivating
+      explore: true,           // Young investors love research!
     },
     showNetWorth: true,
     showPerformance: true,     // Can handle volatility
@@ -272,6 +277,7 @@ export const DEMO_PORTAL_SETTINGS: Record<string, ClientPortalSettings> = {
       messages: true,
       portfolio: true,         // But simplified
       goals: true,
+      explore: false,          // HIDDEN - research causes anxiety
     },
     showNetWorth: true,
     showPerformance: false,    // HIDDEN - causes anxiety
