@@ -475,9 +475,11 @@ export async function GET(request: NextRequest) {
   // Yahoo is the best free source for actual index values (^GSPC, ^DJI, etc.)
   for (const symbol of INDEX_SYMBOLS) {
     let price: MarketPrice | null = await fetchIndexFromYahoo(symbol);
+    let freshlyFetched = false;
     
     if (price) {
       diagnostics.sources.push(`yahoo:${symbol}`);
+      freshlyFetched = true;
     }
     
     // If live failed, try persistent cache
@@ -506,8 +508,8 @@ export async function GET(request: NextRequest) {
       };
     }
     
-    // Cache successful fetches
-    if (price && price.timestamp === Date.now()) {
+    // Cache successful fetches (only fresh data, not cached/fallback)
+    if (price && freshlyFetched) {
       await setCachedPrice(symbol, {
         price: price.price,
         change: price.change,
@@ -559,6 +561,7 @@ export async function GET(request: NextRequest) {
   
   for (const symbol of ['BTC', 'TAO']) {
     let price: MarketPrice | null = cryptoPrices.get(symbol) || null;
+    let freshlyFetched = !!price; // If we got it from cryptoPrices map, it's fresh
     
     // Try persistent cache
     if (!price) {
@@ -586,8 +589,8 @@ export async function GET(request: NextRequest) {
       };
     }
     
-    // Cache successful fetches
-    if (price && price.timestamp === Date.now()) {
+    // Cache successful fetches (only fresh data, not cached/fallback)
+    if (price && freshlyFetched) {
       await setCachedPrice(symbol, {
         price: price.price,
         change: price.change,
