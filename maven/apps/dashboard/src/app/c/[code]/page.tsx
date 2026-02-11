@@ -23,11 +23,12 @@ const DEMO_CLIENT = {
   lastName: 'Smith',
   email: 'john.smith@email.com',
   advisor: {
-    name: 'Maven Partners',
+    name: 'Sarah Chen',
+    title: 'Senior Wealth Advisor',
     firm: 'Maven Partners',
-    photo: null,
+    photo: null, // Would be a URL in production
     phone: '(555) 123-4567',
-    email: 'support@mavenpartners.com',
+    email: 'sarah.chen@mavenpartners.com',
   },
   portfolioValue: 850000,
   portfolioChange: 2380,
@@ -44,7 +45,9 @@ const DEMO_CLIENT = {
       target: 2000000, 
       current: 850000, 
       targetDate: '2038',
-      status: 'on-track',
+      yearsRemaining: 12,
+      projectedValue: 2150000, // Projected value at target date
+      status: 'ahead',
       icon: '🏖️',
     },
     { 
@@ -53,6 +56,8 @@ const DEMO_CLIENT = {
       target: 150000, 
       current: 72000, 
       targetDate: '2032',
+      yearsRemaining: 6,
+      projectedValue: 145000,
       status: 'on-track',
       icon: '🎓',
     },
@@ -63,6 +68,17 @@ const DEMO_CLIENT = {
     { id: '2', type: 'contribution', description: 'Monthly contribution', amount: 2500, date: '2026-01-15' },
     { id: '3', type: 'dividend', description: 'Dividend reinvested', amount: 456, date: '2026-01-02' },
   ],
+  // What the advisor did this month (outcomes, not trades)
+  advisorActions: [
+    { id: '1', action: 'Rebalanced portfolio to maintain target allocation', date: '2026-02-05', icon: '⚖️' },
+    { id: '2', action: 'Harvested $1,200 tax loss in international fund', date: '2026-01-28', icon: '💰', savings: 300 },
+    { id: '3', action: 'Reinvested $1,842 in dividends automatically', date: '2026-02-01', icon: '🔄' },
+  ],
+  // Personal note from advisor (AI-generated, advisor-approved)
+  advisorNote: {
+    message: "Hi John — Markets have been volatile lately, but your portfolio is positioned exactly where we want it. Your retirement goal is actually ahead of schedule now. Looking forward to our quarterly review next week!",
+    date: '2026-02-10',
+  },
   // Milestones - celebrations!
   milestones: [
     { id: '1', title: 'Portfolio crossed $800K!', date: '2026-01-15', icon: '🎉' },
@@ -72,6 +88,18 @@ const DEMO_CLIENT = {
     date: '2026-02-20',
     time: '2:00 PM',
     type: 'Quarterly Review',
+  },
+  // Dynamic status (computed from portfolio state)
+  status: {
+    type: 'ahead', // 'ahead' | 'on-track' | 'behind' | 'needs-attention'
+    headline: "You're ahead of schedule",
+    detail: "Your retirement goal is tracking 7% above projections. At this pace, you could reach your target 2 years early.",
+  },
+  // Market context (calm framing)
+  marketContext: {
+    headline: 'Markets this week',
+    change: -1.2,
+    message: "The S&P 500 dipped 1.2% this week on inflation concerns. Your portfolio is built for moments like this — staying diversified and focused on the long term.",
   },
 };
 
@@ -206,30 +234,116 @@ function ClientDashboardInner() {
         </div>
       </div>
 
-      {/* Status Message - Reassurance */}
-      <div className="bg-[#111827] border border-white/10 rounded-2xl p-5">
+      {/* Dynamic Status Message - Computed from actual data */}
+      <div className={`border rounded-2xl p-5 ${
+        client.status.type === 'ahead' 
+          ? 'bg-emerald-500/10 border-emerald-500/20' 
+          : client.status.type === 'needs-attention'
+            ? 'bg-amber-500/10 border-amber-500/20'
+            : 'bg-[#111827] border-white/10'
+      }`}>
         <div className="flex items-start gap-4">
-          <div className="text-2xl">✨</div>
+          <div className="text-2xl">
+            {client.status.type === 'ahead' ? '🚀' : client.status.type === 'needs-attention' ? '👋' : '✨'}
+          </div>
           <div>
-            <p className="text-white font-medium mb-1">You're on track</p>
+            <p className={`font-medium mb-1 ${
+              client.status.type === 'ahead' ? 'text-emerald-400' : 'text-white'
+            }`}>
+              {client.status.headline}
+            </p>
             <p className="text-gray-400 text-sm">
-              Your portfolio is performing well and aligned with your long-term goals. 
-              No action needed from you — Maven Partners is managing everything.
+              {client.status.detail}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Goals Progress */}
+      {/* From Your Advisor - Personal Touch */}
+      {client.advisorNote && (
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+              {client.advisor.name.split(' ').map(n => n[0]).join('')}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-white font-medium">{client.advisor.name}</p>
+                <span className="text-gray-500 text-sm">• {client.advisor.title}</span>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                "{client.advisorNote.message}"
+              </p>
+              <p className="text-gray-500 text-xs mt-2">{formatDate(client.advisorNote.date)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* What We Did This Month - Advisor Actions */}
+      {client.advisorActions && client.advisorActions.length > 0 && (
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span>🛠️</span> What we did this month
+          </h2>
+          <div className="space-y-3">
+            {client.advisorActions.map((action) => (
+              <div key={action.id} className="flex items-start gap-3 p-3 bg-white/5 rounded-xl">
+                <span className="text-xl">{action.icon}</span>
+                <div className="flex-1">
+                  <p className="text-white text-sm">{action.action}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-gray-500 text-xs">{formatDate(action.date)}</span>
+                    {action.savings && (
+                      <span className="text-emerald-400 text-xs">~${action.savings} tax savings</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Market Context - Calm Framing */}
+      {client.marketContext && (
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-start gap-4">
+            <div className="text-2xl">📊</div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-white font-medium">{client.marketContext.headline}</p>
+                <span className={`text-sm font-medium ${
+                  client.marketContext.change >= 0 ? 'text-emerald-400' : 'text-amber-400'
+                }`}>
+                  {client.marketContext.change >= 0 ? '▲' : '▼'} {Math.abs(client.marketContext.change)}%
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                {client.marketContext.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Goals Progress with Projected Trajectory */}
       <div>
         <h2 className="text-lg font-semibold text-white mb-4">Your Goals</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {client.goals.map((goal) => {
             const progress = Math.round((goal.current / goal.target) * 100);
+            const projectedProgress = goal.projectedValue ? Math.round((goal.projectedValue / goal.target) * 100) : progress;
+            const isAhead = goal.status === 'ahead' || (goal.projectedValue && goal.projectedValue >= goal.target);
+            
             return (
               <div 
                 key={goal.id}
-                className="bg-[#111827] border border-white/10 rounded-2xl p-5 hover:border-teal-500/30 transition-colors"
+                className={`border rounded-2xl p-5 transition-colors ${
+                  isAhead 
+                    ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
+                    : 'bg-[#111827] border-white/10 hover:border-teal-500/30'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -246,16 +360,42 @@ function ClientDashboardInner() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Current vs Target */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">{formatCurrency(goal.current)}</span>
                   <span className="text-gray-500">of {formatCurrency(goal.target)}</span>
                 </div>
                 <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-1000"
-                    style={{ width: `${progress}%` }}
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      isAhead ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-teal-500 to-teal-400'
+                    }`}
+                    style={{ width: `${Math.min(progress, 100)}%` }}
                   />
                 </div>
+                
+                {/* Projected Trajectory */}
+                {goal.projectedValue && goal.yearsRemaining && (
+                  <div className={`mt-4 pt-3 border-t ${isAhead ? 'border-emerald-500/20' : 'border-white/10'}`}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Projected at {goal.targetDate}:</span>
+                      <span className={isAhead ? 'text-emerald-400 font-medium' : 'text-white font-medium'}>
+                        {formatCurrency(goal.projectedValue)}
+                      </span>
+                    </div>
+                    {isAhead && (
+                      <p className="text-emerald-400 text-xs mt-1">
+                        ✓ On track to exceed goal by {formatCurrency(goal.projectedValue - goal.target)}
+                      </p>
+                    )}
+                    {!isAhead && goal.projectedValue < goal.target && (
+                      <p className="text-amber-400 text-xs mt-1">
+                        Consider increasing contributions to close the gap
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

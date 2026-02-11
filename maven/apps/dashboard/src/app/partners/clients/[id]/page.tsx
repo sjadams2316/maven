@@ -630,6 +630,68 @@ export default function ClientDetail() {
               </table>
             </div>
           </div>
+
+          {/* Client Research Activity */}
+          <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
+                <span>🔎</span> Research Activity
+              </h2>
+              <span className="text-xs text-gray-500">Last 7 days</span>
+            </div>
+            
+            {/* Demo research activity */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center text-amber-400 font-bold text-sm">
+                    TSLA
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-medium">Tesla, Inc.</span>
+                      <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">⭐ Wants to discuss</span>
+                    </div>
+                    <p className="text-gray-400 text-sm">Asked Maven about fit • 2 hours ago</p>
+                  </div>
+                </div>
+                <button className="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg transition min-h-[44px]">
+                  Review
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 font-bold text-sm">
+                    NVDA
+                  </div>
+                  <div>
+                    <span className="text-white font-medium">NVIDIA Corporation</span>
+                    <p className="text-gray-400 text-sm">Viewed details • Yesterday</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 font-bold text-sm">
+                    BTC
+                  </div>
+                  <div>
+                    <span className="text-white font-medium">Bitcoin</span>
+                    <p className="text-gray-400 text-sm">Asked Maven 2 questions • 3 days ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-gray-500 text-xs flex items-center gap-2">
+                <span>💡</span>
+                Proactively reach out when clients research investments — it builds trust and positions you as attentive.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
