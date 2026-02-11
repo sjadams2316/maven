@@ -42,3 +42,18 @@ export {
   SOURCE_WEIGHTS,
   ATHENA_CONFIG,
 } from './config';
+
+// Providers
+export {
+  chutesCompletion,
+  chutesQuery,
+  chutesBatch,
+  analyzePortfolioWithChutes,
+  isChutesConfigured,
+  CHUTES_DEFAULT_MODEL,
+  CHUTES_MODELS,
+  getAvailableProviders,
+  type ChutesMessage,
+  type ChutesCompletionOptions,
+  type ChutesResponse,
+} from './providers';
