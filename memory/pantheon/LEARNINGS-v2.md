@@ -193,10 +193,10 @@ Also: Don't SAVE in demo mode — check `isDemoMode` before any `localStorage.se
 
 ---
 
-*Last distilled: 2026-02-10 14:46 EST*
-*Total learnings: 35*
+*Last distilled: 2026-02-10 21:30 EST*
+*Total learnings: 36*
 *High-confidence: 10*
-*Medium-confidence: 9*
+*Medium-confidence: 10*
 *Needs validation: 16*
 
 ---
@@ -462,3 +462,113 @@ const handleSort = (col: typeof sortColumn) => {
 ```
 
 **Connects to:** L006 (interactive elements need clear affordances and feedback)
+
+---
+
+## 2026-02-10 — Client Portal Curation
+
+### L036 — Advisor Curation Layer Pattern
+**Tags:** `architecture`, `ux`, `client-portal`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** pantheon-client-portal-curation 2026-02-10
+**Insight:** Client portals should have an advisor-controlled curation layer. Advisors know their clients — a 30-year-old doesn't need Social Security, an anxious retiree doesn't need performance charts.
+
+**Pattern:**
+
+1. **Settings Type with Sensible Defaults:**
+```typescript
+interface ClientPortalSettings {
+  sections: {
+    family: boolean;
+    socialSecurity: boolean;
+    estate: boolean;
+    taxPlanning: boolean;
+    // ...
+  };
+  showPerformance: boolean;  // Hide for anxious clients
+  showNetWorth: boolean;     // Some prefer hidden
+  communicationTone: 'conservative' | 'moderate' | 'engaged';
+}
+```
+
+2. **Life Stage Presets:**
+   - Young Professional: Hide SS, Estate, simplify
+   - Pre-Retiree: Show ALL (SS critical)
+   - Retiree: Show all, but HIDE performance (causes anxiety)
+   - HNW: Show all, emphasize Estate & Philanthropy
+
+3. **Hook Pattern for Consumption:**
+```typescript
+const { settings, isSectionEnabled } = useClientPortalSettings(code);
+const visibleItems = navItems.filter(item => 
+  !item.sectionKey || isSectionEnabled(item.sectionKey)
+);
+```
+
+4. **Preview Mode for Advisors:**
+   - `?preview=true` shows what client sees
+   - Hidden sections shown with strikethrough + "Hidden for this client"
+
+**Why this matters:** The advisor is the curator. They know client emotional needs. A portal that shows everything to everyone is a dashboard, not a concierge experience.
+
+### L037 — AI-Generated Content Needs Fallbacks + Tone Guardrails
+**Tags:** `api`, `ux`, `client-portal`, `ai`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** pantheon-client-portal-foundation 2026-02-10
+**Insight:** AI-generated client-facing content (like weekly market commentary) needs:
+
+1. **Fallback content:** If AI fails, return pre-written calm messaging rather than errors
+2. **Tone enforcement in system prompt:** Explicitly state what NOT to say (no alarmist language, no action items)
+3. **Caching:** Weekly commentary doesn't need real-time generation — 24h cache TTL is fine
+4. **"Generated on [date]" footer:** Be transparent about when content was created
+
+**Pattern for calm wealth commentary:**
+```typescript
+const systemPrompt = `You are a wealth advisor writing weekly commentary.
+Your tone must be:
+- CALM: Never alarming or anxiety-inducing
+- CONFIDENT: Reassuring without being dismissive
+- EDUCATIONAL: Help them understand without overwhelming
+- BRIEF: 2-3 short paragraphs maximum
+
+Rules:
+- Never mention specific stock picks
+- Never suggest urgent action
+- Never use alarming language about drops/risks
+- Focus on long-term perspective
+- Emphasize the advisor is managing things`;
+```
+
+**Fallback pattern:**
+```typescript
+catch (error) {
+  // Return thoughtful fallback rather than error
+  return Response.json({
+    commentary: "Markets continue their steady course...",
+    generatedAt: new Date().toISOString(),
+    marketHighlights: ["Portfolio aligned with goals", "Long-term outlook stable"],
+  });
+}
+```
+
+**Connects to:** L013 (client portal = calm, no anxiety), L001 (fallback data for external calls)
+
+### L038 — Brand Consistency: Single Source for Firm Identity
+**Tags:** `ui`, `ux`, `branding`
+**Confidence:** 2 ⭐⭐
+**Confirmed by:** pantheon-client-portal-foundation 2026-02-10
+**Insight:** When updating branding (e.g., "Adams Wealth" → "Maven Partners"):
+
+1. **Search ALL occurrences:** Advisor names, firm names in layout, page, components
+2. **Update accent colors consistently:** Don't mix amber and teal as accent
+3. **Logo/initials:** "MP" for Maven Partners, use gradient matching accent color
+4. **Owned strings vs fetched:** Some branding comes from advisor DB, some is hardcoded — know which is which
+
+**Checklist for branding updates:**
+- [ ] layout.tsx header/logo
+- [ ] page.tsx greeting and references  
+- [ ] Footer "powered by" text
+- [ ] Component headers (ClientHeader, PortalNavigation)
+- [ ] Color accent (Tailwind classes: `teal-400`, `teal-500`, etc.)
+- [ ] Shadow colors (`shadow-teal-500/20`)
+- [ ] Demo data objects (advisor.firm, advisor.name)
