@@ -10,6 +10,7 @@
 |-------|------|------|--------|--------------|
 | `pantheon-client-portal-foundation` | Client Portal | Branding + Nav + Weekly Commentary | 🟡 Running | layout.tsx, page.tsx, api/commentary |
 | `pantheon-client-portal-family` | Client Portal | Family/Household Section | 🟡 Running | family/*.tsx, demo-family.ts |
+| `pantheon-client-portal-curation` | Client Portal | Advisor Curation Layer (section visibility) | 🟡 Running | client-portal-settings.ts, useClientPortalSettings.ts |
 
 ---
 
@@ -58,7 +59,7 @@ After current agents complete:
 
 | Date | Spawns | Est. Cost | Budget |
 |------|--------|-----------|--------|
-| 2026-02-10 | 2 | ~$1-2 | $50/day |
+| 2026-02-10 | 3 | ~$2-4 | $50/day |
 
 ---
 

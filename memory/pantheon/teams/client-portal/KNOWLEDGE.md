@@ -95,6 +95,78 @@ maven/apps/dashboard/src/app/c/[code]/
 
 ---
 
+## Advisor Curation Layer (CRITICAL)
+
+**Advisors control what each client sees.** Sections are shown/hidden based on:
+- Client life stage
+- Relevance to their situation
+- Advisor's judgment
+
+### Visibility Settings Model
+
+```typescript
+interface ClientPortalSettings {
+  clientId: string;
+  
+  // Section visibility (advisor toggles)
+  sections: {
+    family: boolean;           // Default: true
+    socialSecurity: boolean;   // Default: true if age > 50
+    estate: boolean;           // Default: true if net worth > $500K
+    taxPlanning: boolean;      // Default: true
+    philanthropy: boolean;     // Default: true if giving history
+    documents: boolean;        // Default: true
+    messages: boolean;         // Default: true
+  };
+  
+  // Tone/communication style
+  communicationTone: 'conservative' | 'moderate' | 'engaged';
+  
+  // Content preferences
+  showNetWorth: boolean;       // Some clients prefer hidden
+  showPerformance: boolean;    // Some get anxious about returns
+  showProjections: boolean;    // Show retirement projections?
+  
+  // Commentary preferences
+  weeklyCommentary: boolean;   // Show AI-generated commentary?
+  marketUpdates: boolean;      // Show market news?
+}
+```
+
+### Life Stage Presets
+
+| Life Stage | Typical Settings |
+|------------|------------------|
+| **Young Professional (25-35)** | Hide: Social Security, Estate (unless HNW). Show: Tax, Family if married |
+| **Growing Family (35-50)** | Show: Family, Tax, Documents. Maybe hide: SS, Philanthropy |
+| **Pre-Retiree (50-65)** | Show: ALL sections. SS and Estate critical |
+| **Retiree (65+)** | Show: ALL. Emphasize: SS, Estate, Tax (RMDs) |
+| **HNW Any Age** | Show: ALL. Emphasize: Estate, Philanthropy, Tax |
+
+### How Advisors Set This
+
+In Partners portal (`/partners/clients/[id]/settings`):
+- Toggle each section on/off
+- Select life stage preset (auto-sets toggles)
+- Override individual settings as needed
+- Preview client view with current settings
+
+### Implementation
+
+1. **Database:** `ClientPortalSettings` table linked to client
+2. **API:** `/api/client-portal/[code]/settings` returns visibility
+3. **Layout:** Checks settings before rendering nav items
+4. **Pages:** Return 404 or redirect if section hidden for this client
+
+### Why This Matters
+
+- **30-year-old doesn't need SS section** → Feels irrelevant, clutters UI
+- **Anxious client doesn't need performance charts** → Creates stress
+- **Simple situation doesn't need estate planning** → Overwhelming
+- **Advisor knows their client** → They curate the experience
+
+---
+
 ## Philosophy: Calm UX
 
 **The client hired an advisor to NOT think about this stuff.**
