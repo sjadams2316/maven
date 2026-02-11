@@ -2,45 +2,56 @@
 
 import { useState, useEffect } from 'react';
 import { Phone, Mail, Calendar, MapPin, Send, CheckCircle } from 'lucide-react';
-import { SkeletonCard } from '@/components/client-portal/SkeletonCard';
 import { clsx } from 'clsx';
 
 // Demo data
 const DEMO_ADVISOR = {
   name: 'Sarah Adams',
   title: 'Senior Financial Advisor',
-  firm: 'Adams Wealth Management',
+  firm: 'Maven Partners',
   phone: '(555) 123-4567',
-  email: 'sarah@adamswealth.com',
+  email: 'sarah@mavenpartners.com',
   address: '123 Financial Way, Suite 400\nNew York, NY 10001',
   availability: 'Mon-Fri, 9am-5pm EST',
   photo: undefined,
 };
 
-const PRIMARY_COLOR = '#4f46e5';
-
-// L006: Skeleton matches layout
+// L006: Skeleton matches layout - dark theme
 function ContactSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-7 w-40 bg-slate-200 rounded animate-pulse" />
+      <div className="h-7 w-40 bg-white/10 rounded animate-pulse" />
       
       {/* Advisor card skeleton */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
         <div className="flex items-center gap-4 mb-4">
-          <div className="h-16 w-16 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-16 w-16 rounded-full bg-white/10 animate-pulse" />
           <div className="space-y-2">
-            <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-slate-200 rounded animate-pulse" />
+            <div className="h-5 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-4 w-48 bg-white/10 rounded animate-pulse" />
           </div>
         </div>
-        <div className="space-y-3">
-          <div className="h-12 w-full bg-slate-200 rounded-xl animate-pulse" />
-          <div className="h-12 w-full bg-slate-200 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-12 w-full bg-white/10 rounded-xl animate-pulse" />
+          <div className="h-12 w-full bg-white/10 rounded-xl animate-pulse" />
         </div>
       </div>
       
-      <SkeletonCard lines={4} />
+      {/* Contact details skeleton */}
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <div className="h-5 w-40 bg-white/10 rounded animate-pulse mb-4" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-3">
+              <div className="h-5 w-5 bg-white/10 rounded animate-pulse" />
+              <div className="space-y-1 flex-1">
+                <div className="h-4 w-16 bg-white/10 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -70,10 +81,10 @@ export default function ContactPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Contact Your Advisor</h1>
+      <h1 className="text-2xl font-bold text-white">Contact Your Advisor</h1>
 
       {/* Advisor card */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
         <div className="flex items-center gap-4 mb-6">
           {advisor.photo ? (
             <img 
@@ -83,16 +94,15 @@ export default function ContactPage() {
             />
           ) : (
             <div 
-              className="h-16 w-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
-              style={{ backgroundColor: PRIMARY_COLOR }}
+              className="h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/20"
             >
               {advisor.name.split(' ').map(n => n[0]).join('')}
             </div>
           )}
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">{advisor.name}</h2>
-            <p className="text-slate-600">{advisor.title}</p>
-            <p className="text-sm text-slate-500">{advisor.firm}</p>
+            <h2 className="text-xl font-semibold text-white">{advisor.name}</h2>
+            <p className="text-gray-400">{advisor.title}</p>
+            <p className="text-sm text-amber-400">{advisor.firm}</p>
           </div>
         </div>
 
@@ -102,8 +112,8 @@ export default function ContactPage() {
             href={`tel:${advisor.phone.replace(/\D/g, '')}`}
             className={clsx(
               'flex items-center justify-center gap-2 min-h-[48px] px-4 py-3',
-              'bg-slate-100 rounded-xl font-medium text-slate-700',
-              'hover:bg-slate-200 transition-colors'
+              'bg-white/5 rounded-xl font-medium text-gray-300 border border-white/10',
+              'hover:bg-white/10 hover:border-amber-500/20 transition-all duration-200'
             )}
           >
             <Phone className="h-5 w-5" />
@@ -113,10 +123,10 @@ export default function ContactPage() {
             href={`mailto:${advisor.email}`}
             className={clsx(
               'flex items-center justify-center gap-2 min-h-[48px] px-4 py-3',
-              'text-white rounded-xl font-medium',
-              'hover:opacity-90 transition-opacity'
+              'bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl font-medium text-black',
+              'hover:from-amber-400 hover:to-amber-500 transition-all duration-200',
+              'shadow-lg shadow-amber-500/20'
             )}
-            style={{ backgroundColor: PRIMARY_COLOR }}
           >
             <Mail className="h-5 w-5" />
             Email
@@ -125,17 +135,17 @@ export default function ContactPage() {
       </div>
 
       {/* Contact details */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="font-semibold text-slate-900 mb-4">Contact Information</h3>
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <h3 className="font-semibold text-white mb-4">Contact Information</h3>
         
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <Phone className="h-5 w-5 text-slate-400 mt-0.5" />
+            <Phone className="h-5 w-5 text-gray-500 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-900">Phone</p>
+              <p className="font-medium text-white">Phone</p>
               <a 
                 href={`tel:${advisor.phone.replace(/\D/g, '')}`}
-                className="text-slate-600 hover:underline"
+                className="text-gray-400 hover:text-amber-400 transition-colors"
               >
                 {advisor.phone}
               </a>
@@ -143,12 +153,12 @@ export default function ContactPage() {
           </div>
           
           <div className="flex items-start gap-3">
-            <Mail className="h-5 w-5 text-slate-400 mt-0.5" />
+            <Mail className="h-5 w-5 text-gray-500 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-900">Email</p>
+              <p className="font-medium text-white">Email</p>
               <a 
                 href={`mailto:${advisor.email}`}
-                className="text-slate-600 hover:underline"
+                className="text-gray-400 hover:text-amber-400 transition-colors"
               >
                 {advisor.email}
               </a>
@@ -156,29 +166,29 @@ export default function ContactPage() {
           </div>
           
           <div className="flex items-start gap-3">
-            <Calendar className="h-5 w-5 text-slate-400 mt-0.5" />
+            <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-900">Availability</p>
-              <p className="text-slate-600">{advisor.availability}</p>
+              <p className="font-medium text-white">Availability</p>
+              <p className="text-gray-400">{advisor.availability}</p>
             </div>
           </div>
           
           <div className="flex items-start gap-3">
-            <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
+            <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
             <div>
-              <p className="font-medium text-slate-900">Office</p>
-              <p className="text-slate-600 whitespace-pre-line">{advisor.address}</p>
+              <p className="font-medium text-white">Office</p>
+              <p className="text-gray-400 whitespace-pre-line">{advisor.address}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Quick message form */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="font-semibold text-slate-900 mb-4">Send a Quick Message</h3>
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <h3 className="font-semibold text-white mb-4">Send a Quick Message</h3>
         
         {messageSent ? (
-          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl text-green-700">
+          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
             <CheckCircle className="h-5 w-5" />
             <span>Message sent! Your advisor will respond soon.</span>
           </div>
@@ -189,11 +199,11 @@ export default function ContactPage() {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your message here..."
               className={clsx(
-                'w-full p-4 border border-slate-200 rounded-xl resize-none',
-                'focus:outline-none focus:ring-2 focus:border-transparent',
-                'text-base placeholder:text-slate-400'
+                'w-full p-4 bg-white/5 border border-white/10 rounded-xl resize-none',
+                'focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50',
+                'text-white text-base placeholder:text-gray-500',
+                'transition-all duration-200'
               )}
-              style={{ '--tw-ring-color': PRIMARY_COLOR } as React.CSSProperties}
               rows={4}
             />
             <button
@@ -202,11 +212,11 @@ export default function ContactPage() {
               className={clsx(
                 // L002: 48px touch target
                 'flex items-center justify-center gap-2 w-full min-h-[48px] mt-4 px-4 py-3',
-                'text-white rounded-xl font-medium',
+                'bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl font-medium text-black',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
-                'hover:opacity-90 transition-opacity'
+                'hover:from-amber-400 hover:to-amber-500 transition-all duration-200',
+                'shadow-lg shadow-amber-500/20'
               )}
-              style={{ backgroundColor: PRIMARY_COLOR }}
             >
               <Send className="h-5 w-5" />
               Send Message

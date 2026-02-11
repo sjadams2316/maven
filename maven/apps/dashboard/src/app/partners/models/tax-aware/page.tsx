@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 
 // Tax account types
@@ -8,6 +8,13 @@ type AccountType = 'taxable' | 'taxDeferred' | 'taxFree';
 
 // Tax efficiency indicators
 type TaxEfficiency = 'efficient' | 'acceptable' | 'avoid';
+
+interface ProductOption {
+  ticker: string;
+  name: string;
+  efficiency: TaxEfficiency;
+  reason?: string;
+}
 
 interface ProductMapping {
   ticker: string;
@@ -18,13 +25,132 @@ interface ProductMapping {
 
 interface SleeveMapping {
   sleeve: string;
+  weight: number;
   taxable: ProductMapping;
   taxDeferred: ProductMapping;
   taxFree: ProductMapping;
 }
 
+interface TaxAwareModel {
+  id: string;
+  name: string;
+  description: string;
+  sleeves: SleeveMapping[];
+}
+
+// Product alternatives for each sleeve
+const PRODUCT_OPTIONS: Record<string, Record<AccountType, ProductOption[]>> = {
+  'US Large Cap': {
+    taxable: [
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market ETF', efficiency: 'efficient', reason: 'Low turnover, tax-efficient index fund' },
+      { ticker: 'SPY', name: 'SPDR S&P 500 ETF', efficiency: 'efficient', reason: 'Low turnover, highly liquid' },
+      { ticker: 'IVV', name: 'iShares Core S&P 500 ETF', efficiency: 'efficient', reason: 'Low cost, tax-efficient' },
+      { ticker: 'SCHB', name: 'Schwab U.S. Broad Market ETF', efficiency: 'efficient', reason: 'Ultra-low expense ratio' },
+      { ticker: 'ITOT', name: 'iShares Core S&P Total US Stock', efficiency: 'efficient', reason: 'Broad market exposure' },
+    ],
+    taxDeferred: [
+      { ticker: 'SCHD', name: 'Schwab US Dividend Equity ETF', efficiency: 'efficient', reason: 'Dividends sheltered from taxes' },
+      { ticker: 'VYM', name: 'Vanguard High Dividend Yield ETF', efficiency: 'efficient', reason: 'High dividends sheltered' },
+      { ticker: 'DVY', name: 'iShares Select Dividend ETF', efficiency: 'efficient', reason: 'Dividend focus OK in tax-deferred' },
+      { ticker: 'VTI', name: 'Vanguard Total Stock Market ETF', efficiency: 'efficient', reason: 'Broad market exposure' },
+    ],
+    taxFree: [
+      { ticker: 'QQQ', name: 'Invesco QQQ Trust', efficiency: 'efficient', reason: 'High growth potential, tax-free forever' },
+      { ticker: 'VGT', name: 'Vanguard Information Technology ETF', efficiency: 'efficient', reason: 'High growth tech exposure' },
+      { ticker: 'MGK', name: 'Vanguard Mega Cap Growth ETF', efficiency: 'efficient', reason: 'Growth-focused, tax-free gains' },
+      { ticker: 'SCHG', name: 'Schwab U.S. Large-Cap Growth ETF', efficiency: 'efficient', reason: 'Growth potential in Roth' },
+    ],
+  },
+  'International': {
+    taxable: [
+      { ticker: 'VXUS', name: 'Vanguard Total Intl Stock ETF', efficiency: 'efficient', reason: 'Foreign tax credit eligible' },
+      { ticker: 'IXUS', name: 'iShares Core MSCI Total Intl', efficiency: 'efficient', reason: 'Foreign tax credit eligible' },
+      { ticker: 'VEA', name: 'Vanguard FTSE Developed Markets', efficiency: 'efficient', reason: 'Developed markets, tax-efficient' },
+      { ticker: 'IEFA', name: 'iShares Core MSCI EAFE ETF', efficiency: 'efficient', reason: 'Developed markets exposure' },
+    ],
+    taxDeferred: [
+      { ticker: 'VWILX', name: 'Vanguard Intl Growth Fund', efficiency: 'acceptable', reason: 'Active fund OK in tax-deferred' },
+      { ticker: 'VXUS', name: 'Vanguard Total Intl Stock ETF', efficiency: 'efficient', reason: 'Broad international exposure' },
+      { ticker: 'EFA', name: 'iShares MSCI EAFE ETF', efficiency: 'efficient', reason: 'Developed markets' },
+    ],
+    taxFree: [
+      { ticker: 'EEM', name: 'iShares MSCI Emerging Markets', efficiency: 'efficient', reason: 'High growth EM exposure' },
+      { ticker: 'VWO', name: 'Vanguard FTSE Emerging Markets', efficiency: 'efficient', reason: 'EM growth potential' },
+      { ticker: 'IEMG', name: 'iShares Core MSCI Emerging Markets', efficiency: 'efficient', reason: 'Low-cost EM exposure' },
+    ],
+  },
+  'Bonds': {
+    taxable: [
+      { ticker: 'VTEB', name: 'Vanguard Tax-Exempt Bond ETF', efficiency: 'efficient', reason: 'Municipal bonds - tax-free income' },
+      { ticker: 'MUB', name: 'iShares National Muni Bond ETF', efficiency: 'efficient', reason: 'Tax-exempt municipal bonds' },
+      { ticker: 'TFI', name: 'SPDR Nuveen Municipal Bond ETF', efficiency: 'efficient', reason: 'Tax-free municipal income' },
+      { ticker: 'BND', name: 'Vanguard Total Bond Market ETF', efficiency: 'acceptable', reason: 'Taxable interest income' },
+    ],
+    taxDeferred: [
+      { ticker: 'BND', name: 'Vanguard Total Bond Market ETF', efficiency: 'efficient', reason: 'Interest income sheltered' },
+      { ticker: 'AGG', name: 'iShares Core U.S. Aggregate Bond', efficiency: 'efficient', reason: 'Broad bond exposure' },
+      { ticker: 'SCHZ', name: 'Schwab U.S. Aggregate Bond ETF', efficiency: 'efficient', reason: 'Low-cost bond exposure' },
+    ],
+    taxFree: [
+      { ticker: 'HYG', name: 'iShares iBoxx High Yield Corp Bond', efficiency: 'acceptable', reason: 'Higher yield, tax-free growth' },
+      { ticker: 'JNK', name: 'SPDR Bloomberg High Yield Bond', efficiency: 'acceptable', reason: 'High yield in Roth' },
+      { ticker: 'BNDX', name: 'Vanguard Total Intl Bond ETF', efficiency: 'efficient', reason: 'International diversification' },
+    ],
+  },
+  'REITs': {
+    taxable: [
+      { ticker: '--', name: 'Avoid in Taxable', efficiency: 'avoid', reason: 'REIT dividends taxed as ordinary income' },
+    ],
+    taxDeferred: [
+      { ticker: 'VNQ', name: 'Vanguard Real Estate ETF', efficiency: 'efficient', reason: 'High dividends sheltered' },
+      { ticker: 'SCHH', name: 'Schwab U.S. REIT ETF', efficiency: 'efficient', reason: 'Low-cost REIT exposure' },
+      { ticker: 'IYR', name: 'iShares U.S. Real Estate ETF', efficiency: 'efficient', reason: 'Broad REIT exposure' },
+    ],
+    taxFree: [
+      { ticker: 'VNQ', name: 'Vanguard Real Estate ETF', efficiency: 'efficient', reason: 'Tax-free dividends forever' },
+      { ticker: 'SCHH', name: 'Schwab U.S. REIT ETF', efficiency: 'efficient', reason: 'Low-cost, tax-free growth' },
+      { ticker: 'USRT', name: 'iShares Core U.S. REIT ETF', efficiency: 'efficient', reason: 'Broad REIT, tax-free' },
+    ],
+  },
+  'US Small Cap': {
+    taxable: [
+      { ticker: 'VB', name: 'Vanguard Small-Cap ETF', efficiency: 'acceptable', reason: 'Index fund, but higher turnover' },
+      { ticker: 'IJR', name: 'iShares Core S&P Small-Cap ETF', efficiency: 'acceptable', reason: 'Small-cap index exposure' },
+      { ticker: 'SCHA', name: 'Schwab U.S. Small-Cap ETF', efficiency: 'acceptable', reason: 'Low-cost small-cap' },
+    ],
+    taxDeferred: [
+      { ticker: 'VSMAX', name: 'Vanguard Small-Cap Index Admiral', efficiency: 'efficient', reason: 'Active management OK here' },
+      { ticker: 'VB', name: 'Vanguard Small-Cap ETF', efficiency: 'efficient', reason: 'Small-cap exposure' },
+      { ticker: 'SLYV', name: 'SPDR S&P 600 Small Cap Value', efficiency: 'efficient', reason: 'Value tilt in tax-deferred' },
+    ],
+    taxFree: [
+      { ticker: 'VBK', name: 'Vanguard Small-Cap Growth ETF', efficiency: 'efficient', reason: 'Max growth in Roth' },
+      { ticker: 'IJT', name: 'iShares S&P Small-Cap 600 Growth', efficiency: 'efficient', reason: 'Growth small-cap' },
+      { ticker: 'SLYG', name: 'SPDR S&P 600 Small Cap Growth', efficiency: 'efficient', reason: 'High growth potential' },
+    ],
+  },
+  'Cash': {
+    taxable: [
+      { ticker: 'VMFXX', name: 'Vanguard Federal Money Market', efficiency: 'acceptable', reason: 'Interest taxed, but minimal' },
+      { ticker: 'SPAXX', name: 'Fidelity Government Money Market', efficiency: 'acceptable', reason: 'Government securities' },
+      { ticker: 'SWVXX', name: 'Schwab Value Advantage Money', efficiency: 'acceptable', reason: 'Prime money market' },
+    ],
+    taxDeferred: [
+      { ticker: 'VMFXX', name: 'Vanguard Federal Money Market', efficiency: 'efficient', reason: 'Interest sheltered' },
+      { ticker: 'SPAXX', name: 'Fidelity Government Money Market', efficiency: 'efficient', reason: 'Safe, sheltered' },
+    ],
+    taxFree: [
+      { ticker: 'VMFXX', name: 'Vanguard Federal Money Market', efficiency: 'efficient', reason: 'N/A - minimal allocation' },
+      { ticker: 'SPAXX', name: 'Fidelity Government Money Market', efficiency: 'efficient', reason: 'Safe cash position' },
+    ],
+  },
+};
+
+// Type for tracking edited mappings
+type EditedMappings = Record<string, Record<AccountType, ProductMapping | null>>;
+
 // Demo model with tax-aware mappings
-const TAX_AWARE_MODELS = [
+const TAX_AWARE_MODELS: TaxAwareModel[] = [
   {
     id: '1',
     name: 'Moderate Growth - Tax Optimized',
@@ -149,11 +275,179 @@ function EfficiencyIndicator({ efficiency, reason }: { efficiency: TaxEfficiency
 export default function TaxAwarePage() {
   const [selectedModel, setSelectedModel] = useState(TAX_AWARE_MODELS[0]);
   const [editMode, setEditMode] = useState(false);
+  const [editedMappings, setEditedMappings] = useState<EditedMappings>({});
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [showExplainer, setShowExplainer] = useState(true);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-  // Calculate tax efficiency score
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    return Object.keys(editedMappings).length > 0;
+  }, [editedMappings]);
+
+  // Get the current mapping (edited or original)
+  const getCurrentMapping = useCallback((sleeve: string, accountType: AccountType): ProductMapping => {
+    const editedMapping = editedMappings[sleeve]?.[accountType];
+    if (editedMapping) return editedMapping;
+    
+    const originalSleeve = selectedModel.sleeves.find(s => s.sleeve === sleeve);
+    return originalSleeve?.[accountType] as ProductMapping;
+  }, [editedMappings, selectedModel]);
+
+  // Check if a specific cell has been modified
+  const isModified = useCallback((sleeve: string, accountType: AccountType): boolean => {
+    return !!editedMappings[sleeve]?.[accountType];
+  }, [editedMappings]);
+
+  // Handle product change
+  const handleProductChange = useCallback((sleeve: string, accountType: AccountType, ticker: string) => {
+    const options = PRODUCT_OPTIONS[sleeve]?.[accountType] || [];
+    const selectedOption = options.find(o => o.ticker === ticker);
+    if (!selectedOption) return;
+
+    // Check if this is the same as the original
+    const originalSleeve = selectedModel.sleeves.find(s => s.sleeve === sleeve);
+    const originalMapping = originalSleeve?.[accountType] as ProductMapping;
+    
+    if (originalMapping.ticker === ticker) {
+      // Remove from editedMappings if reverting to original
+      setEditedMappings(prev => {
+        const newMappings = { ...prev };
+        if (newMappings[sleeve]) {
+          delete newMappings[sleeve][accountType];
+          if (Object.keys(newMappings[sleeve]).length === 0) {
+            delete newMappings[sleeve];
+          }
+        }
+        return newMappings;
+      });
+    } else {
+      // Add to editedMappings
+      setEditedMappings(prev => ({
+        ...prev,
+        [sleeve]: {
+          ...prev[sleeve],
+          [accountType]: selectedOption,
+        },
+      }));
+    }
+  }, [selectedModel]);
+
+  // Save changes
+  const handleSave = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      setEditMode(false);
+      return;
+    }
+
+    // Apply edited mappings to the model
+    const updatedSleeves = selectedModel.sleeves.map(sleeve => {
+      const sleeveEdits = editedMappings[sleeve.sleeve];
+      if (!sleeveEdits) return sleeve;
+
+      return {
+        ...sleeve,
+        taxable: sleeveEdits.taxable || sleeve.taxable,
+        taxDeferred: sleeveEdits.taxDeferred || sleeve.taxDeferred,
+        taxFree: sleeveEdits.taxFree || sleeve.taxFree,
+      };
+    });
+
+    setSelectedModel({
+      ...selectedModel,
+      sleeves: updatedSleeves,
+    });
+    setEditedMappings({});
+    setEditMode(false);
+  }, [selectedModel, editedMappings, hasUnsavedChanges]);
+
+  // Cancel changes
+  const handleCancel = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowDiscardConfirm(true);
+    } else {
+      setEditMode(false);
+    }
+  }, [hasUnsavedChanges]);
+
+  // Confirm discard
+  const handleConfirmDiscard = useCallback(() => {
+    setEditedMappings({});
+    setEditMode(false);
+    setShowDiscardConfirm(false);
+  }, []);
+
+  // Editable product cell component
+  const ProductCell = ({ sleeve, accountType, showLabel = false }: { sleeve: string; accountType: AccountType; showLabel?: boolean }) => {
+    const mapping = getCurrentMapping(sleeve, accountType);
+    const modified = isModified(sleeve, accountType);
+    const options = PRODUCT_OPTIONS[sleeve]?.[accountType] || [];
+    
+    const colorConfig = {
+      taxable: { bg: 'bg-amber-500/5', border: 'border-amber-500/10', label: 'TAXABLE', labelColor: 'text-amber-400' },
+      taxDeferred: { bg: 'bg-blue-500/5', border: 'border-blue-500/10', label: 'TAX-DEFERRED', labelColor: 'text-blue-400' },
+      taxFree: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/10', label: 'ROTH', labelColor: 'text-emerald-400' },
+    };
+    const config = colorConfig[accountType];
+
+    if (editMode && options.length > 1) {
+      return (
+        <div className={`p-3 rounded-lg ${showLabel ? `${config.bg} ${config.border} border` : ''} ${modified ? 'ring-2 ring-amber-500/50 bg-amber-500/10' : ''}`}>
+          {showLabel && (
+            <div className="flex items-center justify-between mb-1">
+              <span className={`${config.labelColor} text-xs font-medium`}>{config.label}</span>
+              {modified && <span className="text-amber-400 text-xs">Modified</span>}
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <EfficiencyIndicator efficiency={mapping.efficiency} reason={mapping.reason} />
+            <select
+              value={mapping.ticker}
+              onChange={(e) => handleProductChange(sleeve, accountType, e.target.value)}
+              className={`flex-1 bg-white/10 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[44px] cursor-pointer ${
+                modified ? 'border-amber-500/50' : 'border-white/20'
+              }`}
+            >
+              {options.map((option) => (
+                <option key={option.ticker} value={option.ticker} className="bg-gray-900 text-white">
+                  {option.ticker} - {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      );
+    }
+
+    // Non-edit mode display
+    if (showLabel) {
+      return (
+        <div className={`p-3 ${config.bg} rounded-lg border ${config.border}`}>
+          <div className="flex items-center justify-between mb-1">
+            <span className={`${config.labelColor} text-xs font-medium`}>{config.label}</span>
+            <EfficiencyIndicator efficiency={mapping.efficiency} reason={mapping.reason} />
+          </div>
+          <div className="text-white font-medium">{mapping.ticker}</div>
+          <div className="text-gray-500 text-xs truncate">{mapping.name}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-3">
+        <EfficiencyIndicator efficiency={mapping.efficiency} reason={mapping.reason} />
+        <div>
+          <div className={`font-medium ${mapping.ticker === '--' ? 'text-gray-500' : 'text-white'}`}>
+            {mapping.ticker}
+          </div>
+          <div className="text-gray-500 text-xs">{mapping.name}</div>
+        </div>
+      </div>
+    );
+  };
+
+  // Calculate tax efficiency score (recalculates when model changes)
   const taxEfficiencyScore = useMemo(() => {
     let score = 0;
     let total = 0;
@@ -251,20 +545,44 @@ export default function TaxAwarePage() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className={`px-4 py-3 rounded-xl transition-colors min-h-[48px] flex items-center justify-center gap-2 ${
-              editMode
-                ? 'bg-amber-600 text-white'
-                : 'bg-white/10 hover:bg-white/20 text-white'
-            }`}
-          >
-            <span>{editMode ? '💾' : '✏️'}</span>
-            <span>{editMode ? 'Save Changes' : 'Edit Mappings'}</span>
-          </button>
+          {/* Unsaved changes indicator */}
+          {editMode && hasUnsavedChanges && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-400 text-sm">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              <span>Unsaved changes</span>
+            </div>
+          )}
+          
+          {editMode ? (
+            <>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors min-h-[48px] flex items-center justify-center gap-2"
+              >
+                <span>✕</span>
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors min-h-[48px] flex items-center justify-center gap-2"
+              >
+                <span>💾</span>
+                <span>Save Changes</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditMode(true)}
+              className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors min-h-[48px] flex items-center justify-center gap-2"
+            >
+              <span>✏️</span>
+              <span>Edit Mappings</span>
+            </button>
+          )}
           <button
             onClick={() => setShowApplyModal(true)}
-            className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors font-medium min-h-[48px] flex items-center justify-center gap-2"
+            disabled={editMode}
+            className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-colors font-medium min-h-[48px] flex items-center justify-center gap-2"
           >
             <span>👤</span>
             <span>Apply to Client</span>
@@ -391,35 +709,9 @@ export default function TaxAwarePage() {
               </div>
               
               <div className="space-y-3">
-                {/* Taxable */}
-                <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-amber-400 text-xs font-medium">TAXABLE</span>
-                    <EfficiencyIndicator efficiency={sleeve.taxable.efficiency} reason={sleeve.taxable.reason} />
-                  </div>
-                  <div className="text-white font-medium">{sleeve.taxable.ticker}</div>
-                  <div className="text-gray-500 text-xs truncate">{sleeve.taxable.name}</div>
-                </div>
-
-                {/* Tax-Deferred */}
-                <div className="p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-blue-400 text-xs font-medium">TAX-DEFERRED</span>
-                    <EfficiencyIndicator efficiency={sleeve.taxDeferred.efficiency} reason={sleeve.taxDeferred.reason} />
-                  </div>
-                  <div className="text-white font-medium">{sleeve.taxDeferred.ticker}</div>
-                  <div className="text-gray-500 text-xs truncate">{sleeve.taxDeferred.name}</div>
-                </div>
-
-                {/* Roth */}
-                <div className="p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-emerald-400 text-xs font-medium">ROTH</span>
-                    <EfficiencyIndicator efficiency={sleeve.taxFree.efficiency} reason={sleeve.taxFree.reason} />
-                  </div>
-                  <div className="text-white font-medium">{sleeve.taxFree.ticker}</div>
-                  <div className="text-gray-500 text-xs truncate">{sleeve.taxFree.name}</div>
-                </div>
+                <ProductCell sleeve={sleeve.sleeve} accountType="taxable" showLabel />
+                <ProductCell sleeve={sleeve.sleeve} accountType="taxDeferred" showLabel />
+                <ProductCell sleeve={sleeve.sleeve} accountType="taxFree" showLabel />
               </div>
             </div>
           ))}

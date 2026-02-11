@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import InteractivePortfolioChart, { Holding } from '@/components/InteractivePortfolioChart';
+import RiskGauge from '@/components/RiskGauge';
+import Sparkline from '@/components/Sparkline';
 
 // Demo client data
 const DEMO_CLIENT = {
@@ -37,6 +39,27 @@ const DEMO_CLIENT = {
   ],
 };
 
+// Client performance data (L025: Show both historical AND expected returns)
+const CLIENT_PERFORMANCE = {
+  ytdReturn: 8.2,
+  oneYearReturn: 12.4,
+  threeYearReturn: 9.8,
+  expectedReturn: 7.5, // Expected annual return based on allocation
+  beta: 0.92,
+  sharpeRatio: 1.24,
+  maxDrawdown: -12.3,
+  riskScore: 6,
+  benchmarkDiff: 1.2, // vs S&P
+  volatility: 14.2,
+};
+
+// 12-month trailing data for sparklines
+const PERFORMANCE_SPARKLINES = {
+  ytd: [0, 1.2, 0.8, 2.4, 3.1, 4.5, 5.2, 6.1, 5.8, 7.2, 7.8, 8.2],
+  oneYear: [0, 2.1, 1.8, 4.2, 5.8, 7.2, 8.4, 9.1, 8.6, 10.2, 11.4, 12.4],
+  threeYear: [0, 2.4, 4.1, 5.8, 7.2, 8.5, 9.1, 8.8, 9.2, 9.5, 9.6, 9.8],
+};
+
 // Features that can be enabled/disabled for client view
 const AVAILABLE_FEATURES = [
   { id: 'dashboard', name: 'Dashboard', description: 'Portfolio overview and key metrics' },
@@ -63,6 +86,7 @@ export default function ClientDetail() {
   const [clientInsights, setClientInsights] = useState(DEMO_CLIENT.insights);
   const [newNote, setNewNote] = useState('');
   const [showMeetingPrep, setShowMeetingPrep] = useState(false);
+  const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
 
   const toggleFeature = (featureId: string) => {
     setEnabledFeatures(prev =>
@@ -76,6 +100,10 @@ export default function ClientDetail() {
     setClientInsights(prev =>
       prev.map(i => i.id === insightId ? { ...i, enabled: !i.enabled } : i)
     );
+  };
+
+  const handleHoldingClick = (holding: Holding) => {
+    setSelectedHolding(holding);
   };
 
   const tabs = [
@@ -220,6 +248,113 @@ export default function ClientDetail() {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* Risk & Performance Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Risk Score Gauge */}
+            <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Risk Profile</h3>
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <RiskGauge score={CLIENT_PERFORMANCE.riskScore} size="lg" />
+                <div className="flex-1 grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 text-xs">Beta (vs S&P)</div>
+                    <div className="text-xl font-bold text-white">{CLIENT_PERFORMANCE.beta}</div>
+                    <div className="text-gray-500 text-xs">{CLIENT_PERFORMANCE.beta < 1 ? 'Lower' : 'Higher'} volatility</div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 text-xs">Sharpe Ratio</div>
+                    <div className="text-xl font-bold text-emerald-400">{CLIENT_PERFORMANCE.sharpeRatio}</div>
+                    <div className="text-gray-500 text-xs">Risk-adj return</div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 text-xs">Max Drawdown</div>
+                    <div className="text-xl font-bold text-red-400">{CLIENT_PERFORMANCE.maxDrawdown}%</div>
+                    <div className="text-gray-500 text-xs">Historical worst</div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 text-xs">Volatility</div>
+                    <div className="text-xl font-bold text-white">{CLIENT_PERFORMANCE.volatility}%</div>
+                    <div className="text-gray-500 text-xs">Annualized</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Returns with Sparklines (L025: Historical + Expected) */}
+            <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Performance</h3>
+              <div className="space-y-4">
+                {/* YTD Return */}
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Sparkline data={PERFORMANCE_SPARKLINES.ytd} width={80} height={32} positive={CLIENT_PERFORMANCE.ytdReturn >= 0} />
+                    <div>
+                      <div className="text-white font-medium">YTD Return</div>
+                      <div className="text-gray-500 text-xs">Historical</div>
+                    </div>
+                  </div>
+                  <div className={`text-xl font-bold ${CLIENT_PERFORMANCE.ytdReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {CLIENT_PERFORMANCE.ytdReturn >= 0 ? '+' : ''}{CLIENT_PERFORMANCE.ytdReturn}%
+                  </div>
+                </div>
+                
+                {/* 1Y Return */}
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Sparkline data={PERFORMANCE_SPARKLINES.oneYear} width={80} height={32} positive={CLIENT_PERFORMANCE.oneYearReturn >= 0} />
+                    <div>
+                      <div className="text-white font-medium">1-Year Return</div>
+                      <div className="text-gray-500 text-xs">Historical</div>
+                    </div>
+                  </div>
+                  <div className={`text-xl font-bold ${CLIENT_PERFORMANCE.oneYearReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {CLIENT_PERFORMANCE.oneYearReturn >= 0 ? '+' : ''}{CLIENT_PERFORMANCE.oneYearReturn}%
+                  </div>
+                </div>
+                
+                {/* 3Y Return */}
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Sparkline data={PERFORMANCE_SPARKLINES.threeYear} width={80} height={32} positive={CLIENT_PERFORMANCE.threeYearReturn >= 0} />
+                    <div>
+                      <div className="text-white font-medium">3-Year Return</div>
+                      <div className="text-gray-500 text-xs">Annualized</div>
+                    </div>
+                  </div>
+                  <div className={`text-xl font-bold ${CLIENT_PERFORMANCE.threeYearReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {CLIENT_PERFORMANCE.threeYearReturn >= 0 ? '+' : ''}{CLIENT_PERFORMANCE.threeYearReturn}%
+                  </div>
+                </div>
+
+                {/* Expected Return (L025) */}
+                <div className="flex items-center justify-between p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 h-8 flex items-center justify-center text-amber-400">
+                      <span className="text-lg">📈</span>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">Expected Return</div>
+                      <div className="text-amber-400 text-xs">Based on allocation</div>
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-amber-400">
+                    +{CLIENT_PERFORMANCE.expectedReturn}%
+                  </div>
+                </div>
+
+                {/* Benchmark Comparison */}
+                <div className="pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">vs S&P 500 (YTD)</span>
+                    <span className={`font-medium ${CLIENT_PERFORMANCE.benchmarkDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {CLIENT_PERFORMANCE.benchmarkDiff >= 0 ? '+' : ''}{CLIENT_PERFORMANCE.benchmarkDiff}% alpha
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Interactive Portfolio Chart */}
           <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
             <InteractivePortfolioChart
@@ -232,10 +367,61 @@ export default function ClientDetail() {
                 subCategory: h.subCategory,
               } as Holding))}
               totalValue={DEMO_CLIENT.aum}
-              title="Asset Allocation"
-              onHoldingClick={(holding) => console.log('Clicked holding:', holding)}
+              title="Asset Allocation (Click to Drill Down)"
+              onHoldingClick={handleHoldingClick}
             />
           </div>
+
+          {/* Selected Holding Detail Modal */}
+          {selectedHolding && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 max-w-md w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-white">{selectedHolding.ticker || selectedHolding.name}</h3>
+                  <button
+                    onClick={() => setSelectedHolding(null)}
+                    className="text-gray-400 hover:text-white min-w-[48px] min-h-[48px] flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-gray-400 text-sm">{selectedHolding.name}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-500 text-xs">Value</div>
+                      <div className="text-white font-bold">{formatCurrency(selectedHolding.value)}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-500 text-xs">Cost Basis</div>
+                      <div className="text-white font-bold">{formatCurrency(selectedHolding.costBasis || selectedHolding.value)}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-500 text-xs">Category</div>
+                      <div className="text-white font-medium text-sm">{selectedHolding.category}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="text-gray-500 text-xs">Gain/Loss</div>
+                      {selectedHolding.costBasis && (
+                        <div className={`font-bold ${selectedHolding.value >= selectedHolding.costBasis ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {selectedHolding.value >= selectedHolding.costBasis ? '+' : ''}
+                          {formatCurrency(selectedHolding.value - selectedHolding.costBasis)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors min-h-[48px]">
+                      Research
+                    </button>
+                    <button className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors min-h-[48px]">
+                      Trade
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Holdings Table */}
           <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
@@ -443,8 +629,18 @@ export default function ClientDetail() {
                 <h3 className="text-amber-500 font-medium mb-2 md:mb-3 text-sm md:text-base">📊 Portfolio Summary</h3>
                 <ul className="text-gray-300 space-y-1 md:space-y-2 ml-4 text-sm md:text-base">
                   <li>• AUM: {formatCurrency(DEMO_CLIENT.aum)} ({DEMO_CLIENT.change > 0 ? '+' : ''}{DEMO_CLIENT.change}% MTD)</li>
-                  <li>• Risk Profile: {DEMO_CLIENT.riskTolerance}</li>
+                  <li>• Risk Score: {CLIENT_PERFORMANCE.riskScore}/10 ({DEMO_CLIENT.riskTolerance})</li>
+                  <li>• YTD Return: {CLIENT_PERFORMANCE.ytdReturn}% (vs {CLIENT_PERFORMANCE.ytdReturn - CLIENT_PERFORMANCE.benchmarkDiff}% S&P)</li>
                   <li>• Top Holding: VTI at 34% allocation</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-amber-500 font-medium mb-2 md:mb-3 text-sm md:text-base">📈 Performance Metrics</h3>
+                <ul className="text-gray-300 space-y-1 md:space-y-2 ml-4 text-sm md:text-base">
+                  <li>• Sharpe Ratio: {CLIENT_PERFORMANCE.sharpeRatio} (excellent)</li>
+                  <li>• Beta: {CLIENT_PERFORMANCE.beta} (lower volatility than market)</li>
+                  <li>• Max Drawdown: {CLIENT_PERFORMANCE.maxDrawdown}%</li>
                 </ul>
               </div>
 

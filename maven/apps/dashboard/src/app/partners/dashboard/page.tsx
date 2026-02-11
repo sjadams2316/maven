@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Sparkline from '@/components/Sparkline';
 
 // Quick action definitions
 const QUICK_ACTIONS = [
@@ -24,20 +25,32 @@ const DEMO_RECENT_ACTIONS = [
   { id: '5', action: 'Sent rebalance alert', client: 'Sarah Park', time: '2 days ago', icon: '🔔' },
 ];
 
+// Rich dashboard metrics
+const DASHBOARD_METRICS = {
+  totalAum: 12400000,
+  avgClientAum: 263830,
+  ytdReturn: 8.7,
+  avgRiskScore: 6.2,
+  clientsAboveTarget: 34,
+  clientsBelowTarget: 8,
+  taxAlphaSaved: 47200,
+  rebalancesNeeded: 5,
+};
+
 // Demo data for advisor dashboard
 const DEMO_STATS = {
   totalAUM: 12500000,
-  clientCount: 23,
-  avgClientAUM: 543478,
+  clientCount: 47,
+  avgClientAUM: 263830,
   monthlyGrowth: 2.3,
 };
 
 const DEMO_CLIENTS = [
-  { id: '1', name: 'Robert & Linda Chen', aum: 1250000, change: 3.2, alerts: 2 },
-  { id: '2', name: 'The Morrison Family Trust', aum: 890000, change: -1.1, alerts: 0 },
-  { id: '3', name: 'Jennifer Walsh', aum: 675000, change: 2.8, alerts: 1 },
-  { id: '4', name: 'Michael Thompson', aum: 520000, change: 4.1, alerts: 0 },
-  { id: '5', name: 'Sarah & David Park', aum: 445000, change: 1.9, alerts: 3 },
+  { id: '1', name: 'Robert & Linda Chen', aum: 1250000, change: 3.2, alerts: 2, ytdReturn: 9.4 },
+  { id: '2', name: 'The Morrison Family Trust', aum: 890000, change: -1.1, alerts: 0, ytdReturn: 6.8 },
+  { id: '3', name: 'Jennifer Walsh', aum: 675000, change: 2.8, alerts: 1, ytdReturn: 11.2 },
+  { id: '4', name: 'Michael Thompson', aum: 520000, change: 4.1, alerts: 0, ytdReturn: 8.9 },
+  { id: '5', name: 'Sarah & David Park', aum: 445000, change: 1.9, alerts: 3, ytdReturn: 7.3 },
 ];
 
 const DEMO_ALERTS = [
@@ -50,6 +63,14 @@ const DEMO_MEETINGS = [
   { id: '1', client: 'Robert Chen', time: '2:00 PM', type: 'Quarterly Review' },
   { id: '2', client: 'Michael Thompson', time: '4:30 PM', type: 'Portfolio Update' },
 ];
+
+// 12-month trailing data for sparklines
+const SPARKLINE_DATA = {
+  aum: [10.2, 10.5, 10.1, 10.8, 11.2, 11.0, 11.5, 11.8, 12.0, 11.7, 12.2, 12.4],
+  ytdReturn: [0, 1.2, 0.8, 2.1, 3.5, 4.2, 5.1, 6.0, 5.8, 7.2, 8.1, 8.7],
+  taxAlpha: [0, 4200, 8100, 12500, 18200, 22400, 27800, 32100, 38500, 41200, 44800, 47200],
+  riskScore: [6.5, 6.4, 6.3, 6.2, 6.4, 6.3, 6.1, 6.2, 6.3, 6.2, 6.1, 6.2],
+};
 
 function formatCurrency(value: number): string {
   if (value >= 1000000) {
@@ -69,27 +90,97 @@ export default function PartnersDashboard() {
         <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
       </div>
 
-      {/* Stats Grid - Stack on mobile */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+      {/* Primary Stats Grid - Stack on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Total AUM</div>
-          <div className="text-xl md:text-3xl font-bold text-white">{formatCurrency(DEMO_STATS.totalAUM)}</div>
-          <div className="text-emerald-500 text-xs md:text-sm mt-1">+{DEMO_STATS.monthlyGrowth}% this month</div>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Total AUM</div>
+              <div className="text-xl md:text-3xl font-bold text-white">{formatCurrency(DASHBOARD_METRICS.totalAum)}</div>
+              <div className="text-emerald-500 text-xs md:text-sm mt-1">+{DEMO_STATS.monthlyGrowth}% this month</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={60} height={32} />
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">YTD Return</div>
+              <div className="text-xl md:text-3xl font-bold text-emerald-500">+{DASHBOARD_METRICS.ytdReturn}%</div>
+              <div className="text-gray-500 text-xs md:text-sm mt-1">Avg across clients</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.ytdReturn} width={60} height={32} />
+          </div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
           <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
-          <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DEMO_STATS.avgClientAUM)}</div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Alerts</div>
-          <div className="text-xl md:text-3xl font-bold text-amber-500">{DEMO_ALERTS.length}</div>
-          <div className="text-gray-500 text-xs md:text-sm mt-1">Require attention</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DASHBOARD_METRICS.avgClientAum)}</div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Today's Meetings</div>
           <div className="text-xl md:text-3xl font-bold text-white">{DEMO_MEETINGS.length}</div>
           <div className="text-gray-500 text-xs md:text-sm mt-1">Next: {DEMO_MEETINGS[0]?.time || 'None'}</div>
+        </div>
+      </div>
+
+      {/* Secondary Stats Grid - Performance & Risk Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Avg Risk Score</div>
+              <div className="text-lg md:text-xl font-bold text-amber-400">{DASHBOARD_METRICS.avgRiskScore.toFixed(1)}</div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+              <span className="text-sm">📊</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Above Target</div>
+              <div className="text-lg md:text-xl font-bold text-emerald-400">{DASHBOARD_METRICS.clientsAboveTarget}</div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <span className="text-sm">✓</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Below Target</div>
+              <div className="text-lg md:text-xl font-bold text-red-400">{DASHBOARD_METRICS.clientsBelowTarget}</div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+              <span className="text-sm">⚠</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Tax Alpha Saved</div>
+              <div className="text-lg md:text-xl font-bold text-emerald-400">{formatCurrency(DASHBOARD_METRICS.taxAlphaSaved)}</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.taxAlpha} width={40} height={24} />
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Rebalances Needed</div>
+              <div className="text-lg md:text-xl font-bold text-amber-500">{DASHBOARD_METRICS.rebalancesNeeded}</div>
+            </div>
+            <Link 
+              href="/partners/rebalance" 
+              className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 hover:bg-amber-500/30 transition-colors"
+            >
+              <span className="text-sm">→</span>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -204,7 +295,7 @@ export default function PartnersDashboard() {
         </div>
       </div>
 
-      {/* Top Clients */}
+      {/* Top Clients with Performance */}
       <div className="mt-6 md:mt-8 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <h2 className="text-lg md:text-xl font-semibold text-white">Top Clients by AUM</h2>
@@ -215,28 +306,37 @@ export default function PartnersDashboard() {
         
         {/* Mobile: Card layout */}
         <div className="md:hidden space-y-3">
-          {DEMO_CLIENTS.map((client) => (
-            <Link
-              key={client.id}
-              href={`/partners/clients/${client.id}`}
-              className="block p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-medium">{client.name}</span>
-                {client.alerts > 0 && (
-                  <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">
-                    {client.alerts} alert{client.alerts > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">{formatCurrency(client.aum)}</span>
-                <span className={client.change >= 0 ? 'text-emerald-500' : 'text-red-500'}>
-                  {client.change >= 0 ? '+' : ''}{client.change}%
-                </span>
-              </div>
-            </Link>
-          ))}
+          {DEMO_CLIENTS.map((client, idx) => {
+            // Generate sparkline data for each client
+            const sparkData = Array.from({ length: 12 }, (_, i) => 
+              Math.max(0, client.ytdReturn * (i + 1) / 12 + (Math.random() - 0.5) * 2)
+            );
+            return (
+              <Link
+                key={client.id}
+                href={`/partners/clients/${client.id}`}
+                className="block p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-medium">{client.name}</span>
+                  {client.alerts > 0 && (
+                    <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">
+                      {client.alerts} alert{client.alerts > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">{formatCurrency(client.aum)}</span>
+                  <div className="flex items-center gap-2">
+                    <Sparkline data={sparkData} width={50} height={20} positive={client.ytdReturn >= 0} />
+                    <span className={client.ytdReturn >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                      {client.ytdReturn >= 0 ? '+' : ''}{client.ytdReturn}% YTD
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Desktop: Table layout */}
@@ -247,41 +347,56 @@ export default function PartnersDashboard() {
                 <th className="pb-4 font-medium">Client</th>
                 <th className="pb-4 font-medium text-right">AUM</th>
                 <th className="pb-4 font-medium text-right">MTD Change</th>
+                <th className="pb-4 font-medium text-right">YTD Return</th>
                 <th className="pb-4 font-medium text-right">Alerts</th>
                 <th className="pb-4 font-medium"></th>
               </tr>
             </thead>
             <tbody>
-              {DEMO_CLIENTS.map((client) => (
-                <tr key={client.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="py-4">
-                    <Link href={`/partners/clients/${client.id}`} className="text-white hover:text-amber-400">
-                      {client.name}
-                    </Link>
-                  </td>
-                  <td className="py-4 text-right text-white">{formatCurrency(client.aum)}</td>
-                  <td className={`py-4 text-right ${client.change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {client.change >= 0 ? '+' : ''}{client.change}%
-                  </td>
-                  <td className="py-4 text-right">
-                    {client.alerts > 0 ? (
-                      <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-sm">
-                        {client.alerts}
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">—</span>
-                    )}
-                  </td>
-                  <td className="py-4 text-right">
-                    <Link
-                      href={`/partners/clients/${client.id}`}
-                      className="text-gray-500 hover:text-white transition-colors inline-flex items-center justify-center min-w-[48px] min-h-[48px]"
-                    >
-                      →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {DEMO_CLIENTS.map((client, idx) => {
+                // Generate sparkline data for each client
+                const sparkData = Array.from({ length: 12 }, (_, i) => 
+                  Math.max(0, client.ytdReturn * (i + 1) / 12 + (Math.random() - 0.5) * 2)
+                );
+                return (
+                  <tr key={client.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td className="py-4">
+                      <Link href={`/partners/clients/${client.id}`} className="text-white hover:text-amber-400">
+                        {client.name}
+                      </Link>
+                    </td>
+                    <td className="py-4 text-right text-white">{formatCurrency(client.aum)}</td>
+                    <td className={`py-4 text-right ${client.change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {client.change >= 0 ? '+' : ''}{client.change}%
+                    </td>
+                    <td className="py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Sparkline data={sparkData} width={60} height={24} positive={client.ytdReturn >= 0} />
+                        <span className={client.ytdReturn >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                          {client.ytdReturn >= 0 ? '+' : ''}{client.ytdReturn}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 text-right">
+                      {client.alerts > 0 ? (
+                        <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-sm">
+                          {client.alerts}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
+                    </td>
+                    <td className="py-4 text-right">
+                      <Link
+                        href={`/partners/clients/${client.id}`}
+                        className="text-gray-500 hover:text-white transition-colors inline-flex items-center justify-center min-w-[48px] min-h-[48px]"
+                      >
+                        →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

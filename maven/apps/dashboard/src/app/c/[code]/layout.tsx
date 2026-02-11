@@ -7,9 +7,9 @@ import '../../globals.css';
 // Demo data - will be replaced with API call
 const DEMO_CLIENT_DATA = {
   name: 'John Smith',
-  advisorFirm: 'Adams Wealth Management',
+  advisorFirm: 'Maven Partners',
   advisorLogo: undefined,
-  primaryColor: '#4f46e5', // indigo-600
+  primaryColor: '#f59e0b', // Amber for Maven Partners
 };
 
 export const metadata = {
@@ -29,13 +29,19 @@ export default async function ClientPortalLayout({
   
   return (
     <html lang="en">
-      <body className="bg-slate-50 min-h-screen">
+      <body className="bg-[#0a0a12] min-h-screen text-white">
+        {/* Subtle gradient background effects */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-3xl" />
+        </div>
+        
         {/* Preview banner for advisors previewing client view */}
         <Suspense fallback={null}>
           <PreviewBanner clientName={client.name} />
         </Suspense>
         
-        <div className="flex min-h-screen">
+        <div className="relative flex min-h-screen">
           {/* Desktop sidebar */}
           <ClientNav code={code} primaryColor={client.primaryColor} />
           

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { SkeletonCard, SkeletonValue } from '@/components/client-portal/SkeletonCard';
 import { clsx } from 'clsx';
 
 // Demo data
@@ -12,7 +11,7 @@ const DEMO_PORTFOLIO = {
   ytdChange: 64450,
   lastUpdated: '2024-02-10',
   allocations: [
-    { name: 'US Stocks', value: 382500, percentage: 45, color: '#4f46e5' },
+    { name: 'US Stocks', value: 382500, percentage: 45, color: '#f59e0b' },
     { name: 'International Stocks', value: 170000, percentage: 20, color: '#8b5cf6' },
     { name: 'Bonds', value: 212500, percentage: 25, color: '#06b6d4' },
     { name: 'Cash', value: 85000, percentage: 10, color: '#10b981' },
@@ -23,8 +22,6 @@ const DEMO_PORTFOLIO = {
     { name: 'Roth IRA', value: 75000, ytdReturn: 8.5 },
   ],
 };
-
-const PRIMARY_COLOR = '#4f46e5';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -39,33 +36,48 @@ function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 }
 
-// L006: Skeleton matches real layout
+// L006: Skeleton matches real layout - dark theme
 function PortfolioSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-7 w-36 bg-slate-200 rounded animate-pulse" />
+      <div className="h-7 w-36 bg-white/10 rounded animate-pulse" />
       
       {/* Value skeleton */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <SkeletonValue />
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <div className="h-4 w-20 bg-white/10 rounded animate-pulse mb-2" />
+        <div className="h-10 w-48 bg-white/10 rounded animate-pulse mb-3" />
+        <div className="h-6 w-32 bg-white/10 rounded animate-pulse" />
       </div>
       
       {/* Allocation skeleton */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <div className="h-5 w-28 bg-slate-200 rounded animate-pulse mb-4" />
-        <div className="h-4 w-full bg-slate-200 rounded-full animate-pulse mb-4" />
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <div className="h-5 w-28 bg-white/10 rounded animate-pulse mb-4" />
+        <div className="h-4 w-full bg-white/10 rounded-full animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex justify-between">
-              <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
-              <div className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+              <div className="h-4 w-16 bg-white/10 rounded animate-pulse" />
             </div>
           ))}
         </div>
       </div>
       
       {/* Accounts skeleton */}
-      <SkeletonCard lines={3} />
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <div className="h-5 w-32 bg-white/10 rounded animate-pulse mb-4" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex justify-between">
+              <div className="space-y-2">
+                <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
+                <div className="h-3 w-16 bg-white/10 rounded animate-pulse" />
+              </div>
+              <div className="h-5 w-24 bg-white/10 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -85,21 +97,22 @@ export default function PortfolioPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Your Portfolio</h1>
+      <h1 className="text-2xl font-bold text-white">Your Portfolio</h1>
 
       {/* Total value card */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <p className="text-sm text-slate-500 mb-1">Total Value</p>
-        <p className="text-4xl font-bold text-slate-900">
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <p className="text-sm text-gray-400 mb-1">Total Value</p>
+        <p className="text-4xl font-bold text-white">
           {formatCurrency(portfolio.totalValue)}
         </p>
         <div className="flex items-center gap-3 mt-2">
           <div 
-            className="flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium"
-            style={{ 
-              backgroundColor: portfolio.ytdReturn >= 0 ? '#dcfce7' : '#fee2e2',
-              color: portfolio.ytdReturn >= 0 ? '#166534' : '#991b1b'
-            }}
+            className={clsx(
+              'flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium',
+              portfolio.ytdReturn >= 0 
+                ? 'bg-emerald-500/10 text-emerald-400' 
+                : 'bg-red-500/10 text-red-400'
+            )}
           >
             {portfolio.ytdReturn >= 0 ? (
               <TrendingUp className="h-4 w-4" />
@@ -108,25 +121,25 @@ export default function PortfolioPage() {
             )}
             {formatPercent(portfolio.ytdReturn)} YTD
           </div>
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-gray-500">
             ({formatCurrency(portfolio.ytdChange)})
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-3">
+        <p className="text-xs text-gray-500 mt-3">
           Last updated {new Date(portfolio.lastUpdated).toLocaleDateString()}
         </p>
       </div>
 
       {/* Simple allocation view - no complex charts */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Allocation</h2>
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <h2 className="text-lg font-semibold text-white mb-4">Allocation</h2>
         
         {/* Simple bar visualization */}
-        <div className="flex rounded-full overflow-hidden h-4 mb-4">
-          {portfolio.allocations.map((alloc, i) => (
+        <div className="flex rounded-full overflow-hidden h-4 mb-4 bg-white/5">
+          {portfolio.allocations.map((alloc) => (
             <div
               key={alloc.name}
-              className="h-full"
+              className="h-full transition-all duration-500"
               style={{ 
                 backgroundColor: alloc.color,
                 width: `${alloc.percentage}%`
@@ -144,13 +157,13 @@ export default function PortfolioPage() {
                   className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: alloc.color }}
                 />
-                <span className="text-slate-700">{alloc.name}</span>
+                <span className="text-gray-300">{alloc.name}</span>
               </div>
               <div className="text-right">
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-white">
                   {formatCurrency(alloc.value)}
                 </span>
-                <span className="text-slate-400 ml-2 text-sm">
+                <span className="text-gray-500 ml-2 text-sm">
                   {alloc.percentage}%
                 </span>
               </div>
@@ -160,21 +173,24 @@ export default function PortfolioPage() {
       </div>
 
       {/* Accounts breakdown */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Your Accounts</h2>
+      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
+        <h2 className="text-lg font-semibold text-white mb-4">Your Accounts</h2>
         <div className="space-y-4">
           {portfolio.accounts.map((account) => (
             <div 
               key={account.name}
-              className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0"
+              className="flex items-center justify-between py-3 border-b border-white/5 last:border-0"
             >
               <div>
-                <p className="font-medium text-slate-900">{account.name}</p>
-                <p className="text-sm text-slate-500">
+                <p className="font-medium text-white">{account.name}</p>
+                <p className={clsx(
+                  'text-sm',
+                  account.ytdReturn >= 0 ? 'text-emerald-400' : 'text-red-400'
+                )}>
                   {formatPercent(account.ytdReturn)} YTD
                 </p>
               </div>
-              <p className="text-lg font-semibold text-slate-900">
+              <p className="text-lg font-semibold text-white">
                 {formatCurrency(account.value)}
               </p>
             </div>
@@ -183,7 +199,7 @@ export default function PortfolioPage() {
       </div>
 
       {/* Friendly disclaimer */}
-      <p className="text-sm text-slate-400 text-center px-4">
+      <p className="text-sm text-gray-500 text-center px-4">
         This summary is for informational purposes. Contact your advisor for personalized advice.
       </p>
     </div>

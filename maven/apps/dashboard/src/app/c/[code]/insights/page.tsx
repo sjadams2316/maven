@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { AlertCircle, Info, CheckCircle, Lightbulb } from 'lucide-react';
-import { SkeletonList } from '@/components/client-portal/SkeletonCard';
 import { EmptyState } from '@/components/client-portal/EmptyState';
 import { clsx } from 'clsx';
 
@@ -34,38 +33,56 @@ const DEMO_INSIGHTS = [
   },
 ];
 
-const PRIMARY_COLOR = '#4f46e5';
-
 const priorityConfig = {
   high: {
     icon: AlertCircle,
-    bgColor: 'bg-red-50',
-    iconColor: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    iconColor: 'text-red-400',
     borderColor: 'border-l-red-500',
     label: 'Action needed',
+    labelBg: 'bg-red-500/10 text-red-400',
   },
   medium: {
     icon: Info,
-    bgColor: 'bg-amber-50',
-    iconColor: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
+    iconColor: 'text-amber-400',
     borderColor: 'border-l-amber-500',
     label: 'Review suggested',
+    labelBg: 'bg-amber-500/10 text-amber-400',
   },
   low: {
     icon: CheckCircle,
-    bgColor: 'bg-green-50',
-    iconColor: 'text-green-500',
-    borderColor: 'border-l-green-500',
+    bgColor: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-400',
+    borderColor: 'border-l-emerald-500',
     label: 'For your info',
+    labelBg: 'bg-emerald-500/10 text-emerald-400',
   },
 };
 
-// L006: Skeleton matches real layout
+// L006: Skeleton matches real layout - dark theme
 function InsightsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-7 w-48 bg-slate-200 rounded animate-pulse" />
-      <SkeletonList items={3} />
+      <div className="space-y-1">
+        <div className="h-7 w-24 bg-white/10 rounded animate-pulse" />
+        <div className="h-4 w-48 bg-white/10 rounded animate-pulse" />
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-[#12121a] rounded-2xl p-5 shadow-xl shadow-black/20 border border-white/10">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-white/10 animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-5 w-40 bg-white/10 rounded animate-pulse" />
+                <div className="h-4 w-20 bg-white/10 rounded animate-pulse" />
+                <div className="h-4 w-full bg-white/10 rounded animate-pulse" />
+                <div className="h-3 w-24 bg-white/10 rounded animate-pulse mt-2" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -87,12 +104,12 @@ export default function InsightsPage({ params }: { params: { code: string } }) {
   if (insights.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Insights</h1>
+        <h1 className="text-2xl font-bold text-white">Insights</h1>
         <EmptyState
           icon={Lightbulb}
           title="No insights yet"
           message="Your advisor hasn't shared any insights with you yet. Check back soon — they're working on personalized recommendations for your portfolio."
-          primaryColor={PRIMARY_COLOR}
+          primaryColor="#f59e0b"
         />
       </div>
     );
@@ -103,8 +120,8 @@ export default function InsightsPage({ params }: { params: { code: string } }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Insights</h1>
-        <p className="text-slate-600 mt-1">
+        <h1 className="text-2xl font-bold text-white">Insights</h1>
+        <p className="text-gray-400 mt-1">
           {unreadCount > 0 
             ? `${unreadCount} new insight${unreadCount > 1 ? 's' : ''} from your advisor`
             : 'Personalized recommendations from your advisor'
@@ -121,10 +138,10 @@ export default function InsightsPage({ params }: { params: { code: string } }) {
             <div
               key={insight.id}
               className={clsx(
-                'bg-white rounded-xl p-5 shadow-sm border border-slate-100',
-                'border-l-4',
+                'bg-[#12121a] rounded-2xl p-5 shadow-xl shadow-black/20 border border-white/10',
+                'border-l-4 transition-all duration-200 hover:border-amber-500/30',
                 config.borderColor,
-                !insight.read && 'ring-1 ring-slate-200'
+                !insight.read && 'ring-1 ring-white/10'
               )}
             >
               {/* Header */}
@@ -138,25 +155,24 @@ export default function InsightsPage({ params }: { params: { code: string } }) {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-slate-900">{insight.title}</h3>
+                    <h3 className="font-semibold text-white">{insight.title}</h3>
                     {!insight.read && (
-                      <span className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0" />
+                      <span className="h-2 w-2 bg-amber-400 rounded-full flex-shrink-0 animate-pulse" />
                     )}
                   </div>
                   
                   <span className={clsx(
                     'inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-2',
-                    config.bgColor,
-                    config.iconColor
+                    config.labelBg
                   )}>
                     {config.label}
                   </span>
                   
-                  <p className="text-slate-600 leading-relaxed">
+                  <p className="text-gray-400 leading-relaxed">
                     {insight.message}
                   </p>
                   
-                  <p className="text-sm text-slate-400 mt-3">
+                  <p className="text-sm text-gray-500 mt-3">
                     {new Date(insight.date).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -172,12 +188,11 @@ export default function InsightsPage({ params }: { params: { code: string } }) {
 
       {/* Subtle prompt to contact */}
       <div className="text-center py-4">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-gray-500">
           Have questions about these insights?{' '}
           <a 
             href={`/c/${params.code}/contact`}
-            className="font-medium underline"
-            style={{ color: PRIMARY_COLOR }}
+            className="font-medium text-amber-400 hover:text-amber-300 transition-colors"
           >
             Contact your advisor
           </a>

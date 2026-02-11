@@ -2,39 +2,31 @@
 
 *Live status of running agents, file locks, and dependencies. Check before spawning.*
 
-**Last Updated:** 2026-02-10 19:31 EST
+**Last Updated:** 2026-02-10 20:03 EST
 
 ---
 
 ## Active Agents
 
-| Agent | Task | Files | Dependencies | Started | Status |
-|-------|------|-------|--------------|---------|--------|
-| api-routes | Advisor/Client API routes | /api/advisor/*, /api/clients/* | schema (done) | 19:31 | 🟡 Running |
-| client-portal | Client portal /c/[code] | /c/*, components/client-portal/* | api-routes | 19:31 | 🟡 Running |
+| Agent | Task | Files | Started | Status |
+|-------|------|-------|---------|--------|
+| pantheon-charts-data | Interactive charts + rich data | /partners/dashboard/*, clients/* | 20:00 | 🟡 Running |
+| **pantheon-client-theme** | Premium dark theme for client portal | /c/[code]/layout, header, nav | 20:03 | 🟡 Running |
+| **pantheon-client-dashboard** | Rich features on client home | /c/[code]/page.tsx | 20:03 | 🟡 Running |
+| **pantheon-client-portfolio** | World-class portfolio page | /c/[code]/portfolio/page.tsx | 20:03 | 🟡 Running |
+| **pantheon-client-insights-contact** | Enhanced insights + contact | /c/[code]/insights, contact | 20:03 | 🟡 Running |
 
 ---
 
-## Dependency Graph
+## Client Portal Transformation Sprint
 
-```
-schema (c065d57) ✅
-    ↓
-api-routes (building advisor/client APIs)
-    ↓
-client-portal (uses API routes)
-```
+**Goal:** Make the client portal the best in wealth management
 
----
-
-## File Locks
-
-| File | Locked By | Since |
-|------|-----------|-------|
-| /api/advisor/* | api-routes | 19:31 |
-| /api/clients/* | api-routes | 19:31 |
-| /c/* | client-portal | 19:31 |
-| components/client-portal/* | client-portal | 19:31 |
+**Agents:**
+1. **Theme** — Premium dark theme, Maven Partners branding, amber accents
+2. **Dashboard** — Portfolio value, allocation chart, holdings preview, market snapshot
+3. **Portfolio** — Full holdings, accounts, performance charts, sorting/filtering
+4. **Insights + Contact** — Rich insight cards, multi-channel contact
 
 ---
 
@@ -42,28 +34,20 @@ client-portal (uses API routes)
 
 | Agent | Task | Result | Completed | Learning |
 |-------|------|--------|-----------|----------|
-| schema | Add Advisor, ClientRelationship, BridgeFT models | ✅ c065d57 | 19:30 EST | — |
+| api-routes | Advisor/Client API routes | ✅ | 19:36 | — |
+| client-portal | Client portal v1 | ✅ | 19:37 | — |
+| pantheon-tax-edit | Tax-aware edit | ✅ | 20:02 | verify |
+| pantheon-ux-sweep | UX consistency | ✅ | 20:02 | verify |
 
 ---
 
-## Sprint Statistics (2026-02-10)
+## File Locks
 
-| Sprint | Agents | Success | Commits | Learnings |
-|--------|--------|---------|---------|-----------|
-| Schema | 1 (Eli) | 100% | 1 | 0 |
-| API Sprint | 2 | — | — | — |
-
----
-
-## How to Update
-
-### When Spawning:
-1. Add row to "Active Agents" with files + dependencies
-2. Add file locks
-3. Check dependency graph — does this agent need to wait?
-
-### On Completion:
-1. Move to "Recently Completed"
-2. Remove file locks
-3. Update dependency graph (if applicable)
-4. **Verify agent appended learning with ID to LEARNINGS-v2.md**
+| File | Locked By | Since |
+|------|-----------|-------|
+| /c/[code]/layout.tsx | pantheon-client-theme | 20:03 |
+| /c/[code]/page.tsx | pantheon-client-dashboard | 20:03 |
+| /c/[code]/portfolio/page.tsx | pantheon-client-portfolio | 20:03 |
+| /c/[code]/insights/page.tsx | pantheon-client-insights-contact | 20:03 |
+| /c/[code]/contact/page.tsx | pantheon-client-insights-contact | 20:03 |
+| /partners/dashboard/page.tsx | pantheon-charts-data | 20:00 |

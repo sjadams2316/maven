@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const DEMO_INSIGHTS = [
+const INITIAL_INSIGHTS = [
   { id: '1', client: 'Robert Chen', clientId: '1', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning', date: '2 hours ago' },
   { id: '2', client: 'Sarah Park', clientId: '5', type: 'tax', message: 'Tax-loss harvesting opportunity: $12,400', severity: 'info', date: '4 hours ago' },
   { id: '3', client: 'Jennifer Walsh', clientId: '3', type: 'concentration', message: 'NVDA position at 18% (above 15% threshold)', severity: 'warning', date: '1 day ago' },
@@ -13,16 +13,24 @@ const DEMO_INSIGHTS = [
 ];
 
 export default function PartnersInsights() {
+  const [insights, setInsights] = useState(INITIAL_INSIGHTS);
   const [filter, setFilter] = useState<'all' | 'warning' | 'info' | 'success'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dismissedMessage, setDismissedMessage] = useState<string | null>(null);
+  
+  const handleDismiss = (id: string, client: string) => {
+    setInsights(prev => prev.filter(i => i.id !== id));
+    setDismissedMessage(`Dismissed insight for ${client}`);
+    setTimeout(() => setDismissedMessage(null), 3000);
+  };
 
-  const filteredInsights = DEMO_INSIGHTS.filter(i => {
+  const filteredInsights = insights.filter(i => {
     if (filter !== 'all' && i.severity !== filter) return false;
     if (typeFilter !== 'all' && i.type !== typeFilter) return false;
     return true;
   });
 
-  const types = ['all', ...new Set(DEMO_INSIGHTS.map(i => i.type))];
+  const types = ['all', ...new Set(insights.map(i => i.type))];
 
   return (
     <div className="p-4 md:p-8">
@@ -98,7 +106,10 @@ export default function PartnersInsights() {
                 >
                   View
                 </Link>
-                <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-gray-400 transition-colors min-h-[48px] flex items-center justify-center flex-1 sm:flex-initial">
+                <button 
+                  onClick={() => handleDismiss(insight.id, insight.client)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-gray-400 hover:text-white transition-colors min-h-[48px] flex items-center justify-center flex-1 sm:flex-initial"
+                >
                   Dismiss
                 </button>
               </div>
