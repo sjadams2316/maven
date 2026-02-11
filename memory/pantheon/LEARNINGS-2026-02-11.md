@@ -42,6 +42,16 @@
 **Pattern:** Different pages have different implementations
 **Check:** Include landing page, dashboard, demo in market data QA rotation
 
+### L019: Never use `timestamp === Date.now()` for freshness checks
+**Trigger:** Cache never updated because Date.now() was called at different moments
+**Pattern:** `price.timestamp === Date.now()` in conditional, but both calls return different values
+**Check:** Use explicit flags (`freshlyFetched = true`) instead of timestamp comparison
+
+### L020: Health checks must only monitor actively-fetched symbols
+**Trigger:** Legacy ETF symbols (SPY, QQQ) in cache made health check appear stale
+**Pattern:** Cache has old entries from previous code versions
+**Check:** Explicitly list symbols to monitor, don't rely on "all keys in cache"
+
 ---
 
 ## Pattern Summary

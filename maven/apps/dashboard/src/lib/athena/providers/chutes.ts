@@ -80,6 +80,23 @@ function getApiKey(): string {
 }
 
 /**
+ * Strip reasoning traces from model responses
+ * DeepSeek R1 and some other models wrap their thinking in <think>...</think> tags
+ */
+function stripReasoningTraces(content: string): string {
+  // Remove <think>...</think> blocks (including multiline)
+  let cleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  
+  // Also handle unclosed <think> at the start (sometimes models don't close it)
+  cleaned = cleaned.replace(/^<think>[\s\S]*?(?=\n\n|\n[A-Z])/i, '');
+  
+  // Trim whitespace and normalize newlines
+  cleaned = cleaned.trim().replace(/\n{3,}/g, '\n\n');
+  
+  return cleaned;
+}
+
+/**
  * Calculate cost for a completion
  */
 function calculateCost(
@@ -155,7 +172,10 @@ export async function chutesCompletion(
   
   const promptTokens = data.usage?.prompt_tokens || 0;
   const completionTokens = data.usage?.completion_tokens || 0;
-  const content = data.choices?.[0]?.message?.content || '';
+  const rawContent = data.choices?.[0]?.message?.content || '';
+  
+  // Strip reasoning traces (DeepSeek R1 uses <think> tags)
+  const content = stripReasoningTraces(rawContent);
 
   return {
     content,
