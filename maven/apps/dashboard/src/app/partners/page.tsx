@@ -183,7 +183,7 @@ export default function PartnersPage() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-8">
             <Link
-              href="/partners/dashboard"
+              href="/partners/dashboard?demo=true"
               className="w-full sm:w-auto px-6 md:px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl transition-all text-base md:text-lg flex items-center justify-center gap-2 min-h-[48px] shadow-lg shadow-amber-500/20"
             >
               👨‍💼 Try Advisor Demo
