@@ -227,40 +227,52 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
-## Project Pantheon (v3.2 - Autonomous Build System)
+## Project Pantheon (v4.1 - Full Hierarchy + Execution)
 
-**What:** Multi-agent architecture for Maven. Self-improving intelligence network that builds autonomously.
+**What:** Multi-agent architecture for Maven. Specialized teams + verified execution.
 
-**v3.2 Upgrades (2026-02-10):**
-- **Blast Radius Analysis** — Every fix automatically searches for ALL instances of the pattern
-- **Selective Learning Injection** — Agents get specific L### IDs, not "read all learnings" (70% token savings)
-- **SPAWN-CHECKLIST.md** — Mandatory checklist before every spawn
-- **Autonomous Build System** — Pantheon builds Maven 24/7 from prioritized backlog
-- **Orchestrator Accountability** — Eli enforces protocols, catches missing learnings
+**v4.1 Architecture (2026-02-10):**
 
-**Autonomous Build Loop:**
 ```
-BACKLOG → SELECTOR → COST CHECK → SPAWN AGENT → QUALITY GATE → SHIP/ESCALATE → REPORT
+                    ELI (Master Orchestrator)
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+   TOOL TEAMS        PERSONA TEAMS      CROSS-CUTTING
+   (Subnets)         (Specialists)         TEAMS
+        │                  │                  │
+   ┌────┴────┐       ┌────┴────┐       ┌────┴────┐
+   │Portfolio│       │Tech Exec│       │   QA    │
+   │  Lab    │       │Pre-Retire│      │Integra- │
+   │Tax Intel│       │Inheritor │      │Compliance│
+   │Retirement│      │Biz Owner │      └─────────┘
+   │Oracle   │       └─────────┘
+   │Dashboard│
+   │Client   │
+   │ Portal  │
+   └─────────┘
 ```
 
-**Safety Rails:** $50/day budget, max 3 items/window, forbidden zones (auth/payments/APIs)
+**Each Team Has:** Lead, UX, Research, Data, Dev, QA agents with specialized KNOWLEDGE.md
 
-**Infrastructure:**
-- `memory/pantheon/PANTHEON-STATUS.md` — Live agent tracker + file locks
-- `memory/pantheon/PANTHEON-PROTOCOL.md` — Full spawn guidelines
-- `memory/pantheon/LEARNINGS-v2.md` — Tagged learnings (28 total)
-- `memory/pantheon/PATTERNS.md` — Proven solutions
-- `memory/pantheon/ANTI-PATTERNS.md` — What NOT to do
-- `memory/pantheon/SPAWN-CHECKLIST.md` — Pre-spawn checklist
-- `memory/pantheon/AUTONOMOUS-BUILD-SPEC.md` — Full autonomous build spec
-- `maven/BACKLOG.md` — Prioritized work queue
-- `memory/pantheon/DAILY-SPEND.md` — Cost tracking
+**Key Metric:** Bugs Sam catches that I should have = **TARGET 0**
 
-**Files:**
-- `memory/PROJECT-PANTHEON.md` — Full spec (v3.2)
-- `memory/pantheon/COMPOUNDING-ROADMAP.md` — Future improvements
+**v4.1 Components:**
+- `PANTHEON-DIAGRAM-v4.1.md` — Full architecture diagram
+- `SPAWN-ROUTER.md` — Route tasks to right team
+- `SPAWN-CHECKLIST.md` — Mandatory pre-spawn checklist
+- `REPUTATION.md` — Agent performance tracking
+- `teams/*/KNOWLEDGE.md` — Team-specific knowledge bases
+- `personas/*/KNOWLEDGE.md` — Client-type expertise
+- `cross-cutting/*/KNOWLEDGE.md` — Support team knowledge
 
-**This is the moat.** Maven builds itself while Sam sleeps. Gap widens daily.
+**Execution Protocol (v4.0 Preserved):**
+- Browser verification required (profile=openclaw)
+- "Build passes" is NOT evidence
+- Heartbeat QA rotation daily
+- Bug post-mortem loop
+
+**This is the moat.** Specialized teams + verified execution. Gap widens daily.
 
 ---
 

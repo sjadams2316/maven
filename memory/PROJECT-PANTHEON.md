@@ -1,9 +1,16 @@
 # Project Pantheon — Multi-Agent Architecture for Maven
 
 *Created: 2026-02-09*
-*Last Updated: 2026-02-10 07:24 EST*
-*Status: Fully Autonomous + Compounding + Autonomous Build System*
-*Version: 3.2 — Blast Radius + Selective Injection + Autonomous Builds*
+*Last Updated: 2026-02-10 21:15 EST*
+*Status: Fully Autonomous + Specialized Teams + Verified Execution*
+*Version: 4.1 — Full Hierarchy + Execution Protocol*
+
+> **Quick Reference:**
+> - Full Diagram: `memory/pantheon/PANTHEON-DIAGRAM-v4.1.md`
+> - Spawn Routing: `memory/pantheon/SPAWN-ROUTER.md`
+> - Spawn Checklist: `memory/pantheon/SPAWN-CHECKLIST.md`
+> - Team Knowledge: `memory/pantheon/teams/[team]/KNOWLEDGE.md`
+> - Reputation: `memory/pantheon/REPUTATION.md`
 
 ---
 
