@@ -3,26 +3,24 @@
 import { User } from 'lucide-react';
 
 interface ClientHeaderProps {
-  firmName: string;
+  firmName?: string;
   firmLogo?: string;
   clientName: string;
-  primaryColor?: string;
 }
 
 export function ClientHeader({ 
-  firmName, 
+  firmName = 'Maven Partners', 
   firmLogo, 
   clientName,
-  primaryColor = '#f59e0b' // amber default for Maven
 }: ClientHeaderProps) {
   const firstName = clientName.split(' ')[0];
   
   return (
     <header 
-      className="sticky top-0 z-50 bg-[#12121a]/80 backdrop-blur-xl border-b border-white/10"
+      className="sticky top-0 z-50 bg-[#0a1628]/80 backdrop-blur-xl border-b border-white/10"
     >
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Firm branding - Maven Partners with amber gradient */}
+        {/* Firm branding - Maven Partners with teal gradient */}
         <div className="flex items-center gap-3">
           {firmLogo ? (
             <img 
@@ -32,14 +30,14 @@ export function ClientHeader({
             />
           ) : (
             <div 
-              className="h-10 w-10 rounded-xl flex items-center justify-center font-bold text-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/20"
+              className="h-10 w-10 rounded-xl flex items-center justify-center font-bold text-lg bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-teal-500/20"
             >
-              M
+              MP
             </div>
           )}
           <div>
             <p className="text-sm text-gray-400">Your advisor</p>
-            <p className="font-semibold text-white bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+            <p className="font-semibold text-white bg-gradient-to-r from-teal-200 to-teal-400 bg-clip-text text-transparent">
               {firmName}
             </p>
           </div>
@@ -51,10 +49,10 @@ export function ClientHeader({
             Welcome back, <span className="text-white font-medium">{firstName}</span>
           </span>
           <div 
-            className="h-10 w-10 rounded-full flex items-center justify-center bg-amber-500/10 border border-amber-500/20 transition-all hover:bg-amber-500/20"
+            className="h-10 w-10 rounded-full flex items-center justify-center bg-teal-500/10 border border-teal-500/20 transition-all hover:bg-teal-500/20"
           >
             <User 
-              className="h-5 w-5 text-amber-400" 
+              className="h-5 w-5 text-teal-400" 
             />
           </div>
         </div>
@@ -66,7 +64,7 @@ export function ClientHeader({
 // Skeleton for loading state - dark theme
 export function ClientHeaderSkeleton() {
   return (
-    <header className="sticky top-0 z-50 bg-[#12121a]/80 backdrop-blur-xl border-b border-white/10">
+    <header className="sticky top-0 z-50 bg-[#0a1628]/80 backdrop-blur-xl border-b border-white/10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-white/10 animate-pulse" />

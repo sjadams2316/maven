@@ -1,46 +1,21 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, usePathname, useSearchParams } from 'next/navigation';
-
-// Demo advisor data
-const DEMO_ADVISOR = {
-  name: 'Sam Adams',
-  firm: 'Adams Wealth Partners',
-  logo: null,
-  primaryColor: '#F59E0B',
-};
+import { useParams, useSearchParams } from 'next/navigation';
+import { PortalNavigation } from '@/components/client-portal';
 
 function ClientLayoutInner({ children }: { children: React.ReactNode }) {
   const params = useParams<{ code: string }>();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isPreview = searchParams.get('preview') === 'true';
-  const isAdvisor = searchParams.get('advisor') === 'true';
-
-  const navItems = [
-    { href: `/c/${params.code}`, label: 'Home', icon: '🏠' },
-    { href: `/c/${params.code}/portfolio`, label: 'Portfolio', icon: '📊' },
-    { href: `/c/${params.code}/goals`, label: 'Goals', icon: '🎯' },
-    { href: `/c/${params.code}/documents`, label: 'Documents', icon: '📁' },
-    { href: `/c/${params.code}/contact`, label: 'Contact', icon: '💬' },
-  ];
-
-  const isActive = (href: string) => {
-    if (href === `/c/${params.code}`) {
-      return pathname === href;
-    }
-    return pathname.startsWith(href);
-  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-[#0a1628]">
       {/* Preview Banner */}
       {isPreview && (
-        <div className="bg-gradient-to-r from-amber-600 to-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
+        <div className="bg-gradient-to-r from-teal-600 to-teal-500 text-white text-center py-2 px-4 text-sm font-medium fixed top-0 left-0 right-0 z-[60]">
           <span className="mr-2">👁️</span>
           Advisor Preview — This is how your client sees their portal
           <Link 
@@ -52,95 +27,42 @@ function ClientLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo / Firm Name */}
-            <Link href={`/c/${params.code}`} className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-                style={{ background: `linear-gradient(135deg, ${DEMO_ADVISOR.primaryColor}, ${DEMO_ADVISOR.primaryColor}dd)` }}
-              >
-                {DEMO_ADVISOR.firm.split(' ').map(w => w[0]).join('').slice(0, 2)}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-white font-semibold text-sm">{DEMO_ADVISOR.firm}</p>
-                <p className="text-gray-500 text-xs">Client Portal</p>
-              </div>
-            </Link>
+      <div className={`flex ${isPreview ? 'pt-10' : ''}`}>
+        {/* Sidebar Navigation */}
+        <PortalNavigation code={params.code} />
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'bg-white/10 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
-            >
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Nav */}
-        {mobileMenuOpen && (
-          <nav className="md:hidden border-t border-white/10 px-4 py-2 bg-[#0a0a0f]">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[48px] ${
-                  isActive(item.href)
-                    ? 'bg-white/10 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span className="text-lg">{item.icon}</span>
-                {item.label}
+        {/* Main Content Area */}
+        <div className="flex-1 min-h-screen">
+          {/* Mobile Header - Only visible on mobile since sidebar is hidden */}
+          <header className="md:hidden sticky top-0 z-40 bg-[#0a1628]/95 backdrop-blur-sm border-b border-white/10">
+            <div className="px-4 py-4 pl-16">
+              <Link href={`/c/${params.code}`} className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold shadow-lg shadow-teal-500/20">
+                  MP
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Maven Partners</p>
+                  <p className="text-gray-500 text-xs">Client Portal</p>
+                </div>
               </Link>
-            ))}
-          </nav>
-        )}
-      </header>
+            </div>
+          </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6 md:py-8">
-        {children}
-      </main>
+          {/* Main Content */}
+          <main className="max-w-4xl mx-auto px-4 py-6 md:py-8 md:px-8">
+            {children}
+          </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-6 mt-8">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-500 text-sm">
-            Powered by <span className="text-amber-500">Maven</span>
-          </p>
+          {/* Footer */}
+          <footer className="border-t border-white/10 py-6 mt-8">
+            <div className="max-w-4xl mx-auto px-4 text-center">
+              <p className="text-gray-500 text-sm">
+                Powered by <span className="text-teal-400">Maven</span>
+              </p>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
@@ -148,15 +70,33 @@ function ClientLayoutInner({ children }: { children: React.ReactNode }) {
 // Loading fallback
 function LayoutFallback({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <header className="border-b border-white/10 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="h-10 w-32 bg-white/10 rounded animate-pulse" />
+    <div className="min-h-screen bg-[#0a1628]">
+      <div className="flex">
+        {/* Sidebar skeleton */}
+        <div className="hidden md:block w-64 bg-[#0a1628] border-r border-white/10 min-h-screen">
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/10 animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+                <div className="h-3 w-16 bg-white/10 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            {[...Array(9)].map((_, i) => (
+              <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
         </div>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {children}
-      </main>
+        
+        {/* Content area */}
+        <div className="flex-1">
+          <main className="max-w-4xl mx-auto px-4 py-8">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

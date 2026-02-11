@@ -3,3 +3,8 @@ export { ClientNav } from './ClientNav';
 export { SkeletonCard, SkeletonValue, SkeletonList } from './SkeletonCard';
 export { EmptyState } from './EmptyState';
 export { PreviewBanner } from './PreviewBanner';
+export { PortalNavigation } from './PortalNavigation';
+export { WeeklyCommentary } from './WeeklyCommentary';
+export { SectionCard, SectionCardGrid } from './SectionCard';
+export { FamilyMemberCard } from './FamilyMemberCard';
+export { FamilyMemberDetail } from './FamilyMemberDetail';
