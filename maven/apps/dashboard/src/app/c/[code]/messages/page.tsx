@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 const DEMO_ADVISOR = {
   name: 'Sam Adams',
   title: 'Wealth Advisor, CFP®',
-  firm: 'Adams Wealth Partners',
+  firm: 'Maven Partners',
   email: 'sam@adamswealth.com',
   phone: '(555) 123-4567',
   photo: null,

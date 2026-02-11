@@ -157,7 +157,7 @@ export default function PartnersPage() {
                   <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">A</span>
                   </div>
-                  <span className="text-gray-800 font-medium">Adams Wealth</span>
+                  <span className="text-gray-800 font-medium">Maven Partners</span>
                 </div>
                 {/* Mock Client UI */}
                 <div className="space-y-3">
