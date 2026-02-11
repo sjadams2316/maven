@@ -1,29 +1,61 @@
 /**
- * Persistent Cache Layer using Upstash Redis
+ * Persistent Cache Layer
  * 
  * Provides reliable caching that survives serverless cold starts.
  * Falls back gracefully when Redis is not configured.
  * 
- * Setup: Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to env
- * via Vercel Marketplace: https://vercel.com/marketplace?category=storage&search=redis
+ * Supports:
+ * - Upstash Redis (REST API): UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+ * - Standard Redis: REDIS_URL or STORAGE_URL
+ * 
+ * Setup via Vercel Marketplace: https://vercel.com/marketplace?category=storage&search=redis
  */
 
-import { Redis } from '@upstash/redis';
+import { Redis as UpstashRedis } from '@upstash/redis';
+import { createClient, RedisClientType } from 'redis';
+
+type CacheClient = 
+  | { type: 'upstash'; client: UpstashRedis }
+  | { type: 'redis'; client: RedisClientType }
+  | null;
 
 // Initialize Redis client if credentials are available
-let redis: Redis | null = null;
+let cacheClient: CacheClient = null;
+let connectionAttempted = false;
 
-function getRedis(): Redis | null {
-  if (redis) return redis;
+async function getClient(): Promise<CacheClient> {
+  if (cacheClient || connectionAttempted) return cacheClient;
+  connectionAttempted = true;
   
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Try Upstash first (REST API, better for serverless)
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   
-  if (url && token) {
-    redis = new Redis({ url, token });
-    return redis;
+  if (upstashUrl && upstashToken) {
+    cacheClient = {
+      type: 'upstash',
+      client: new UpstashRedis({ url: upstashUrl, token: upstashToken }),
+    };
+    console.log('[Cache] Using Upstash Redis');
+    return cacheClient;
   }
   
+  // Try standard Redis URL (from Vercel Redis integration)
+  const redisUrl = process.env.REDIS_URL || process.env.STORAGE_URL;
+  
+  if (redisUrl) {
+    try {
+      const client = createClient({ url: redisUrl });
+      await client.connect();
+      cacheClient = { type: 'redis', client: client as RedisClientType };
+      console.log('[Cache] Using standard Redis');
+      return cacheClient;
+    } catch (err) {
+      console.error('[Cache] Failed to connect to Redis:', err);
+    }
+  }
+  
+  console.log('[Cache] No Redis configured, using memory fallback');
   return null;
 }
 
@@ -41,14 +73,21 @@ const DEFAULT_TTL = 3600; // 1 hour
  * Get a value from cache
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  const client = getRedis();
+  const cache = await getClient();
   
-  if (client) {
+  if (cache) {
     try {
-      const value = await client.get<T>(key);
-      return value;
+      if (cache.type === 'upstash') {
+        return await cache.client.get<T>(key);
+      } else {
+        const value = await cache.client.get(key);
+        if (value) {
+          return JSON.parse(value) as T;
+        }
+        return null;
+      }
     } catch (err) {
-      console.error(`Cache get error for ${key}:`, err);
+      console.error(`[Cache] Get error for ${key}:`, err);
     }
   }
   
@@ -70,14 +109,18 @@ export async function cacheSet<T>(
   options: CacheOptions = {}
 ): Promise<boolean> {
   const ttl = options.ttl ?? DEFAULT_TTL;
-  const client = getRedis();
+  const cache = await getClient();
   
-  if (client) {
+  if (cache) {
     try {
-      await client.set(key, value, { ex: ttl });
+      if (cache.type === 'upstash') {
+        await cache.client.set(key, value, { ex: ttl });
+      } else {
+        await cache.client.setEx(key, ttl, JSON.stringify(value));
+      }
       return true;
     } catch (err) {
-      console.error(`Cache set error for ${key}:`, err);
+      console.error(`[Cache] Set error for ${key}:`, err);
     }
   }
   
@@ -94,14 +137,18 @@ export async function cacheSet<T>(
  * Delete a value from cache
  */
 export async function cacheDel(key: string): Promise<boolean> {
-  const client = getRedis();
+  const cache = await getClient();
   
-  if (client) {
+  if (cache) {
     try {
-      await client.del(key);
+      if (cache.type === 'upstash') {
+        await cache.client.del(key);
+      } else {
+        await cache.client.del(key);
+      }
       return true;
     } catch (err) {
-      console.error(`Cache del error for ${key}:`, err);
+      console.error(`[Cache] Del error for ${key}:`, err);
     }
   }
   
@@ -114,22 +161,26 @@ export async function cacheDel(key: string): Promise<boolean> {
  */
 export async function cacheHealth(): Promise<{
   available: boolean;
-  type: 'redis' | 'memory';
+  type: 'redis' | 'upstash' | 'memory';
   latencyMs?: number;
   error?: string;
 }> {
-  const client = getRedis();
+  const cache = await getClient();
   
-  if (!client) {
+  if (!cache) {
     return { available: true, type: 'memory' };
   }
   
   const start = Date.now();
   try {
-    await client.ping();
+    if (cache.type === 'upstash') {
+      await cache.client.ping();
+    } else {
+      await cache.client.ping();
+    }
     return {
       available: true,
-      type: 'redis',
+      type: cache.type,
       latencyMs: Date.now() - start,
     };
   } catch (err) {

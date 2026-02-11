@@ -18,7 +18,7 @@ interface HealthStatus {
   checks: {
     cache: {
       status: 'ok' | 'degraded' | 'error';
-      type: 'redis' | 'memory';
+      type: 'redis' | 'upstash' | 'memory';
       latencyMs?: number;
       error?: string;
     };
@@ -43,7 +43,7 @@ export async function GET() {
   // Check cache health
   const cache = await cacheHealth();
   const cacheStatus = cache.available 
-    ? (cache.type === 'redis' ? 'ok' : 'degraded')
+    ? (cache.type === 'redis' || cache.type === 'upstash' ? 'ok' : 'degraded')
     : 'error';
   
   if (cache.type === 'memory') {
