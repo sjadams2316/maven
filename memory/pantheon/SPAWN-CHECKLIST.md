@@ -6,6 +6,29 @@
 
 ## Pre-Spawn Checklist
 
+### 0. ☐ Include Boot Sequence (MANDATORY)
+
+**Every agent must read these four files before executing:**
+
+```
+1. memory/pantheon/teams/[team]/KNOWLEDGE.md     ← Domain patterns
+2. memory/pantheon/personas/[persona]/KNOWLEDGE.md  ← If applicable
+3. memory/pantheon/ROUTING-MANIFEST.md           ← Scope boundaries
+4. memory/pantheon/TEAM-PREFLIGHT.md             ← Completion criteria
+```
+
+Include in spawn task:
+```
+**BOOT SEQUENCE (read before executing):**
+1. memory/pantheon/teams/[team]/KNOWLEDGE.md
+2. memory/pantheon/ROUTING-MANIFEST.md
+3. memory/pantheon/TEAM-PREFLIGHT.md (your team's section)
+```
+
+See: `AGENT-BOOT-SEQUENCE.md` for full protocol.
+
+---
+
 ### 1. ☐ Route to the Right Team
 
 Check `SPAWN-ROUTER.md` — which team owns this?
