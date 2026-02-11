@@ -227,6 +227,40 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
+## Athena — Maven's Hybrid Intelligence Layer (2026-02-11)
+
+**What:** The brain that powers Maven. Routes queries to optimal AI sources, synthesizes into recommendations.
+
+**Architecture:**
+```
+Query → Classify (Groq) → Route to:
+├── Speed Path (Groq) — real-time chat
+├── Cost Path (Chutes) — analysis
+├── Deep Path (Perplexity) — research
+└── Enrich with Bittensor signals (Vanta, Precog, Desearch)
+    → Synthesize (weighted consensus) → Response
+```
+
+**Hybrid Model:**
+- **Centralized:** Groq (speed), Claude (reasoning), Perplexity (research)
+- **Decentralized:** Chutes (cheap inference), Vanta (trading signals), Desearch (sentiment)
+
+**Cost:** $0.002/query vs $0.03 (93% cheaper). $1,425/mo vs $30K at scale.
+
+**Claude's Validation (2026-02-11):**
+> "This document could go in a pitch deck almost as-is... The Pantheon + Athena story is what makes Maven not just 'another AI wealth tool' but a fundamentally different architecture."
+
+**Key specs:**
+- Synthesis: Signal agreement framework with weighted consensus
+- Confidence: Agreement score (Day 1) → Calibrated (Phase 4)
+- Degradation: Graceful fallback if sources offline
+- Compliance: Immutable audit trail for SEC
+
+**Full doc:** `maven/docs/ATHENA.md`
+**Claude feedback:** `memory/2026-02-11-athena-feedback.md`
+
+---
+
 ## Project Pantheon (v4.1 - Full Hierarchy + Execution)
 
 **What:** Multi-agent architecture for Maven. Specialized teams + verified execution.
