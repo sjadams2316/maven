@@ -70,6 +70,7 @@ const SECTION_PATH_MAP: Record<keyof ClientPortalSections, string> = {
   messages: '/messages',
   portfolio: '/portfolio',
   goals: '/goals',
+  explore: '/explore',
 };
 
 function getSectionFromPath(path: string): keyof ClientPortalSections | null {
