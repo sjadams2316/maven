@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { MAVEN_KNOWLEDGE_BASE, getRelevantKnowledge } from '@/lib/knowledge-base';
 import { parseLocalStorageProfile, buildContextForChat, UserContext } from '@/lib/user-context';
 import { extractMemories, formatMemoriesForPrompt } from '@/app/api/oracle/memory/route';
+import { shouldUseAthena, athenaOracleQuery, formatMetrics } from '@/lib/athena';
 
 // In-memory store for Oracle memories (matches memory/route.ts)
 const memoryStore = new Map<string, Map<string, any>>();
@@ -1133,7 +1134,7 @@ export async function POST(request: NextRequest) {
     }
 
     const convId = conversationId || `conv_${Date.now()}`;
-    let response: string;
+    let response: string = '';
     let usedClaude = false;
 
     // Parse user context
@@ -1153,7 +1154,54 @@ export async function POST(request: NextRequest) {
       concentrationRisks: []
     };
 
-    if (ANTHROPIC_API_KEY) {
+    // Check if we should use Athena (A/B test)
+    const athenaCheck = shouldUseAthena(message);
+    let usedAthena = false;
+    let athenaMetrics: string | undefined;
+    
+    if (athenaCheck.useAthena) {
+      // --- ATHENA PATH (A/B Test Treatment) ---
+      try {
+        // Build system prompt (simplified for Athena)
+        let systemPrompt = `You are Maven, an AI wealth partner. Be concise, specific, and actionable.
+Respond naturally as a financial advisor would. Use specific numbers when available.`;
+        
+        if (voiceMode) {
+          systemPrompt += ' Keep responses conversational for voice output. No bullet points or markdown.';
+        }
+        
+        // Build history
+        let history: { role: 'user' | 'assistant'; content: string }[] = [];
+        if (clientHistory && Array.isArray(clientHistory)) {
+          history = clientHistory
+            .filter((m: any) => m.role && m.content)
+            .slice(-10) // Shorter history for Athena (cost control)
+            .map((m: any) => ({ role: m.role, content: m.content }));
+        }
+        
+        const athenaResult = await athenaOracleQuery(message, systemPrompt, {
+          history,
+          context: userContext,
+        });
+        
+        response = athenaResult.response;
+        usedAthena = true;
+        athenaMetrics = formatMetrics(athenaResult);
+        console.log(athenaMetrics);
+        
+        // Still update conversation cache
+        history.push({ role: 'user', content: message });
+        history.push({ role: 'assistant', content: response });
+        conversationHistory.set(convId, history);
+        
+      } catch (athenaError: any) {
+        console.error('Athena error, falling back to Claude:', athenaError);
+        // Fall through to Claude
+      }
+    }
+    
+    // --- CLAUDE PATH (Control or Fallback) ---
+    if (!usedAthena && ANTHROPIC_API_KEY) {
       try {
         // Build conversation history from client-provided history (survives server restarts)
         // Client sends previous messages, we add the new user message
@@ -1210,15 +1258,25 @@ export async function POST(request: NextRequest) {
           debug: { error: error.message || String(error) }
         });
       }
-    } else {
+    } else if (!usedAthena) {
+      // No Athena, no Claude API key
       response = generateFallbackResponse(message);
+    }
+
+    // Determine which provider was used
+    let poweredBy = 'fallback';
+    if (usedAthena) {
+      poweredBy = 'athena';
+    } else if (usedClaude) {
+      poweredBy = 'claude-sonnet';
     }
 
     return NextResponse.json({
       response,
       conversationId: convId,
-      poweredBy: usedClaude ? 'claude-sonnet' : 'fallback',
-      authenticated: !!clerkId
+      poweredBy,
+      authenticated: !!clerkId,
+      ...(athenaMetrics ? { athenaMetrics } : {})
     });
   } catch (error) {
     console.error('Chat API error:', error);

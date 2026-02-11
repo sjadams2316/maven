@@ -57,3 +57,11 @@ export {
   type ChutesCompletionOptions,
   type ChutesResponse,
 } from './providers';
+
+// Oracle Bridge (A/B testing between Claude and Athena)
+export {
+  shouldUseAthena,
+  athenaOracleQuery,
+  getRoutingInfo,
+  formatMetrics,
+} from './oracle-bridge';
