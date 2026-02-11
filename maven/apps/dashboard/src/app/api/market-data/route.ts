@@ -9,43 +9,83 @@ const STOCK_NAMES: Record<string, string> = {
   IWM: 'Russell 2000',
 };
 
-// Fallback prices (updated periodically) - shown when live data unavailable
-// These represent approximate market close values and are marked as "delayed"
+// ============================================================================
+// DYNAMIC CACHE: Store last known good prices in memory
+// This survives between requests (within the same serverless function lifecycle)
+// Much better than hardcoded fallbacks that get stale
+// ============================================================================
+interface PriceData {
+  price: number;
+  change: number;
+  changePercent: number;
+  timestamp: number;
+}
+
+const priceCache: Record<string, PriceData> = {};
+
+function cachePrice(symbol: string, data: PriceData) {
+  priceCache[symbol] = { ...data, timestamp: Date.now() };
+}
+
+function getCachedPrice(symbol: string): PriceData | null {
+  const cached = priceCache[symbol];
+  if (!cached) return null;
+  
+  // Cache is valid for 1 hour - after that, use fallback
+  const ONE_HOUR = 60 * 60 * 1000;
+  if (Date.now() - cached.timestamp > ONE_HOUR) {
+    return null;
+  }
+  return cached;
+}
+
+// ============================================================================
+// FALLBACK PRICES: Updated Feb 11, 2026
+// Only used if: (1) live fetch fails AND (2) no cached data available
+// UPDATE THESE WEEKLY or when markets move significantly (>5%)
+// ============================================================================
 const FALLBACK_PRICES: Record<string, { price: number; change: number; changePercent: number }> = {
-  SPY: { price: 605.23, change: 2.41, changePercent: 0.40 },
-  QQQ: { price: 528.47, change: 3.18, changePercent: 0.61 },
-  DIA: { price: 447.82, change: 0.89, changePercent: 0.20 },
-  IWM: { price: 224.56, change: 1.12, changePercent: 0.50 },
+  // Updated: Feb 11, 2026 3:40 PM EST
+  SPY: { price: 692.00, change: -0.10, changePercent: -0.01 },
+  QQQ: { price: 613.00, change: 1.80, changePercent: 0.29 },
+  DIA: { price: 501.00, change: -0.70, changePercent: -0.14 },
+  IWM: { price: 264.00, change: -1.70, changePercent: -0.64 },
 };
 
-// Crypto fallback prices - used when CoinGecko is unavailable
-// Updated: Feb 11, 2026 - Update these periodically to keep fallbacks reasonable
-// TODO: Implement dynamic caching of last known good prices instead of hardcoded fallbacks
 const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePercent: number }> = {
-  BTC: { price: 66700, change: -400, changePercent: -0.6 },
-  TAO: { price: 147, change: -8, changePercent: -5.2 },
+  // Updated: Feb 11, 2026 3:40 PM EST
+  BTC: { price: 67300, change: -1400, changePercent: -2.1 },
+  TAO: { price: 145, change: -8, changePercent: -5.5 },
 };
 
+// ============================================================================
+// MAIN API HANDLER
+// ============================================================================
 export async function GET(request: NextRequest) {
-  // Get base URL from the request for internal API calls
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
   
   let isLiveData = true;
+  let dataSource = 'live';
+  const errors: string[] = [];
   
   try {
-    // Fetch stocks using FMP (Financial Modeling Prep) - works reliably
+    // ========================================================================
+    // FETCH STOCKS
+    // ========================================================================
     const FMP_API_KEY = process.env.FMP_API_KEY;
-    
     let stockData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
     
+    // Try FMP first (primary source)
     if (FMP_API_KEY) {
       try {
-        // FMP batch quote endpoint
         const symbolList = STOCK_SYMBOLS.join(',');
         const fmpResponse = await fetch(
           `https://financialmodelingprep.com/api/v3/quote/${symbolList}?apikey=${FMP_API_KEY}`,
-          { cache: 'no-store' }
+          { 
+            cache: 'no-store',
+            signal: AbortSignal.timeout(5000),
+          }
         );
         
         if (fmpResponse.ok) {
@@ -55,38 +95,62 @@ export async function GET(request: NextRequest) {
             stockData = fmpData.map((quote: {
               symbol: string;
               price: number;
-              previousClose: number;
               change: number;
               changesPercentage: number;
-            }) => ({
-              symbol: quote.symbol,
-              name: STOCK_NAMES[quote.symbol] || quote.symbol,
-              price: quote.price || 0,
-              change: quote.change || 0,
-              changePercent: quote.changesPercentage || 0,
-            }));
+            }) => {
+              const data = {
+                symbol: quote.symbol,
+                name: STOCK_NAMES[quote.symbol] || quote.symbol,
+                price: quote.price || 0,
+                change: quote.change || 0,
+                changePercent: quote.changesPercentage || 0,
+              };
+              
+              // Cache successful fetches
+              if (data.price > 0) {
+                cachePrice(quote.symbol, {
+                  price: data.price,
+                  change: data.change,
+                  changePercent: data.changePercent,
+                  timestamp: Date.now(),
+                });
+              }
+              
+              return data;
+            });
           }
         } else {
-          console.error('FMP API error:', await fmpResponse.text());
+          errors.push(`FMP: ${fmpResponse.status}`);
         }
       } catch (err) {
-        console.error('FMP fetch error:', err);
+        errors.push(`FMP: ${err instanceof Error ? err.message : 'timeout'}`);
       }
+    } else {
+      errors.push('FMP: No API key');
     }
     
-    // If FMP failed, fall back to internal stock-quote API calls
+    // If FMP failed, try internal stock-quote API
     if (stockData.length === 0 || stockData.every(s => s.price === 0)) {
-      console.log('FMP failed, trying internal stock-quote API at:', baseUrl);
+      console.log('FMP failed, trying internal stock-quote API');
       stockData = await Promise.all(
         STOCK_SYMBOLS.map(async (symbol) => {
           try {
             const response = await fetch(`${baseUrl}/api/stock-quote?symbol=${symbol}`, {
               cache: 'no-store',
+              signal: AbortSignal.timeout(3000),
             });
             
             if (response.ok) {
               const data = await response.json();
               if (data.price > 0) {
+                // Cache successful fetches
+                cachePrice(symbol, {
+                  price: data.price,
+                  change: data.change || 0,
+                  changePercent: data.changePercent || 0,
+                  timestamp: Date.now(),
+                });
+                
                 return {
                   symbol,
                   name: STOCK_NAMES[symbol] || data.name || symbol,
@@ -97,89 +161,155 @@ export async function GET(request: NextRequest) {
               }
             }
           } catch (err) {
-            console.error(`Stock quote failed for ${symbol}:`, err);
+            // Silent fail, will use cache/fallback
           }
           return { symbol, name: STOCK_NAMES[symbol], price: 0, change: 0, changePercent: 0 };
         })
       );
     }
 
-    // Log results for debugging
+    // Check what we got
     const validStocks = stockData.filter(s => s.price > 0).length;
-    console.log(`Market data: ${validStocks}/${STOCK_SYMBOLS.length} stocks fetched`);
     
-    // If all live sources failed, use fallback data
-    if (validStocks === 0) {
-      console.log('All live sources failed, using fallback data');
-      isLiveData = false;
-      stockData = STOCK_SYMBOLS.map(symbol => ({
-        symbol,
-        name: STOCK_NAMES[symbol],
-        price: FALLBACK_PRICES[symbol]?.price || 0,
-        change: FALLBACK_PRICES[symbol]?.change || 0,
-        changePercent: FALLBACK_PRICES[symbol]?.changePercent || 0,
-      }));
+    // If live failed, try cache then fallback
+    if (validStocks < STOCK_SYMBOLS.length) {
+      stockData = STOCK_SYMBOLS.map(symbol => {
+        // Check if we got live data for this symbol
+        const liveData = stockData.find(s => s.symbol === symbol && s.price > 0);
+        if (liveData) return liveData;
+        
+        // Try cache
+        const cached = getCachedPrice(symbol);
+        if (cached) {
+          dataSource = 'cached';
+          return {
+            symbol,
+            name: STOCK_NAMES[symbol],
+            price: cached.price,
+            change: cached.change,
+            changePercent: cached.changePercent,
+          };
+        }
+        
+        // Use fallback
+        isLiveData = false;
+        dataSource = 'fallback';
+        return {
+          symbol,
+          name: STOCK_NAMES[symbol],
+          price: FALLBACK_PRICES[symbol]?.price || 0,
+          change: FALLBACK_PRICES[symbol]?.change || 0,
+          changePercent: FALLBACK_PRICES[symbol]?.changePercent || 0,
+        };
+      });
     }
 
-    // Fetch crypto from CoinGecko with fallback
+    // ========================================================================
+    // FETCH CRYPTO
+    // ========================================================================
     let cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
     let cryptoLive = true;
+    
     try {
       const cryptoResponse = await fetch(
         'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,bittensor&vs_currencies=usd&include_24hr_change=true',
         { 
           headers: { 'Accept': 'application/json' },
           cache: 'no-store',
-          signal: AbortSignal.timeout(5000), // 5 second timeout
+          signal: AbortSignal.timeout(5000),
         }
       );
       
       if (cryptoResponse.ok) {
         const crypto = await cryptoResponse.json();
         if (crypto.bitcoin?.usd) {
-          cryptoData = [
-            {
-              symbol: 'BTC',
-              name: 'Bitcoin',
-              price: crypto.bitcoin?.usd || 0,
-              change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
-              changePercent: crypto.bitcoin?.usd_24h_change || 0,
-            },
-            {
-              symbol: 'TAO',
-              name: 'Bittensor',
-              price: crypto.bittensor?.usd || 0,
-              change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
-              changePercent: crypto.bittensor?.usd_24h_change || 0,
-            },
-          ];
+          const btcData = {
+            symbol: 'BTC',
+            name: 'Bitcoin',
+            price: crypto.bitcoin?.usd || 0,
+            change: (crypto.bitcoin?.usd || 0) * (crypto.bitcoin?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bitcoin?.usd_24h_change || 0,
+          };
+          
+          const taoData = {
+            symbol: 'TAO',
+            name: 'Bittensor',
+            price: crypto.bittensor?.usd || 0,
+            change: (crypto.bittensor?.usd || 0) * (crypto.bittensor?.usd_24h_change || 0) / 100,
+            changePercent: crypto.bittensor?.usd_24h_change || 0,
+          };
+          
+          // Cache successful fetches
+          if (btcData.price > 0) {
+            cachePrice('BTC', { price: btcData.price, change: btcData.change, changePercent: btcData.changePercent, timestamp: Date.now() });
+          }
+          if (taoData.price > 0) {
+            cachePrice('TAO', { price: taoData.price, change: taoData.change, changePercent: taoData.changePercent, timestamp: Date.now() });
+          }
+          
+          cryptoData = [btcData, taoData];
         }
+      } else {
+        errors.push(`CoinGecko: ${cryptoResponse.status}`);
       }
     } catch (err) {
-      console.error('Error fetching crypto from CoinGecko:', err);
+      errors.push(`CoinGecko: ${err instanceof Error ? err.message : 'timeout'}`);
     }
     
-    // If CoinGecko failed, use fallback crypto prices
+    // If CoinGecko failed, try cache then fallback
     if (cryptoData.length === 0 || cryptoData.every(c => c.price === 0)) {
-      console.log('CoinGecko failed, using fallback crypto prices');
       cryptoLive = false;
-      cryptoData = [
-        { symbol: 'BTC', name: 'Bitcoin', ...CRYPTO_FALLBACK.BTC },
-        { symbol: 'TAO', name: 'Bittensor', ...CRYPTO_FALLBACK.TAO },
-      ];
+      
+      cryptoData = ['BTC', 'TAO'].map(symbol => {
+        const cached = getCachedPrice(symbol);
+        if (cached) {
+          dataSource = dataSource === 'live' ? 'cached' : dataSource;
+          return {
+            symbol,
+            name: symbol === 'BTC' ? 'Bitcoin' : 'Bittensor',
+            price: cached.price,
+            change: cached.change,
+            changePercent: cached.changePercent,
+          };
+        }
+        
+        dataSource = 'fallback';
+        return {
+          symbol,
+          name: symbol === 'BTC' ? 'Bitcoin' : 'Bittensor',
+          ...CRYPTO_FALLBACK[symbol],
+        };
+      });
     }
+
+    // Log for debugging
+    console.log(`Market data: source=${dataSource}, stocks=${stockData.filter(s => s.price > 0).length}/${STOCK_SYMBOLS.length}, crypto=${cryptoData.filter(c => c.price > 0).length}/2${errors.length > 0 ? `, errors=[${errors.join(', ')}]` : ''}`);
 
     return NextResponse.json({
       stocks: stockData,
       crypto: cryptoData,
       timestamp: new Date().toISOString(),
       isLive: isLiveData && cryptoLive,
+      source: dataSource, // Added for debugging
     });
   } catch (err) {
     console.error('Market data API error:', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch market data' },
-      { status: 500 }
-    );
+    
+    // Even on total failure, return fallback data instead of error
+    return NextResponse.json({
+      stocks: STOCK_SYMBOLS.map(symbol => ({
+        symbol,
+        name: STOCK_NAMES[symbol],
+        ...FALLBACK_PRICES[symbol],
+      })),
+      crypto: [
+        { symbol: 'BTC', name: 'Bitcoin', ...CRYPTO_FALLBACK.BTC },
+        { symbol: 'TAO', name: 'Bittensor', ...CRYPTO_FALLBACK.TAO },
+      ],
+      timestamp: new Date().toISOString(),
+      isLive: false,
+      source: 'fallback',
+      error: 'Live data temporarily unavailable',
+    });
   }
 }

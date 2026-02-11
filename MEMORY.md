@@ -317,6 +317,12 @@ Full spec: `maven/docs/TIERING.md`
 
 **Maven Replaces:** TAMPs, client portal, eventually CRM and planning tools
 
+**Altruist Intro Call — Week of 2026-02-17**
+- Sam meeting with Altruist custody team
+- Context: Altruist launched AI tax planning 2026-02-10, caused wealth stock selloff
+- Angle: Position Maven as AI-native partner, not just custody customer
+- Explore: API depth, integration partnerships, co-marketing potential
+
 ---
 
 ## Competitive Positioning vs Range (2026-02-10)
