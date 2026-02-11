@@ -115,14 +115,51 @@ function formatCurrency(value: number): string {
 export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
   const [prepModal, setPrepModal] = useState<{ open: boolean; meeting: typeof DEMO_MEETINGS[0] | null }>({ open: false, meeting: null });
+  const [livePrep, setLivePrep] = useState<{ summary: string; actionItems: string[]; talkingPoints: string[]; marketContext: string } | null>(null);
+  const [prepLoading, setPrepLoading] = useState(false);
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   
   // Helper to preserve demo param in links
   const demoHref = (href: string) => isDemoMode ? `${href}?demo=true` : href;
   
-  // Get prep content for a meeting
-  const getPrepContent = (clientId: string) => MEETING_PREP[clientId] || null;
+  // Get prep content for a meeting - use live data if available, fallback to static
+  const getPrepContent = (clientId: string) => {
+    if (livePrep) return livePrep;
+    return MEETING_PREP[clientId] || null;
+  };
+  
+  // Fetch live AI prep when modal opens
+  const openPrepModal = async (meeting: typeof DEMO_MEETINGS[0]) => {
+    setPrepModal({ open: true, meeting });
+    setLivePrep(null);
+    setPrepLoading(true);
+    
+    try {
+      const response = await fetch('/api/meeting-prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: meeting.clientId, meetingType: meeting.type }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.prep) {
+          setLivePrep({
+            summary: data.prep.summary || '',
+            actionItems: data.prep.actionItems || [],
+            talkingPoints: data.prep.talkingPoints || [],
+            marketContext: data.prep.marketContext || '',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch live prep:', error);
+      // Fall back to static data
+    } finally {
+      setPrepLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-8">
@@ -277,7 +314,7 @@ export default function PartnersDashboard() {
                 </div>
                 <div className="text-white text-sm md:text-base">{meeting.client}</div>
                 <button 
-                  onClick={() => setPrepModal({ open: true, meeting })}
+                  onClick={() => openPrepModal(meeting)}
                   className="mt-3 w-full py-3 md:py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-sm text-amber-400 hover:text-amber-300 transition-colors min-h-[48px] font-medium"
                 >
                   ✨ Prep Meeting
@@ -479,9 +516,17 @@ export default function PartnersDashboard() {
             
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-              {(() => {
+              {prepLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500 mb-4"></div>
+                  <p className="text-gray-400">Claude is preparing your meeting brief...</p>
+                </div>
+              ) : (() => {
                 const prep = getPrepContent(prepModal.meeting.clientId);
                 if (!prep) return <p className="text-gray-400">No prep data available</p>;
+                
+                // Handle both static (alerts) and API (actionItems) formats
+                const actionItems = prep.actionItems || prep.alerts || [];
                 
                 return (
                   <>
@@ -495,16 +540,16 @@ export default function PartnersDashboard() {
                       </p>
                     </div>
                     
-                    {/* Alerts */}
-                    {prep.alerts.length > 0 && (
+                    {/* Action Items */}
+                    {actionItems.length > 0 && (
                       <div>
                         <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
                           <span>🚨</span> Action Items
                         </h3>
                         <div className="space-y-2">
-                          {prep.alerts.map((alert, i) => (
+                          {actionItems.map((item: string, i: number) => (
                             <div key={i} className="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                              {alert}
+                              {item}
                             </div>
                           ))}
                         </div>
@@ -517,7 +562,7 @@ export default function PartnersDashboard() {
                         <span>💬</span> Talking Points
                       </h3>
                       <ul className="space-y-2">
-                        {prep.talkingPoints.map((point, i) => (
+                        {prep.talkingPoints.map((point: string, i: number) => (
                           <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
                             <span className="text-amber-500 mt-0.5">•</span>
                             <span>{point}</span>
@@ -535,6 +580,13 @@ export default function PartnersDashboard() {
                         {prep.marketContext}
                       </p>
                     </div>
+                    
+                    {/* AI Badge */}
+                    {livePrep && (
+                      <div className="text-center text-gray-500 text-xs pt-2">
+                        ✨ Generated by Claude • Refreshed just now
+                      </div>
+                    )}
                   </>
                 );
               })()}
