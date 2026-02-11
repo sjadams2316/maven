@@ -1,6 +1,6 @@
 # Client Portal Team — Knowledge Base
 
-*The `/c/[code]` pages. Calm, advisor-curated, luxury concierge experience.*
+*The `/c/[code]` pages. Luxury concierge wealth command center.*
 
 ---
 
@@ -11,20 +11,87 @@ The Client Portal team owns:
 - Client-facing experience (NOT advisor tools)
 - Advisor preview mode (`?preview=true`)
 - Calm UX philosophy
+- **Branding: Always "Maven Partners" (not individual advisor names)**
 
 ---
 
-## Key Files
+## Expanded Section Structure
 
 ```
 maven/apps/dashboard/src/app/c/[code]/
-├── layout.tsx          # Shared layout, dark theme
-├── page.tsx            # Home/overview
-├── portfolio/page.tsx  # Holdings view
-├── insights/page.tsx   # Curated insights
-├── documents/page.tsx  # Document vault
-└── contact/page.tsx    # Advisor contact
+├── layout.tsx              # Shared layout, dark theme, Maven Partners branding
+├── page.tsx                # Home: net worth, goals, weekly commentary
+├── family/page.tsx         # Family/household with drill-ins per member
+├── portfolio/page.tsx      # Holdings view (calm, no alerts)
+├── social-security/page.tsx # SS strategy, benefits, timeline
+├── estate/page.tsx         # Beneficiaries, trusts, documents, estate value
+├── tax/page.tsx            # Year-end projection, Roth opportunities
+├── philanthropy/page.tsx   # Charitable giving, DAF, impact
+├── documents/page.tsx      # Document vault
+├── messages/page.tsx       # Secure communication with Maven Partners
+└── contact/page.tsx        # Advisor contact info
 ```
+
+---
+
+## Section Details
+
+### Home (`/c/[code]`)
+- Net worth display (clean, prominent)
+- Goal progress rings
+- Confidence messaging ("You're on track")
+- **Weekly Commentary** from Maven Partners (AI-generated from market + portfolio)
+- Quick links to other sections
+
+### Family/Household (`/c/[code]/family`)
+- List of family members (spouse, children, parents)
+- Per-person drill-in showing:
+  - Their accounts/assets
+  - Beneficiary designations where they appear
+  - Dependents (for tax purposes)
+  - Education planning (529s for children)
+- Household-level summary
+
+### Social Security (`/c/[code]/social-security`)
+- Your current SS strategy (claiming ages)
+- Projected monthly benefits
+- Break-even analysis visualization
+- Spousal coordination (if applicable)
+- Timeline showing key dates
+
+### Estate Planning (`/c/[code]/estate`)
+- Beneficiary summary across all accounts
+- Trust status (if applicable)
+- Estate value estimate
+- Key documents (will, POA, healthcare directive) - status indicators
+- "Next steps" if documents are missing/outdated
+
+### Tax Planning (`/c/[code]/tax`)
+- Year-end tax projection
+- Estimated federal/state liability
+- Roth conversion opportunities (advisor-approved)
+- Tax-loss harvesting status (not action items, just "we've saved you $X")
+- Important dates/deadlines
+
+### Philanthropy (`/c/[code]/philanthropy`)
+- Charitable giving summary (YTD, historical)
+- Donor-advised fund balance (if applicable)
+- Impact tracking
+- Giving goals
+
+### Documents (`/c/[code]/documents`)
+- Organized vault:
+  - Statements
+  - Tax returns
+  - Estate documents
+  - Insurance policies
+- Upload capability
+- Secure sharing
+
+### Messages (`/c/[code]/messages`)
+- Secure thread with Maven Partners team
+- Message history
+- Notification preferences
 
 ---
 
