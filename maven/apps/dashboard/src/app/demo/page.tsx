@@ -266,16 +266,51 @@ export default function DemoPage() {
       buckets.other += ((decomposed.cash + decomposed.gold + decomposed.alternatives) / totalValue) * 100;
     });
     
-    // Round individual components first, then sum for "other" so tooltip math adds up
+    // Largest Remainder Method - ensures percentages sum to exactly 100%
+    // 1. Floor all values
+    // 2. Distribute remaining points to values with largest fractional parts
+    const roundToSum100 = (values: { key: string; value: number }[]): Record<string, number> => {
+      const floored = values.map(v => ({ 
+        key: v.key, 
+        floored: Math.floor(v.value), 
+        remainder: v.value - Math.floor(v.value) 
+      }));
+      
+      let sum = floored.reduce((acc, v) => acc + v.floored, 0);
+      const target = 100;
+      
+      // Sort by remainder descending to distribute extra points fairly
+      const sorted = [...floored].sort((a, b) => b.remainder - a.remainder);
+      
+      // Add 1 to items with largest remainders until we hit 100
+      let idx = 0;
+      while (sum < target && idx < sorted.length) {
+        sorted[idx].floored += 1;
+        sum += 1;
+        idx += 1;
+      }
+      
+      return Object.fromEntries(floored.map(v => [v.key, v.floored]));
+    };
+    
+    // Round the display categories (4 items: usStocks, intlStocks, bonds, other)
+    const otherRaw = buckets.crypto + buckets.reits + buckets.other;
+    const displayValues = roundToSum100([
+      { key: 'usStocks', value: buckets.usStocks },
+      { key: 'intlStocks', value: buckets.intlStocks },
+      { key: 'bonds', value: buckets.bonds },
+      { key: 'other', value: otherRaw },
+    ]);
+    
+    // Round detail values separately for tooltip (these don't need to sum to 100)
     const cryptoRounded = Math.round(buckets.crypto);
     const reitsRounded = Math.round(buckets.reits);
-    const miscRounded = Math.round(buckets.other);
     
     return {
-      usStocks: Math.round(buckets.usStocks),
-      intlStocks: Math.round(buckets.intlStocks),
-      bonds: Math.round(buckets.bonds),
-      other: cryptoRounded + reitsRounded + miscRounded, // Sum of rounded values so tooltip math is correct
+      usStocks: displayValues.usStocks,
+      intlStocks: displayValues.intlStocks,
+      bonds: displayValues.bonds,
+      other: displayValues.other,
       cryptoDetail: cryptoRounded,
       reitsDetail: reitsRounded,
     };
