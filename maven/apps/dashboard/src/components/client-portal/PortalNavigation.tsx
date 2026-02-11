@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { 
   Home, 
   Users, 
@@ -14,31 +14,77 @@ import {
   MessageCircle,
   ChevronRight,
   X,
-  Menu
+  Menu,
+  Target,
+  EyeOff
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useClientPortalSettings } from '@/hooks/useClientPortalSettings';
+import type { ClientPortalSections } from '@/lib/client-portal-settings';
 
 interface PortalNavigationProps {
   code: string;
 }
 
-const navSections = [
+interface NavSection {
+  icon: typeof Home;
+  label: string;
+  path: string;
+  description: string;
+  sectionKey?: keyof ClientPortalSections; // Maps to settings.sections
+}
+
+const navSections: NavSection[] = [
   { icon: Home, label: 'Home', path: '', description: 'Dashboard & overview' },
-  { icon: Users, label: 'Family', path: '/family', description: 'Household members' },
-  { icon: PieChart, label: 'Portfolio', path: '/portfolio', description: 'Holdings & performance' },
-  { icon: Shield, label: 'Social Security', path: '/social-security', description: 'Benefits & strategy' },
-  { icon: Landmark, label: 'Estate', path: '/estate', description: 'Beneficiaries & planning' },
-  { icon: Receipt, label: 'Tax', path: '/tax', description: 'Projections & planning' },
-  { icon: Heart, label: 'Philanthropy', path: '/philanthropy', description: 'Charitable giving' },
-  { icon: FileText, label: 'Documents', path: '/documents', description: 'Your document vault' },
-  { icon: MessageCircle, label: 'Messages', path: '/messages', description: 'Contact Maven Partners' },
+  { icon: Users, label: 'Family', path: '/family', description: 'Household members', sectionKey: 'family' },
+  { icon: PieChart, label: 'Portfolio', path: '/portfolio', description: 'Holdings & performance', sectionKey: 'portfolio' },
+  { icon: Target, label: 'Goals', path: '/goals', description: 'Track your progress', sectionKey: 'goals' },
+  { icon: Shield, label: 'Social Security', path: '/social-security', description: 'Benefits & strategy', sectionKey: 'socialSecurity' },
+  { icon: Landmark, label: 'Estate', path: '/estate', description: 'Beneficiaries & planning', sectionKey: 'estate' },
+  { icon: Receipt, label: 'Tax', path: '/tax', description: 'Projections & planning', sectionKey: 'taxPlanning' },
+  { icon: Heart, label: 'Philanthropy', path: '/philanthropy', description: 'Charitable giving', sectionKey: 'philanthropy' },
+  { icon: FileText, label: 'Documents', path: '/documents', description: 'Your document vault', sectionKey: 'documents' },
+  { icon: MessageCircle, label: 'Messages', path: '/messages', description: 'Contact Maven Partners', sectionKey: 'messages' },
 ];
 
-export function PortalNavigation({ code }: PortalNavigationProps) {
+function PortalNavigationInner({ code }: PortalNavigationProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const basePath = `/c/${code}`;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Fetch settings to determine which sections to show
+  const { settings, isLoading, isSectionEnabled } = useClientPortalSettings(code);
+  
+  // Check if in advisor preview mode
+  const isPreview = searchParams.get('preview') === 'true';
+
+  // Filter nav items based on settings
+  const visibleNavItems = useMemo(() => {
+    if (isLoading) {
+      // While loading, show all items to avoid layout shift
+      return navSections;
+    }
+    
+    return navSections.filter(item => {
+      // Home is always visible
+      if (!item.sectionKey) return true;
+      
+      // Check if section is enabled in settings
+      return isSectionEnabled(item.sectionKey);
+    });
+  }, [isLoading, isSectionEnabled]);
+  
+  // For preview mode: get hidden sections to show indicator
+  const hiddenNavItems = useMemo(() => {
+    if (!isPreview || isLoading) return [];
+    
+    return navSections.filter(item => {
+      if (!item.sectionKey) return false;
+      return !isSectionEnabled(item.sectionKey);
+    });
+  }, [isPreview, isLoading, isSectionEnabled]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -108,7 +154,7 @@ export function PortalNavigation({ code }: PortalNavigationProps) {
         </div>
         
         <div className="p-4 space-y-1">
-          {navSections.map((item) => {
+          {visibleNavItems.map((item) => {
             const href = `${basePath}${item.path}`;
             const active = isActive(item.path);
             
@@ -130,6 +176,25 @@ export function PortalNavigation({ code }: PortalNavigationProps) {
               </Link>
             );
           })}
+          
+          {/* Preview Mode: Show hidden sections indicator */}
+          {isPreview && hiddenNavItems.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-gray-500 px-4 mb-2 flex items-center gap-1.5">
+                <EyeOff className="h-3 w-3" />
+                Hidden for this client
+              </p>
+              {hiddenNavItems.map((item) => (
+                <div
+                  key={item.path}
+                  className="flex items-center gap-3 min-h-[44px] px-4 py-2 rounded-xl text-gray-600 opacity-50"
+                >
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm line-through">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -150,7 +215,7 @@ export function PortalNavigation({ code }: PortalNavigationProps) {
 
         {/* Navigation Items */}
         <div className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navSections.map((item) => {
+          {visibleNavItems.map((item) => {
             const href = `${basePath}${item.path}`;
             const active = isActive(item.path);
             
@@ -172,6 +237,25 @@ export function PortalNavigation({ code }: PortalNavigationProps) {
               </Link>
             );
           })}
+          
+          {/* Preview Mode: Show hidden sections indicator */}
+          {isPreview && hiddenNavItems.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-gray-500 px-4 mb-2 flex items-center gap-1.5">
+                <EyeOff className="h-3 w-3" />
+                Hidden for this client
+              </p>
+              {hiddenNavItems.map((item) => (
+                <div
+                  key={item.path}
+                  className="flex items-center gap-3 min-h-[40px] px-4 py-2 rounded-xl text-gray-600 opacity-50"
+                >
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs line-through">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -182,5 +266,42 @@ export function PortalNavigation({ code }: PortalNavigationProps) {
         </div>
       </nav>
     </>
+  );
+}
+
+// Skeleton loader for navigation
+function NavigationSkeleton() {
+  return (
+    <>
+      {/* Mobile button placeholder */}
+      <div className="md:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-[#111827]/90 rounded-xl animate-pulse" />
+      
+      {/* Desktop sidebar skeleton */}
+      <nav className="hidden md:flex flex-col w-64 bg-[#0a1628] border-r border-white/10 min-h-screen flex-shrink-0">
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+              <div className="h-3 w-16 bg-white/10 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 p-4 space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </nav>
+    </>
+  );
+}
+
+// Export wrapped in Suspense for useSearchParams compatibility
+export function PortalNavigation({ code }: PortalNavigationProps) {
+  return (
+    <Suspense fallback={<NavigationSkeleton />}>
+      <PortalNavigationInner code={code} />
+    </Suspense>
   );
 }
