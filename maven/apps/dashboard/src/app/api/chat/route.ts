@@ -753,6 +753,14 @@ async function executeTool(name: string, input: any, userContext: UserContext, c
         const data = await res.json();
         
         if (!res.ok) {
+          // Provide helpful error messages based on the error type
+          if (data.error === 'Unauthorized' || data.error === 'User not found') {
+            return JSON.stringify({ 
+              status: 'demo_limitation', 
+              message: 'Tax scanning requires a connected account. In demo mode, you can view the pre-loaded tax opportunities on the Tax Harvesting page instead.',
+              suggestion: 'Try asking me about the tax-loss harvesting opportunities shown in your demo portfolio, or visit /tax-harvesting to see them.'
+            });
+          }
           return JSON.stringify({ status: 'error', message: data.error || 'Failed to scan portfolio' });
         }
         
