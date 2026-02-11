@@ -61,9 +61,41 @@ const DEMO_ALERTS = [
 ];
 
 const DEMO_MEETINGS = [
-  { id: '1', client: 'Robert Chen', time: '2:00 PM', type: 'Quarterly Review' },
-  { id: '2', client: 'Michael Thompson', time: '4:30 PM', type: 'Portfolio Update' },
+  { id: '1', clientId: '1', client: 'Robert Chen', time: '2:00 PM', type: 'Quarterly Review' },
+  { id: '2', clientId: '4', client: 'Michael Thompson', time: '4:30 PM', type: 'Portfolio Update' },
 ];
+
+// AI-generated meeting prep content (in production, this would come from Claude)
+const MEETING_PREP: Record<string, { summary: string; talkingPoints: string[]; alerts: string[]; marketContext: string }> = {
+  '1': {
+    summary: "Robert & Linda Chen have $1.3M AUM with a moderate risk profile. Their primary goal is retirement in 2032. Portfolio is up 9.4% YTD, outperforming their benchmark by 1.2%.",
+    talkingPoints: [
+      "Portfolio drift exceeds 5% — recommend rebalancing international allocation",
+      "Tax-loss harvesting opportunity: $3,200 in unrealized losses in VXUS",
+      "Roth conversion window: Their income is lower this year due to Linda's sabbatical",
+      "529 plan for grandson — they mentioned interest last quarter"
+    ],
+    alerts: [
+      "⚠️ Concentrated position: Apple at 12% (above 10% threshold)",
+      "📊 Rebalance needed: International underweight by 4%"
+    ],
+    marketContext: "S&P 500 down 1.2% this week on inflation concerns. Fed minutes released Wednesday showed hawkish lean. Their bond allocation provides good cushion."
+  },
+  '4': {
+    summary: "Michael Thompson has $520K AUM, aggressive growth profile. Primary goal is early retirement at 55 (8 years). Portfolio up 8.9% YTD.",
+    talkingPoints: [
+      "Review concentrated tech positions — 35% in FAANG stocks",
+      "Discuss increasing 401(k) contribution (currently at 12%, max is 23K)",
+      "His company stock vesting next month — plan for diversification",
+      "Update beneficiaries after recent marriage"
+    ],
+    alerts: [
+      "💍 Life event: Recently married — review beneficiaries",
+      "📈 RSU vesting: $45K vesting March 15"
+    ],
+    marketContext: "Tech sector volatile but his long time horizon supports current allocation. Consider adding some value exposure for balance."
+  }
+};
 
 // 12-month trailing data for sparklines
 const SPARKLINE_DATA = {
@@ -82,11 +114,15 @@ function formatCurrency(value: number): string {
 
 export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
+  const [prepModal, setPrepModal] = useState<{ open: boolean; meeting: typeof DEMO_MEETINGS[0] | null }>({ open: false, meeting: null });
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   
   // Helper to preserve demo param in links
   const demoHref = (href: string) => isDemoMode ? `${href}?demo=true` : href;
+  
+  // Get prep content for a meeting
+  const getPrepContent = (clientId: string) => MEETING_PREP[clientId] || null;
 
   return (
     <div className="p-4 md:p-8">
@@ -240,8 +276,11 @@ export default function PartnersDashboard() {
                   </span>
                 </div>
                 <div className="text-white text-sm md:text-base">{meeting.client}</div>
-                <button className="mt-3 w-full py-3 md:py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-colors min-h-[48px]">
-                  Prep Meeting
+                <button 
+                  onClick={() => setPrepModal({ open: true, meeting })}
+                  className="mt-3 w-full py-3 md:py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-sm text-amber-400 hover:text-amber-300 transition-colors min-h-[48px] font-medium"
+                >
+                  ✨ Prep Meeting
                 </button>
               </div>
             ))}
@@ -408,6 +447,117 @@ export default function PartnersDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Meeting Prep Modal */}
+      {prepModal.open && prepModal.meeting && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            onClick={() => setPrepModal({ open: false, meeting: null })}
+          />
+          
+          {/* Modal */}
+          <div className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[80vh] bg-[#12121a] border border-white/10 rounded-2xl z-50 flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2 text-amber-500 text-sm mb-1">
+                  <span>✨</span>
+                  <span>AI Meeting Prep</span>
+                </div>
+                <h2 className="text-xl font-bold text-white">{prepModal.meeting.client}</h2>
+                <p className="text-gray-400 text-sm">{prepModal.meeting.type} • {prepModal.meeting.time}</p>
+              </div>
+              <button 
+                onClick={() => setPrepModal({ open: false, meeting: null })}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <span className="text-gray-400 text-xl">×</span>
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+              {(() => {
+                const prep = getPrepContent(prepModal.meeting.clientId);
+                if (!prep) return <p className="text-gray-400">No prep data available</p>;
+                
+                return (
+                  <>
+                    {/* Summary */}
+                    <div>
+                      <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                        <span>📋</span> Client Summary
+                      </h3>
+                      <p className="text-gray-300 text-sm leading-relaxed bg-white/5 rounded-xl p-4">
+                        {prep.summary}
+                      </p>
+                    </div>
+                    
+                    {/* Alerts */}
+                    {prep.alerts.length > 0 && (
+                      <div>
+                        <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                          <span>🚨</span> Action Items
+                        </h3>
+                        <div className="space-y-2">
+                          {prep.alerts.map((alert, i) => (
+                            <div key={i} className="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                              {alert}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Talking Points */}
+                    <div>
+                      <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                        <span>💬</span> Talking Points
+                      </h3>
+                      <ul className="space-y-2">
+                        {prep.talkingPoints.map((point, i) => (
+                          <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                            <span className="text-amber-500 mt-0.5">•</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {/* Market Context */}
+                    <div>
+                      <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                        <span>📈</span> Market Context
+                      </h3>
+                      <p className="text-gray-300 text-sm leading-relaxed bg-white/5 rounded-xl p-4">
+                        {prep.marketContext}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 md:p-6 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+              <Link
+                href={demoHref(`/partners/clients/${prepModal.meeting.clientId}`)}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white text-sm font-medium text-center transition-colors min-h-[48px] flex items-center justify-center"
+              >
+                View Full Profile
+              </Link>
+              <button
+                onClick={() => setPrepModal({ open: false, meeting: null })}
+                className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 rounded-xl text-white text-sm font-medium transition-colors min-h-[48px]"
+              >
+                Ready for Meeting ✓
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
