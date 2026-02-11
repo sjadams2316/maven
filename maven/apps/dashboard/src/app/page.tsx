@@ -282,9 +282,22 @@ export default function LandingPage() {
             </div>
             
             {/* Trust signals - simpler */}
-            <p className="text-sm text-gray-500 mb-10">
+            <p className="text-sm text-gray-500 mb-6">
               Free during beta • No credit card • Your data stays private
             </p>
+            
+            {/* Maven Partners Link */}
+            <Link
+              href="/partners"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 hover:text-amber-300 transition-all mb-10 group"
+            >
+              <div className="w-5 h-5 bg-gradient-to-br from-amber-500 to-amber-700 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-xs">M</span>
+              </div>
+              <span className="font-medium text-sm">Are you a financial advisor?</span>
+              <span className="text-amber-500 group-hover:translate-x-1 transition-transform">→</span>
+              <span className="text-amber-500/80 text-sm">Maven Partners</span>
+            </Link>
 
             {/* DEBUG: Show raw marketData state */}
             {process.env.NODE_ENV === 'development' && marketData && (
