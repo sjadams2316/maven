@@ -284,3 +284,33 @@ BACKLOG → SELECTOR → COST CHECK → SPAWN AGENT → QUALITY GATE → SHIP/ES
 "AI Wealth Analyst without AUM fees" — deep analysis without requiring asset transfer
 
 **Full analysis:** `memory/research/competitive/2026-02-09-competitive-landscape.md`
+
+---
+
+## Key Contact: Kaitlin Elliott (2026-02-10)
+- **Role:** Head of Firm-Wide AI, Morgan Stanley
+- **Context:** Sam met her at a conference, showed Maven, sent deck
+- **Status:** Staying in touch
+- **Potential:** Future hire/advisor? "What if she launches with us on the team?"
+
+---
+
+## Tech Stack Decision (2026-02-10)
+
+**Finalized:**
+- Custodian Primary: Altruist (modern API, no minimums)
+- Custodian Secondary: Schwab (banking, PAL, HNW needs)
+- Data Aggregation: BridgeFT WealthTech API
+- Compliance: RIA in a Box
+
+**Maven Replaces:** TAMPs, client portal, eventually CRM and planning tools
+
+---
+
+## Competitive Positioning vs Range (2026-02-10)
+
+Range = D2C, $60M funded, $2,655-$8,955/year, hires CFPs
+Maven = B2B2C, empowers RIAs, 5-10x cheaper, software leverage
+
+**Key insight:** Range validates the market. Maven has better unit economics.
+
