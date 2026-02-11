@@ -526,7 +526,7 @@ export default function PartnersDashboard() {
                 if (!prep) return <p className="text-gray-400">No prep data available</p>;
                 
                 // Handle both static (alerts) and API (actionItems) formats
-                const actionItems = prep.actionItems || prep.alerts || [];
+                const actionItems = ('actionItems' in prep ? prep.actionItems : null) || ('alerts' in prep ? prep.alerts : null) || [];
                 
                 return (
                   <>
