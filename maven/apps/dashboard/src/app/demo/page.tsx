@@ -8,13 +8,13 @@ import InsightCard from '../components/InsightCard';
 import MarketOverview from '../components/MarketOverview';
 import QuickActions from '../components/QuickActions';
 import { decomposeFundHolding } from '@/lib/portfolio-utils';
+import { useUserProfile } from '@/providers/UserProvider';
 import { 
   DemoVariant, 
   DemoHolding,
   getDemoVariant, 
   setDemoVariant,
   getDemoHoldings,
-  enableDemoMode,
   DEMO_NET_WORTH,
   RETIREE_NET_WORTH,
   RETIREE_ANNUAL_INCOME,
@@ -119,6 +119,7 @@ const RETIREE_INSIGHTS: DemoInsight[] = [
 // DEMO PAGE COMPONENT
 // ============================================================================
 export default function DemoPage() {
+  const { enterDemoMode, isDemoMode } = useUserProfile();
   const [variant, setVariant] = useState<DemoVariant>('growth');
   const [dismissedInsights, setDismissedInsights] = useState<number[]>([]);
   const [showTargetAllocation, setShowTargetAllocation] = useState(false);
@@ -127,9 +128,12 @@ export default function DemoPage() {
   const [pricesLoading, setPricesLoading] = useState(false);
   
   // Enable demo mode globally on mount (for Oracle and other components to access demo profile)
+  // Using context's enterDemoMode ensures profile state is properly set
   useEffect(() => {
-    enableDemoMode();
-  }, []);
+    if (!isDemoMode) {
+      enterDemoMode();
+    }
+  }, [enterDemoMode, isDemoMode]);
   
   // Load saved variant preference
   useEffect(() => {
