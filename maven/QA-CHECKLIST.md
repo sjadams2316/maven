@@ -95,5 +95,51 @@ grep -rn "800000\|797500\|620000" apps/dashboard/src/app/
 
 ---
 
-*Last updated: 2026-02-08*
+## 🚨 2026-02-11 Bug Patterns (NEW)
+
+### Missing Route Check (L011)
+Before shipping ANY UI with links:
+```bash
+# Verify every href has a corresponding page.tsx
+grep -roh 'href="/c/\[code\]/[^"]*"' src --include="*.tsx" | sort -u
+# Then check: ls apps/dashboard/src/app/c/[code]/
+```
+
+### Demo Mode Preservation (L012)
+In any page under `/partners/`:
+- Use `demoHref()` helper for ALL internal links
+- Search for violations:
+```bash
+grep -n 'href="/partners/' src/app/partners --include="*.tsx" | grep -v demoHref | grep -v 'demo=true'
+```
+
+### Auth Race Conditions (L013)
+- Use `usePathname()` not `useState` for URL tracking
+- Never check auth state before path is determined
+
+### Brand Consistency (L014)
+Before any demo:
+```bash
+grep -rn "Adams Wealth\|placeholder\|TODO\|FIXME" src --include="*.tsx"
+```
+
+## ✅ Partners Dashboard Checklist
+
+- [ ] All nav sidebar links work with `?demo=true`
+- [ ] "View all →" links preserve demo mode
+- [ ] Quick Action buttons work
+- [ ] Action Required items are clickable → client detail
+- [ ] Prep Meeting opens modal with AI content
+- [ ] Client table links work
+
+## ✅ Client Portal Checklist
+
+- [ ] All sidebar nav links work: Home, Family, Portfolio, Goals, Explore, Social Security, Estate, Tax, Philanthropy, Documents, Messages
+- [ ] "Explore Your Plan" cards link correctly
+- [ ] Oracle/Ask Maven button works
+- [ ] All pages show demo content (not 404)
+
+---
+
+*Last updated: 2026-02-11*
 *Update this checklist when you find new bug patterns!*
