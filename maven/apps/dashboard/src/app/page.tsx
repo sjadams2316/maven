@@ -335,9 +335,9 @@ export default function LandingPage() {
                 
                 {/* Index Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                  {/* S&P 500 */}
+                  {/* SPY */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">S&P 500</div>
+                    <div className="text-xs text-gray-500 mb-1">SPY</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
                       {marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
@@ -373,9 +373,9 @@ export default function LandingPage() {
                     </div>
                   </div>
                   
-                  {/* Dow Jones */}
+                  {/* DIA */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">Dow Jones</div>
+                    <div className="text-xs text-gray-500 mb-1">DIA</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
                       {marketData.indices?.dow?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
@@ -410,9 +410,9 @@ export default function LandingPage() {
                     </div>
                   </div>
                   
-                  {/* Nasdaq */}
+                  {/* QQQ */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">Nasdaq</div>
+                    <div className="text-xs text-gray-500 mb-1">QQQ</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
                       {marketData.indices?.nasdaq?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
