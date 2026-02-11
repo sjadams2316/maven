@@ -12,6 +12,10 @@
 import { NextResponse } from 'next/server';
 import { cacheHealth, getMarketPrices } from '@/lib/cache';
 
+// Current symbols we actively fetch and cache
+// Only check these for staleness (ignore legacy ETF symbols)
+const ACTIVE_SYMBOLS = ['^GSPC', '^DJI', '^IXIC', '^RUT', 'BTC', 'TAO'];
+
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
@@ -60,26 +64,33 @@ export async function GET() {
   let marketSymbols: string[] = [];
   
   if (prices) {
-    const symbols = Object.keys(prices);
-    marketSymbols = symbols;
+    // Only check timestamps for symbols we actively fetch
+    // Ignore legacy symbols (SPY, QQQ, etc.) that may have old cached values
+    const activeSymbolsInCache = ACTIVE_SYMBOLS.filter(s => prices[s]);
+    marketSymbols = activeSymbolsInCache;
     
-    // Find oldest price
-    const timestamps = Object.values(prices).map(p => p.timestamp);
-    const oldest = Math.min(...timestamps);
-    marketAge = Math.round((Date.now() - oldest) / 1000);
-    
-    // Check freshness
-    const FIVE_MINUTES = 5 * 60;
-    const ONE_HOUR = 60 * 60;
-    
-    if (marketAge < FIVE_MINUTES) {
-      marketStatus = 'ok';
-    } else if (marketAge < ONE_HOUR) {
-      marketStatus = 'stale';
-      alerts.push(`MARKET DATA: Prices are ${Math.round(marketAge / 60)} minutes old`);
+    if (activeSymbolsInCache.length === 0) {
+      // No active symbols cached yet
+      marketStatus = 'missing';
     } else {
-      marketStatus = 'stale';
-      alerts.push(`MARKET DATA: Prices are ${Math.round(marketAge / 3600)} hours old (CRITICAL)`);
+      // Find oldest price among active symbols only
+      const timestamps = activeSymbolsInCache.map(s => prices[s].timestamp);
+      const oldest = Math.min(...timestamps);
+      marketAge = Math.round((Date.now() - oldest) / 1000);
+    
+      // Check freshness
+      const FIVE_MINUTES = 5 * 60;
+      const ONE_HOUR = 60 * 60;
+      
+      if (marketAge < FIVE_MINUTES) {
+        marketStatus = 'ok';
+      } else if (marketAge < ONE_HOUR) {
+        marketStatus = 'stale';
+        alerts.push(`MARKET DATA: Prices are ${Math.round(marketAge / 60)} minutes old`);
+      } else {
+        marketStatus = 'stale';
+        alerts.push(`MARKET DATA: Prices are ${Math.round(marketAge / 3600)} hours old (CRITICAL)`);
+      }
     }
   } else {
     alerts.push('MARKET DATA: No cached prices available');
