@@ -139,11 +139,21 @@ export default function PartnersClients() {
                     {client.aum > 0 ? `${client.change > 0 ? '+' : ''}${client.change}%` : ''}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {client.alerts > 0 && (
                     <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs font-medium">
                       {client.alerts}
                     </span>
+                  )}
+                  {client.status === 'active' && (
+                    <Link
+                      href={`/c/DEMO-${client.id}?preview=true&advisor=true`}
+                      target="_blank"
+                      onClick={(e) => e.stopPropagation()}
+                      className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs font-medium hover:bg-amber-500/30 transition-colors"
+                    >
+                      👁️ Preview
+                    </Link>
                   )}
                   <span className="text-gray-500">→</span>
                 </div>
@@ -211,12 +221,24 @@ export default function PartnersClients() {
                     )}
                   </td>
                   <td className="p-4 text-right">
-                    <Link
-                      href={`/partners/clients/${client.id}`}
-                      className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] text-gray-500 hover:text-white transition-colors"
-                    >
-                      →
-                    </Link>
+                    <div className="flex items-center justify-end gap-1">
+                      {client.status === 'active' && (
+                        <Link
+                          href={`/c/DEMO-${client.id}?preview=true&advisor=true`}
+                          target="_blank"
+                          className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] text-gray-500 hover:text-amber-400 transition-colors"
+                          title="Preview client portal"
+                        >
+                          👁️
+                        </Link>
+                      )}
+                      <Link
+                        href={`/partners/clients/${client.id}`}
+                        className="inline-flex items-center justify-center min-w-[48px] min-h-[48px] text-gray-500 hover:text-white transition-colors"
+                      >
+                        →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

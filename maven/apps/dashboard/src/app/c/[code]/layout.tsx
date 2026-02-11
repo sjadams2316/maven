@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { ClientHeader, ClientHeaderSkeleton } from '@/components/client-portal/ClientHeader';
 import { ClientNav } from '@/components/client-portal/ClientNav';
+import { PreviewBanner } from '@/components/client-portal/PreviewBanner';
 import '../../globals.css';
 
 // Demo data - will be replaced with API call
@@ -29,6 +30,11 @@ export default async function ClientPortalLayout({
   return (
     <html lang="en">
       <body className="bg-slate-50 min-h-screen">
+        {/* Preview banner for advisors previewing client view */}
+        <Suspense fallback={null}>
+          <PreviewBanner clientName={client.name} />
+        </Suspense>
+        
         <div className="flex min-h-screen">
           {/* Desktop sidebar */}
           <ClientNav code={code} primaryColor={client.primaryColor} />

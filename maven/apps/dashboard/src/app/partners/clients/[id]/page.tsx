@@ -116,9 +116,14 @@ export default function ClientDetail() {
             <span>✉️</span>
             <span className="sm:inline">Message</span>
           </button>
-          <button className="w-full sm:w-auto px-4 py-3 md:py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors font-medium min-h-[48px] text-sm md:text-base">
-            Open Client View
-          </button>
+          <Link
+            href={`/c/DEMO-${DEMO_CLIENT.id}?preview=true&advisor=true`}
+            target="_blank"
+            className="w-full sm:w-auto px-4 py-3 md:py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors font-medium min-h-[48px] text-sm md:text-base flex items-center justify-center gap-2"
+          >
+            <span>👁️</span>
+            Preview Client Portal
+          </Link>
         </div>
       </div>
 
