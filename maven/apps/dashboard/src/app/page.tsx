@@ -13,14 +13,16 @@ import { enableDemoMode } from '@/lib/demo-profile';
 // Fallback market data - shown if API fails or takes too long
 const FALLBACK_MARKET_DATA = {
   indices: {
-    sp500: { price: 694, changePercent: 0.48 },
-    nasdaq: { price: 614, changePercent: 0.77 },
-    dow: { price: 501, changePercent: 0.04 },
+    sp500: { price: 6941.47, changePercent: -0.01, name: 'S&P 500' },
+    nasdaq: { price: 23066.47, changePercent: -0.16, name: 'Nasdaq' },
+    dow: { price: 50121.40, changePercent: -0.13, name: 'Dow 30' },
   },
   crypto: {
-    BTC: { price: 66700, changePercent: -0.6 },
+    BTC: { price: 67500, changePercent: -1.5 },
   },
   timestamp: new Date().toISOString(),
+  marketSession: 'closed',
+  marketLabel: 'Markets Closed',
 };
 
 // Check if US stock market is currently open
@@ -100,17 +102,17 @@ export default function LandingPage() {
         console.log('[Market Data] Raw API response:', JSON.stringify(data, null, 2));
         
         // Transform API response to expected format
-        const stocks: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.stocks || [];
+        const stocks: Array<{ symbol: string; name: string; price: number; change: number; changePercent: number }> = data.stocks || [];
         const crypto: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.crypto || [];
         
         console.log('[Market Data] Stocks array:', stocks);
         
-        // Map stocks array to indices object - use explicit property access
-        const spyData = stocks.find(s => s.symbol === 'SPY');
-        const qqqData = stocks.find(s => s.symbol === 'QQQ');
-        const diaData = stocks.find(s => s.symbol === 'DIA');
+        // Map stocks array to indices object - now using actual index symbols
+        const spxData = stocks.find(s => s.symbol === 'SPX');  // S&P 500
+        const djiData = stocks.find(s => s.symbol === 'DJI');  // Dow Jones
+        const compData = stocks.find(s => s.symbol === 'COMP'); // Nasdaq Composite
         
-        console.log('[Market Data] SPY data:', spyData);
+        console.log('[Market Data] Index data:', { spxData, djiData, compData });
         
         // Map crypto array to object
         const btcData = crypto.find(c => c.symbol === 'BTC');
@@ -118,9 +120,9 @@ export default function LandingPage() {
         // Build market data with explicit number conversion to ensure values are correct
         const marketState = {
           indices: {
-            sp500: spyData ? { price: Number(spyData.price) || 0, changePercent: Number(spyData.changePercent) || 0 } : null,
-            nasdaq: qqqData ? { price: Number(qqqData.price) || 0, changePercent: Number(qqqData.changePercent) || 0 } : null,
-            dow: diaData ? { price: Number(diaData.price) || 0, changePercent: Number(diaData.changePercent) || 0 } : null,
+            sp500: spxData ? { price: Number(spxData.price) || 0, changePercent: Number(spxData.changePercent) || 0, name: spxData.name } : null,
+            nasdaq: compData ? { price: Number(compData.price) || 0, changePercent: Number(compData.changePercent) || 0, name: compData.name } : null,
+            dow: djiData ? { price: Number(djiData.price) || 0, changePercent: Number(djiData.changePercent) || 0, name: djiData.name } : null,
           },
           crypto: {
             BTC: btcData ? { price: Number(btcData.price) || 0, changePercent: Number(btcData.changePercent) || 0 } : null,
@@ -342,11 +344,11 @@ export default function LandingPage() {
                 
                 {/* Index Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                  {/* SPY */}
+                  {/* S&P 500 */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">SPY</div>
+                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.sp500?.name || 'S&P 500'}</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-sm font-medium ${marketData.indices?.sp500?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -380,11 +382,11 @@ export default function LandingPage() {
                     </div>
                   </div>
                   
-                  {/* DIA */}
+                  {/* Dow 30 */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">DIA</div>
+                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.dow?.name || 'Dow 30'}</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.dow?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {marketData.indices?.dow?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-sm font-medium ${marketData.indices?.dow?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -417,11 +419,11 @@ export default function LandingPage() {
                     </div>
                   </div>
                   
-                  {/* QQQ */}
+                  {/* Nasdaq */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">QQQ</div>
+                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.nasdaq?.name || 'Nasdaq'}</div>
                     <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.nasdaq?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {marketData.indices?.nasdaq?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`text-sm font-medium ${marketData.indices?.nasdaq?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>

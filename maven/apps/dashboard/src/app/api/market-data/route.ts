@@ -13,24 +13,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedPrice, setCachedPrice, MarketPrice } from '@/lib/cache';
 
-const STOCK_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
+// Actual index symbols (Yahoo Finance format)
+const INDEX_SYMBOLS = ['^GSPC', '^DJI', '^IXIC', '^RUT'];
 
-// Note: We use ETFs as proxies for indices because they have better data availability
-// Labels indicate this to users for accuracy
-const STOCK_NAMES: Record<string, string> = {
-  SPY: 'S&P 500 ETF',
-  QQQ: 'Nasdaq 100 ETF',
-  DIA: 'Dow 30 ETF',
-  IWM: 'Russell 2000 ETF',
+// Display names for indices
+const INDEX_NAMES: Record<string, string> = {
+  '^GSPC': 'S&P 500',
+  '^DJI': 'Dow 30',
+  '^IXIC': 'Nasdaq',
+  '^RUT': 'Russell 2000',
 };
 
-// Short names for compact displays (market ticker)
-const STOCK_SHORT_NAMES: Record<string, string> = {
-  SPY: 'S&P 500',
-  QQQ: 'Nasdaq',
-  DIA: 'Dow',
-  IWM: 'Russell',
+// Clean symbols for response (without ^)
+const INDEX_CLEAN_SYMBOLS: Record<string, string> = {
+  '^GSPC': 'SPX',
+  '^DJI': 'DJI',
+  '^IXIC': 'COMP',
+  '^RUT': 'RUT',
 };
+
+// Legacy ETF symbols for fallback data
+const ETF_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
 
 // ============================================================================
 // MARKET SESSION DETECTION
@@ -89,6 +92,12 @@ function getMarketSession(): { session: MarketSession; label: string } {
 // These should RARELY be used if caching is working properly
 // ============================================================================
 const FALLBACK_PRICES: Record<string, { price: number; change: number; changePercent: number }> = {
+  // Actual index values
+  '^GSPC': { price: 6941.47, change: -0.50, changePercent: -0.01 },
+  '^DJI': { price: 50121.40, change: -65.00, changePercent: -0.13 },
+  '^IXIC': { price: 23066.47, change: -37.00, changePercent: -0.16 },
+  '^RUT': { price: 2669.47, change: -10.00, changePercent: -0.38 },
+  // ETF fallbacks (legacy)
   SPY: { price: 692.00, change: -0.10, changePercent: -0.01 },
   QQQ: { price: 613.00, change: 1.80, changePercent: 0.29 },
   DIA: { price: 501.00, change: -0.70, changePercent: -0.14 },
@@ -103,6 +112,51 @@ const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePer
 // ============================================================================
 // DATA FETCHING
 // ============================================================================
+
+/**
+ * Fetch actual index values from Yahoo Finance
+ * Uses ^GSPC, ^DJI, ^IXIC, ^RUT for real index values (not ETFs)
+ */
+async function fetchIndexFromYahoo(symbol: string): Promise<MarketPrice | null> {
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`,
+      {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+        },
+      }
+    );
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+    const quotes = data?.chart?.result?.[0]?.indicators?.quote?.[0];
+    
+    if (meta?.regularMarketPrice) {
+      const price = meta.regularMarketPrice;
+      // Get previous close from the first close value or chartPreviousClose
+      const prevClose = meta.chartPreviousClose || meta.previousClose || (quotes?.close?.[0]) || price;
+      const change = price - prevClose;
+      const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
+      
+      return {
+        symbol,
+        price,
+        change,
+        changePercent,
+        timestamp: Date.now(),
+      };
+    }
+  } catch (err) {
+    console.error(`Yahoo index fetch error for ${symbol}:`, err instanceof Error ? err.message : err);
+  }
+  
+  return null;
+}
 
 /**
  * Fetch extended hours data from Polygon.io
@@ -330,41 +384,16 @@ export async function GET(request: NextRequest) {
   let dataSource = 'live';
   
   // ========================================================================
-  // FETCH STOCKS
+  // FETCH INDICES (actual index values, not ETFs)
   // ========================================================================
   
-  // During extended hours, try Polygon first for extended hours data
-  let polygonPrices = new Map<string, MarketPrice>();
-  if (marketSession.session === 'pre-market' || marketSession.session === 'after-hours') {
-    polygonPrices = await fetchFromPolygon(STOCK_SYMBOLS);
-    if (polygonPrices.size > 0) {
-      diagnostics.sources.push('polygon:extended');
-    }
-  }
-  
-  // Try FMP for regular hours or as fallback
-  const fmpPrices = await fetchFromFMP(STOCK_SYMBOLS);
-  
-  if (fmpPrices.size > 0) {
-    diagnostics.sources.push('fmp');
-  }
-  
-  // For each symbol, get best available data
-  for (const symbol of STOCK_SYMBOLS) {
-    // During extended hours, prefer Polygon data
-    let price: MarketPrice | null = polygonPrices.get(symbol) || null;
+  // Fetch actual index data from Yahoo Finance
+  // Yahoo is the best free source for actual index values (^GSPC, ^DJI, etc.)
+  for (const symbol of INDEX_SYMBOLS) {
+    let price: MarketPrice | null = await fetchIndexFromYahoo(symbol);
     
-    // Fall back to FMP
-    if (!price) {
-      price = fmpPrices.get(symbol) || null;
-    }
-    
-    // If FMP failed for this symbol, try Yahoo
-    if (!price) {
-      price = await fetchFromYahoo(symbol);
-      if (price) {
-        diagnostics.sources.push(`yahoo:${symbol}`);
-      }
+    if (price) {
+      diagnostics.sources.push(`yahoo:${symbol}`);
     }
     
     // If live failed, try persistent cache
@@ -403,8 +432,8 @@ export async function GET(request: NextRequest) {
     }
     
     stockData.push({
-      symbol,
-      name: STOCK_NAMES[symbol] || symbol,
+      symbol: INDEX_CLEAN_SYMBOLS[symbol] || symbol,
+      name: INDEX_NAMES[symbol] || symbol,
       price: price.price,
       change: price.change,
       changePercent: price.changePercent,
