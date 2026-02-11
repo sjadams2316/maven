@@ -100,3 +100,40 @@ grep -rn "TODO\|FIXME\|XXX" src --include="*.tsx" | head -20
 **Pattern:** Most bugs were "incomplete implementation" — UI built before all destinations existed.
 
 **Fix:** Route existence validation in CI + comprehensive click-through before marking done.
+
+---
+
+### L016: Stale Fallback Data (CRITICAL - Sam Reported 3:36 PM)
+**What happened:** Market data showed SPY at $605 when actual price was $692 (14% off!)
+
+**Root cause:** Hardcoded fallback prices were 3+ months old. When live API fails (timeout, rate limit), users see ancient data.
+
+**Sam's words:** "This is killing the trust of our product. Project Pantheon is not doing what we said."
+
+**The real problem:** Architecture was fragile:
+- Fallback = static prices from October 2025
+- No caching of last known good values
+- Any API hiccup = massively wrong data
+
+**Fix applied:**
+1. Updated all fallback prices to current market values
+2. Added in-memory caching of last known good prices (1hr TTL)
+3. Cascade: Live → Cache → Fallback
+4. Added `source` field to API response for debugging
+
+**Prevention:**
+- Fallback data is emergency-only, not a feature
+- Any displayed data needs recency guarantees
+- Add monitoring when using fallback data
+- Review fallback prices monthly or when markets move >5%
+
+**Rule:** Data shown to users must NEVER be more than 1 hour stale.
+
+**Commit:** `5392841`
+
+---
+
+## Updated Bug Count
+
+**Bugs caught by Sam today: 6** (was 5)
+- This one is the worst because it's REPEAT behavior
