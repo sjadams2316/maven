@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Sparkline from '@/components/Sparkline';
 
 // Quick action definitions
@@ -54,9 +55,9 @@ const DEMO_CLIENTS = [
 ];
 
 const DEMO_ALERTS = [
-  { id: '1', client: 'Robert Chen', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning' },
-  { id: '2', client: 'Sarah Park', type: 'tax', message: 'Tax-loss harvesting opportunity: $12,400', severity: 'info' },
-  { id: '3', client: 'Jennifer Walsh', type: 'risk', message: 'Concentrated position: NVDA at 18%', severity: 'warning' },
+  { id: '1', clientId: '1', client: 'Robert Chen', type: 'rebalance', message: 'Portfolio drift exceeds 5% threshold', severity: 'warning' },
+  { id: '2', clientId: '5', client: 'Sarah Park', type: 'tax', message: 'Tax-loss harvesting opportunity: $12,400', severity: 'info' },
+  { id: '3', clientId: '3', client: 'Jennifer Walsh', type: 'risk', message: 'Concentrated position: NVDA at 18%', severity: 'warning' },
 ];
 
 const DEMO_MEETINGS = [
@@ -81,6 +82,11 @@ function formatCurrency(value: number): string {
 
 export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
+  const searchParams = useSearchParams();
+  const isDemoMode = searchParams.get('demo') === 'true';
+  
+  // Helper to preserve demo param in links
+  const demoHref = (href: string) => isDemoMode ? `${href}?demo=true` : href;
 
   return (
     <div className="p-4 md:p-8">
@@ -175,7 +181,7 @@ export default function PartnersDashboard() {
               <div className="text-lg md:text-xl font-bold text-amber-500">{DASHBOARD_METRICS.rebalancesNeeded}</div>
             </div>
             <Link 
-              href="/partners/rebalance" 
+              href={demoHref("/partners/rebalance")} 
               className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 hover:bg-amber-500/30 transition-colors"
             >
               <span className="text-sm">→</span>
@@ -189,15 +195,16 @@ export default function PartnersDashboard() {
         <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-lg md:text-xl font-semibold text-white">Action Required</h2>
-            <Link href="/partners/insights" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
+            <Link href={demoHref("/partners/insights")} className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
               View all →
             </Link>
           </div>
           <div className="space-y-3 md:space-y-4">
             {DEMO_ALERTS.map((alert) => (
-              <div
+              <Link
                 key={alert.id}
-                className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors cursor-pointer"
+                href={demoHref(`/partners/clients/${alert.clientId}`)}
+                className="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-colors"
               >
                 <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                   alert.severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
@@ -209,10 +216,10 @@ export default function PartnersDashboard() {
                   </div>
                   <p className="text-gray-400 text-xs md:text-sm">{alert.message}</p>
                 </div>
-                <button className="text-gray-500 hover:text-white transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center">
+                <span className="text-gray-500 group-hover:text-amber-500 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center">
                   →
-                </button>
-              </div>
+                </span>
+              </Link>
             ))}
           </div>
         </div>
@@ -255,7 +262,7 @@ export default function PartnersDashboard() {
             {QUICK_ACTIONS.map((action) => (
               <Link
                 key={action.id}
-                href={action.href}
+                href={demoHref(action.href)}
                 className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
                 style={{ minWidth: '48px', minHeight: '48px' }}
               >
@@ -274,7 +281,7 @@ export default function PartnersDashboard() {
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-lg md:text-xl font-semibold text-white">Recent Activity</h2>
-            <Link href="/partners/activity" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
+            <Link href={demoHref("/partners/activity")} className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
               View all →
             </Link>
           </div>
@@ -299,7 +306,7 @@ export default function PartnersDashboard() {
       <div className="mt-6 md:mt-8 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <h2 className="text-lg md:text-xl font-semibold text-white">Top Clients by AUM</h2>
-          <Link href="/partners/clients" className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
+          <Link href={demoHref("/partners/clients")} className="text-amber-500 text-sm hover:text-amber-400 min-h-[48px] min-w-[48px] flex items-center justify-center md:min-h-0 md:min-w-0">
             View all →
           </Link>
         </div>
