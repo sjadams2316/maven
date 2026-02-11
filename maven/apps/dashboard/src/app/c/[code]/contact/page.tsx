@@ -1,228 +1,223 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Phone, Mail, Calendar, MapPin, Send, CheckCircle } from 'lucide-react';
-import { clsx } from 'clsx';
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
 
-// Demo data
+// Demo advisor data
 const DEMO_ADVISOR = {
-  name: 'Sarah Adams',
-  title: 'Senior Financial Advisor',
-  firm: 'Maven Partners',
+  name: 'Sam Adams',
+  title: 'Wealth Advisor, CFP®',
+  firm: 'Adams Wealth Partners',
+  email: 'sam@adamswealth.com',
   phone: '(555) 123-4567',
-  email: 'sarah@mavenpartners.com',
-  address: '123 Financial Way, Suite 400\nNew York, NY 10001',
-  availability: 'Mon-Fri, 9am-5pm EST',
-  photo: undefined,
+  photo: null,
+  bio: "With over 15 years of experience in wealth management, I'm dedicated to helping families achieve their financial goals. I specialize in retirement planning, tax optimization, and multi-generational wealth strategies.",
+  credentials: ['CFP®', 'CFA', 'MBA'],
+  yearsExperience: 15,
+  clientsSince: '2022-03-15',
 };
 
-// L006: Skeleton matches layout - dark theme
-function ContactSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="h-7 w-40 bg-white/10 rounded animate-pulse" />
-      
-      {/* Advisor card skeleton */}
-      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="h-16 w-16 rounded-full bg-white/10 animate-pulse" />
-          <div className="space-y-2">
-            <div className="h-5 w-32 bg-white/10 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-white/10 rounded animate-pulse" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-12 w-full bg-white/10 rounded-xl animate-pulse" />
-          <div className="h-12 w-full bg-white/10 rounded-xl animate-pulse" />
-        </div>
-      </div>
-      
-      {/* Contact details skeleton */}
-      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
-        <div className="h-5 w-40 bg-white/10 rounded animate-pulse mb-4" />
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex gap-3">
-              <div className="h-5 w-5 bg-white/10 rounded animate-pulse" />
-              <div className="space-y-1 flex-1">
-                <div className="h-4 w-16 bg-white/10 rounded animate-pulse" />
-                <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+// Demo meeting slots
+const DEMO_MEETING_SLOTS = [
+  { date: '2026-02-12', time: '10:00 AM', available: true },
+  { date: '2026-02-12', time: '2:00 PM', available: true },
+  { date: '2026-02-13', time: '11:00 AM', available: true },
+  { date: '2026-02-14', time: '9:00 AM', available: true },
+  { date: '2026-02-14', time: '3:00 PM', available: true },
+];
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { 
+    weekday: 'short',
+    month: 'short', 
+    day: 'numeric',
+  });
 }
 
 export default function ContactPage() {
-  const [loading, setLoading] = useState(true);
-  const [advisor, setAdvisor] = useState(DEMO_ADVISOR);
+  const params = useParams();
+  const [messageType, setMessageType] = useState<'general' | 'meeting' | 'urgent'>('general');
   const [message, setMessage] = useState('');
-  const [messageSent, setMessageSent] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo: just show success
-    setMessageSent(true);
-    setMessage('');
-    setTimeout(() => setMessageSent(false), 3000);
+    // In production, this would send the message
+    setSubmitted(true);
   };
 
-  if (loading) {
-    return <ContactSkeleton />;
+  if (submitted) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center">
+          <div className="text-4xl mb-4">✅</div>
+          <h2 className="text-xl font-bold text-white mb-2">Message Sent!</h2>
+          <p className="text-gray-400 mb-6">
+            {messageType === 'meeting' 
+              ? "We'll confirm your meeting shortly." 
+              : "Your advisor will respond within 1 business day."}
+          </p>
+          <button
+            onClick={() => {
+              setSubmitted(false);
+              setMessage('');
+              setSelectedSlot(null);
+            }}
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors min-h-[44px]"
+          >
+            Send another message
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">Contact Your Advisor</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-white mb-2">Contact Your Advisor</h1>
+        <p className="text-gray-400">We're here to help with any questions</p>
+      </div>
 
-      {/* Advisor card */}
-      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
-        <div className="flex items-center gap-4 mb-6">
-          {advisor.photo ? (
-            <img 
-              src={advisor.photo}
-              alt={advisor.name}
-              className="h-16 w-16 rounded-full object-cover"
-            />
-          ) : (
-            <div 
-              className="h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-lg shadow-amber-500/20"
-            >
-              {advisor.name.split(' ').map(n => n[0]).join('')}
+      {/* Advisor Card */}
+      <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 rounded-2xl p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+            {DEMO_ADVISOR.name.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-white font-semibold text-lg">{DEMO_ADVISOR.name}</h2>
+            <p className="text-indigo-300 text-sm">{DEMO_ADVISOR.title}</p>
+            <p className="text-gray-400 text-sm mt-1">{DEMO_ADVISOR.firm}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {DEMO_ADVISOR.credentials.map((cred) => (
+                <span key={cred} className="px-2 py-1 bg-white/10 text-gray-300 text-xs rounded">
+                  {cred}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="text-gray-300 text-sm mt-4 leading-relaxed">
+          {DEMO_ADVISOR.bio}
+        </p>
+      </div>
+
+      {/* Quick Contact Options */}
+      <div className="grid grid-cols-2 gap-4">
+        <a
+          href={`tel:${DEMO_ADVISOR.phone.replace(/\D/g, '')}`}
+          className="flex flex-col items-center gap-2 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors min-h-[100px] justify-center"
+        >
+          <span className="text-2xl">📞</span>
+          <span className="text-white text-sm font-medium">Call</span>
+          <span className="text-gray-500 text-xs">{DEMO_ADVISOR.phone}</span>
+        </a>
+        <a
+          href={`mailto:${DEMO_ADVISOR.email}`}
+          className="flex flex-col items-center gap-2 p-5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors min-h-[100px] justify-center"
+        >
+          <span className="text-2xl">✉️</span>
+          <span className="text-white text-sm font-medium">Email</span>
+          <span className="text-gray-500 text-xs">{DEMO_ADVISOR.email}</span>
+        </a>
+      </div>
+
+      {/* Message Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+          <h3 className="text-white font-semibold mb-4">Send a Message</h3>
+          
+          {/* Message Type */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { id: 'general', label: '💬 General Question', icon: '💬' },
+              { id: 'meeting', label: '📅 Schedule Meeting', icon: '📅' },
+              { id: 'urgent', label: '🔴 Urgent Matter', icon: '🔴' },
+            ].map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => setMessageType(type.id as any)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
+                  messageType === type.id
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Meeting Slots */}
+          {messageType === 'meeting' && (
+            <div className="mb-4">
+              <p className="text-gray-400 text-sm mb-3">Select a time that works for you:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {DEMO_MEETING_SLOTS.map((slot, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedSlot(`${slot.date}-${slot.time}`)}
+                    className={`p-3 rounded-lg text-left text-sm transition-colors min-h-[48px] ${
+                      selectedSlot === `${slot.date}-${slot.time}`
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-white/5 text-gray-300 border border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    <span className="font-medium">{formatDate(slot.date)}</span>
+                    <span className="text-gray-500 ml-2">{slot.time}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Urgent Notice */}
+          {messageType === 'urgent' && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+              <p className="text-red-400 text-sm">
+                <strong>For true emergencies:</strong> Call {DEMO_ADVISOR.phone} directly. 
+                We'll prioritize your message and respond as quickly as possible.
+              </p>
+            </div>
+          )}
+
+          {/* Message Input */}
           <div>
-            <h2 className="text-xl font-semibold text-white">{advisor.name}</h2>
-            <p className="text-gray-400">{advisor.title}</p>
-            <p className="text-sm text-amber-400">{advisor.firm}</p>
-          </div>
-        </div>
-
-        {/* Quick contact buttons - L002: 48px touch targets */}
-        <div className="grid grid-cols-2 gap-3">
-          <a
-            href={`tel:${advisor.phone.replace(/\D/g, '')}`}
-            className={clsx(
-              'flex items-center justify-center gap-2 min-h-[48px] px-4 py-3',
-              'bg-white/5 rounded-xl font-medium text-gray-300 border border-white/10',
-              'hover:bg-white/10 hover:border-amber-500/20 transition-all duration-200'
-            )}
-          >
-            <Phone className="h-5 w-5" />
-            Call
-          </a>
-          <a
-            href={`mailto:${advisor.email}`}
-            className={clsx(
-              'flex items-center justify-center gap-2 min-h-[48px] px-4 py-3',
-              'bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl font-medium text-black',
-              'hover:from-amber-400 hover:to-amber-500 transition-all duration-200',
-              'shadow-lg shadow-amber-500/20'
-            )}
-          >
-            <Mail className="h-5 w-5" />
-            Email
-          </a>
-        </div>
-      </div>
-
-      {/* Contact details */}
-      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
-        <h3 className="font-semibold text-white mb-4">Contact Information</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Phone className="h-5 w-5 text-gray-500 mt-0.5" />
-            <div>
-              <p className="font-medium text-white">Phone</p>
-              <a 
-                href={`tel:${advisor.phone.replace(/\D/g, '')}`}
-                className="text-gray-400 hover:text-amber-400 transition-colors"
-              >
-                {advisor.phone}
-              </a>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <Mail className="h-5 w-5 text-gray-500 mt-0.5" />
-            <div>
-              <p className="font-medium text-white">Email</p>
-              <a 
-                href={`mailto:${advisor.email}`}
-                className="text-gray-400 hover:text-amber-400 transition-colors"
-              >
-                {advisor.email}
-              </a>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
-            <div>
-              <p className="font-medium text-white">Availability</p>
-              <p className="text-gray-400">{advisor.availability}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
-            <div>
-              <p className="font-medium text-white">Office</p>
-              <p className="text-gray-400 whitespace-pre-line">{advisor.address}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick message form */}
-      <div className="bg-[#12121a] rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10">
-        <h3 className="font-semibold text-white mb-4">Send a Quick Message</h3>
-        
-        {messageSent ? (
-          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
-            <CheckCircle className="h-5 w-5" />
-            <span>Message sent! Your advisor will respond soon.</span>
-          </div>
-        ) : (
-          <form onSubmit={handleSendMessage}>
+            <label className="block text-gray-400 text-sm mb-2">
+              {messageType === 'meeting' ? 'What would you like to discuss?' : 'Your message'}
+            </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className={clsx(
-                'w-full p-4 bg-white/5 border border-white/10 rounded-xl resize-none',
-                'focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50',
-                'text-white text-base placeholder:text-gray-500',
-                'transition-all duration-200'
-              )}
-              rows={4}
+              placeholder={
+                messageType === 'general' 
+                  ? "Ask us anything about your finances..." 
+                  : messageType === 'meeting'
+                    ? "Topics for our meeting..."
+                    : "Describe your urgent matter..."
+              }
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 min-h-[120px] resize-none"
             />
-            <button
-              type="submit"
-              disabled={!message.trim()}
-              className={clsx(
-                // L002: 48px touch target
-                'flex items-center justify-center gap-2 w-full min-h-[48px] mt-4 px-4 py-3',
-                'bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl font-medium text-black',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-                'hover:from-amber-400 hover:to-amber-500 transition-all duration-200',
-                'shadow-lg shadow-amber-500/20'
-              )}
-            >
-              <Send className="h-5 w-5" />
-              Send Message
-            </button>
-          </form>
-        )}
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={!message.trim() || (messageType === 'meeting' && !selectedSlot)}
+            className="w-full mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors min-h-[48px]"
+          >
+            {messageType === 'meeting' ? 'Request Meeting' : 'Send Message'}
+          </button>
+        </div>
+      </form>
+
+      {/* Response Time */}
+      <div className="text-center text-gray-500 text-sm">
+        <p>Typical response time: Within 1 business day</p>
       </div>
     </div>
   );
