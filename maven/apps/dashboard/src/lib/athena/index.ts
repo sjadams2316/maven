@@ -45,6 +45,7 @@ export {
 
 // Providers
 export {
+  // Chutes
   chutesCompletion,
   chutesQuery,
   chutesBatch,
@@ -52,10 +53,21 @@ export {
   isChutesConfigured,
   CHUTES_DEFAULT_MODEL,
   CHUTES_MODELS,
+  // Groq
+  groqCompletion,
+  groqQuery,
+  groqClassify,
+  isGroqConfigured,
+  GROQ_DEFAULT_MODEL,
+  GROQ_MODELS,
+  // Utility
   getAvailableProviders,
   type ChutesMessage,
   type ChutesCompletionOptions,
   type ChutesResponse,
+  type GroqMessage,
+  type GroqCompletionOptions,
+  type GroqResponse,
 } from './providers';
 
 // Oracle Bridge (A/B testing between Claude and Athena)

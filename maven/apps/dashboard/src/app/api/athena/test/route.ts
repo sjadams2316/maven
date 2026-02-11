@@ -13,6 +13,8 @@ import {
   getAvailableProviders,
   CHUTES_MODELS,
   classifyAndRoute,
+  isGroqConfigured,
+  GROQ_MODELS,
 } from '@/lib/athena';
 
 export async function GET() {
@@ -21,11 +23,19 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     athenaVersion: '1.0.0',
+    featureFlags: {
+      athenaEnabled: process.env.ATHENA_ENABLED === 'true',
+      abTestPercent: parseInt(process.env.ATHENA_AB_PERCENT || '0', 10),
+    },
     providers: {
       available: providers,
       chutes: {
         configured: isChutesConfigured(),
         models: CHUTES_MODELS,
+      },
+      groq: {
+        configured: isGroqConfigured(),
+        models: isGroqConfigured() ? GROQ_MODELS : null,
       },
     },
     timestamp: new Date().toISOString(),
