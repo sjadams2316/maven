@@ -42,6 +42,21 @@ Only after QA flow is done:
 - [ ] Check for failed Vercel deploys
 - [ ] Any pending agent completions to verify
 
+## Data Health Check (MANDATORY - Every Heartbeat)
+
+**Before anything else, check data freshness:**
+
+```bash
+curl -s https://mavenwealth.ai/api/health | jq '.status, .checks.marketData, .alerts'
+```
+
+**Action required if:**
+- `status` is not "healthy" → Investigate immediately
+- `marketData.status` is "stale" or "missing" → Check API providers
+- `alerts` array is not empty → Address each alert
+
+**This check exists because:** Market data has broken multiple times (L015, L016). Sam catches it before we do. That's unacceptable.
+
 ---
 
 ## Bug Post-Mortem Trigger
