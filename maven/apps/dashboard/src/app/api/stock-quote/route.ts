@@ -168,6 +168,9 @@ async function fetchYahooChart(symbol: string): Promise<{
   changePercent: number;
   exchange?: string;
   type?: string;
+  afterHoursPrice?: number;
+  afterHoursChange?: number;
+  afterHoursChangePercent?: number;
 } | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
@@ -198,6 +201,17 @@ async function fetchYahooChart(symbol: string): Promise<{
     const change = price - previousClose;
     const changePercent = previousClose ? (change / previousClose) * 100 : 0;
     
+    // After-hours data (if available)
+    let afterHoursPrice: number | undefined;
+    let afterHoursChange: number | undefined;
+    let afterHoursChangePercent: number | undefined;
+    
+    if (meta.postMarketPrice && meta.regularMarketPrice) {
+      afterHoursPrice = meta.postMarketPrice as number;
+      afterHoursChange = afterHoursPrice - (meta.regularMarketPrice as number);
+      afterHoursChangePercent = (afterHoursChange / (meta.regularMarketPrice as number)) * 100;
+    }
+    
     return {
       name: meta.shortName || meta.longName || symbol,
       price,
@@ -205,6 +219,9 @@ async function fetchYahooChart(symbol: string): Promise<{
       changePercent,
       exchange: meta.exchangeName,
       type: meta.instrumentType,
+      afterHoursPrice,
+      afterHoursChange,
+      afterHoursChangePercent,
     };
   } catch (error) {
     console.error('Yahoo chart error:', error);
@@ -318,6 +335,9 @@ export async function GET(request: NextRequest) {
     changePercent: number;
     exchange?: string;
     type?: string;
+    afterHoursPrice?: number;
+    afterHoursChange?: number;
+    afterHoursChangePercent?: number;
   } | null = null;
   let source = 'unknown';
   let isLive = true;
@@ -414,6 +434,12 @@ export async function GET(request: NextRequest) {
     source,
     isLive,
     ...(isLive ? {} : { warning: 'Price may be delayed — using cached data' }),
+    // After-hours data (if available)
+    ...(result.afterHoursPrice && {
+      afterHoursPrice: result.afterHoursPrice,
+      afterHoursChange: result.afterHoursChange,
+      afterHoursChangePercent: result.afterHoursChangePercent,
+    }),
   });
 }
 
