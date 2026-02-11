@@ -102,7 +102,16 @@ export default function LandingPage() {
         console.log('[Market Data] Raw API response:', JSON.stringify(data, null, 2));
         
         // Transform API response to expected format
-        const stocks: Array<{ symbol: string; name: string; price: number; change: number; changePercent: number }> = data.stocks || [];
+        const stocks: Array<{ 
+          symbol: string; 
+          name: string; 
+          price: number; 
+          change: number; 
+          changePercent: number;
+          afterHoursPrice?: number;
+          afterHoursChange?: number;
+          afterHoursChangePercent?: number;
+        }> = data.stocks || [];
         const crypto: Array<{ symbol: string; price: number; change: number; changePercent: number }> = data.crypto || [];
         
         console.log('[Market Data] Stocks array:', stocks);
@@ -120,9 +129,24 @@ export default function LandingPage() {
         // Build market data with explicit number conversion to ensure values are correct
         const marketState = {
           indices: {
-            sp500: spxData ? { price: Number(spxData.price) || 0, changePercent: Number(spxData.changePercent) || 0, name: spxData.name } : null,
-            nasdaq: compData ? { price: Number(compData.price) || 0, changePercent: Number(compData.changePercent) || 0, name: compData.name } : null,
-            dow: djiData ? { price: Number(djiData.price) || 0, changePercent: Number(djiData.changePercent) || 0, name: djiData.name } : null,
+            sp500: spxData ? { 
+              price: Number(spxData.price) || 0, 
+              changePercent: Number(spxData.changePercent) || 0, 
+              name: spxData.name,
+              afterHoursChangePercent: spxData.afterHoursChangePercent,
+            } : null,
+            nasdaq: compData ? { 
+              price: Number(compData.price) || 0, 
+              changePercent: Number(compData.changePercent) || 0, 
+              name: compData.name,
+              afterHoursChangePercent: compData.afterHoursChangePercent,
+            } : null,
+            dow: djiData ? { 
+              price: Number(djiData.price) || 0, 
+              changePercent: Number(djiData.changePercent) || 0, 
+              name: djiData.name,
+              afterHoursChangePercent: djiData.afterHoursChangePercent,
+            } : null,
           },
           crypto: {
             BTC: btcData ? { price: Number(btcData.price) || 0, changePercent: Number(btcData.changePercent) || 0 } : null,
@@ -354,8 +378,14 @@ export default function LandingPage() {
                       <span className={`text-sm font-medium ${marketData.indices?.sp500?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {marketData.indices?.sp500?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.sp500?.changePercent || 0).toFixed(2)}%
                       </span>
+                      {/* After-hours indicator */}
+                      {marketData.marketSession === 'after-hours' && marketData.indices?.sp500?.afterHoursChangePercent !== undefined && (
+                        <span className={`text-xs ${marketData.indices?.sp500?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
+                          🌙 {marketData.indices?.sp500?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.sp500?.afterHoursChangePercent.toFixed(2)}%
+                        </span>
+                      )}
                       {/* Realistic sparkline with gradient */}
-                      <svg className="w-16 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
+                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="sparkGreen1" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor={marketData.indices?.sp500?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>
@@ -392,7 +422,13 @@ export default function LandingPage() {
                       <span className={`text-sm font-medium ${marketData.indices?.dow?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {marketData.indices?.dow?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.dow?.changePercent || 0).toFixed(2)}%
                       </span>
-                      <svg className="w-16 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
+                      {/* After-hours indicator */}
+                      {marketData.marketSession === 'after-hours' && marketData.indices?.dow?.afterHoursChangePercent !== undefined && (
+                        <span className={`text-xs ${marketData.indices?.dow?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
+                          🌙 {marketData.indices?.dow?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.dow?.afterHoursChangePercent.toFixed(2)}%
+                        </span>
+                      )}
+                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="sparkGreen2" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor={marketData.indices?.dow?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>
@@ -429,7 +465,13 @@ export default function LandingPage() {
                       <span className={`text-sm font-medium ${marketData.indices?.nasdaq?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                         {marketData.indices?.nasdaq?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.nasdaq?.changePercent || 0).toFixed(2)}%
                       </span>
-                      <svg className="w-16 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
+                      {/* After-hours indicator */}
+                      {marketData.marketSession === 'after-hours' && marketData.indices?.nasdaq?.afterHoursChangePercent !== undefined && (
+                        <span className={`text-xs ${marketData.indices?.nasdaq?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
+                          🌙 {marketData.indices?.nasdaq?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.nasdaq?.afterHoursChangePercent.toFixed(2)}%
+                        </span>
+                      )}
+                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="sparkGreen3" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor={marketData.indices?.nasdaq?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>

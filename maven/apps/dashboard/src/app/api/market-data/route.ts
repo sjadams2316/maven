@@ -113,11 +113,20 @@ const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePer
 // DATA FETCHING
 // ============================================================================
 
+// Extended market price with after-hours data
+interface ExtendedMarketPrice extends MarketPrice {
+  regularClose?: number;        // Regular market close price
+  afterHoursPrice?: number;     // Current after-hours price
+  afterHoursChange?: number;    // After-hours change from close
+  afterHoursChangePercent?: number; // After-hours change percent
+}
+
 /**
  * Fetch actual index values from Yahoo Finance
  * Uses ^GSPC, ^DJI, ^IXIC, ^RUT for real index values (not ETFs)
+ * Also fetches after-hours data when available
  */
-async function fetchIndexFromYahoo(symbol: string): Promise<MarketPrice | null> {
+async function fetchIndexFromYahoo(symbol: string): Promise<ExtendedMarketPrice | null> {
   try {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`,
@@ -143,12 +152,28 @@ async function fetchIndexFromYahoo(symbol: string): Promise<MarketPrice | null> 
       const change = price - prevClose;
       const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
       
+      // After-hours data (Yahoo provides this in postMarketPrice/postMarketChange)
+      // For indices, we use the current price vs regular close
+      const regularClose = meta.regularMarketPrice;
+      const afterHoursPrice = meta.postMarketPrice || null;
+      let afterHoursChange = 0;
+      let afterHoursChangePercent = 0;
+      
+      if (afterHoursPrice && regularClose) {
+        afterHoursChange = afterHoursPrice - regularClose;
+        afterHoursChangePercent = (afterHoursChange / regularClose) * 100;
+      }
+      
       return {
         symbol,
         price,
         change,
         changePercent,
         timestamp: Date.now(),
+        regularClose,
+        afterHoursPrice: afterHoursPrice || undefined,
+        afterHoursChange: afterHoursPrice ? afterHoursChange : undefined,
+        afterHoursChangePercent: afterHoursPrice ? afterHoursChangePercent : undefined,
       };
     }
   } catch (err) {
@@ -378,7 +403,16 @@ export async function GET(request: NextRequest) {
   const marketSession = getMarketSession();
   
   // Results
-  const stockData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
+  const stockData: { 
+    symbol: string; 
+    name: string; 
+    price: number; 
+    change: number; 
+    changePercent: number;
+    afterHoursPrice?: number;
+    afterHoursChange?: number;
+    afterHoursChangePercent?: number;
+  }[] = [];
   const cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
   let isLiveData = true;
   let dataSource = 'live';
@@ -431,12 +465,21 @@ export async function GET(request: NextRequest) {
       });
     }
     
+    // Cast to ExtendedMarketPrice to access after-hours fields
+    const extPrice = price as ExtendedMarketPrice;
+    
     stockData.push({
       symbol: INDEX_CLEAN_SYMBOLS[symbol] || symbol,
       name: INDEX_NAMES[symbol] || symbol,
       price: price.price,
       change: price.change,
       changePercent: price.changePercent,
+      // After-hours data (if available)
+      ...(extPrice.afterHoursPrice && {
+        afterHoursPrice: extPrice.afterHoursPrice,
+        afterHoursChange: extPrice.afterHoursChange,
+        afterHoursChangePercent: extPrice.afterHoursChangePercent,
+      }),
     });
   }
   
