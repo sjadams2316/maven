@@ -14,6 +14,7 @@ import {
   getDemoVariant, 
   setDemoVariant,
   getDemoHoldings,
+  enableDemoMode,
   DEMO_NET_WORTH,
   RETIREE_NET_WORTH,
   RETIREE_ANNUAL_INCOME,
@@ -124,6 +125,11 @@ export default function DemoPage() {
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pricesLoading, setPricesLoading] = useState(false);
+  
+  // Enable demo mode globally on mount (for Oracle and other components to access demo profile)
+  useEffect(() => {
+    enableDemoMode();
+  }, []);
   
   // Load saved variant preference
   useEffect(() => {
