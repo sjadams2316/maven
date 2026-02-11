@@ -126,6 +126,8 @@ export default function LandingPage() {
             BTC: btcData ? { price: Number(btcData.price) || 0, changePercent: Number(btcData.changePercent) || 0 } : null,
           },
           timestamp: data.timestamp,
+          marketSession: data.marketSession,
+          marketLabel: data.marketLabel,
         };
         
         console.log('[Market Data] Setting state:', JSON.stringify(marketState, null, 2));
@@ -320,8 +322,13 @@ export default function LandingPage() {
                 {/* Market Status */}
                 <div className="flex items-center justify-center gap-3 mb-3 text-xs text-gray-500">
                   <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${marketOpen === null ? 'bg-gray-500' : marketOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                    <span>{marketOpen === null ? 'Checking...' : marketOpen ? 'US Markets Open' : 'US Markets Closed'}</span>
+                    <span className={`w-2 h-2 rounded-full ${
+                      !marketData?.marketSession ? 'bg-gray-500' : 
+                      marketData.marketSession === 'regular' ? 'bg-emerald-500 animate-pulse' : 
+                      marketData.marketSession === 'pre-market' || marketData.marketSession === 'after-hours' ? 'bg-amber-500 animate-pulse' : 
+                      'bg-red-500'
+                    }`}></span>
+                    <span>{marketData?.marketLabel || 'Loading...'}</span>
                   </div>
                   <span className="text-gray-600">•</span>
                   <span>As of {new Date(marketData.timestamp).toLocaleString('en-US', { 

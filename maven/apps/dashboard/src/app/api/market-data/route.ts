@@ -33,6 +33,58 @@ const STOCK_SHORT_NAMES: Record<string, string> = {
 };
 
 // ============================================================================
+// MARKET SESSION DETECTION
+// All times in Eastern Time
+// ============================================================================
+type MarketSession = 'pre-market' | 'regular' | 'after-hours' | 'closed';
+
+function getMarketSession(): { session: MarketSession; label: string } {
+  // Get current time in Eastern Time
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+    weekday: 'short',
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const weekday = parts.find(p => p.type === 'weekday')?.value || '';
+  const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+  const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+  const currentMinutes = hour * 60 + minute;
+  
+  // Weekend - market closed
+  if (weekday === 'Sat' || weekday === 'Sun') {
+    return { session: 'closed', label: 'Markets Closed (Weekend)' };
+  }
+  
+  // Pre-market: 4:00 AM - 9:30 AM ET
+  const preMarketStart = 4 * 60;       // 4:00 AM = 240 minutes
+  const regularOpen = 9 * 60 + 30;     // 9:30 AM = 570 minutes
+  
+  // Regular hours: 9:30 AM - 4:00 PM ET
+  const regularClose = 16 * 60;        // 4:00 PM = 960 minutes
+  
+  // After-hours: 4:00 PM - 8:00 PM ET
+  const afterHoursClose = 20 * 60;     // 8:00 PM = 1200 minutes
+  
+  if (currentMinutes >= preMarketStart && currentMinutes < regularOpen) {
+    return { session: 'pre-market', label: 'Pre-Market' };
+  }
+  
+  if (currentMinutes >= regularOpen && currentMinutes < regularClose) {
+    return { session: 'regular', label: 'Markets Open' };
+  }
+  
+  if (currentMinutes >= regularClose && currentMinutes < afterHoursClose) {
+    return { session: 'after-hours', label: 'After Hours' };
+  }
+  
+  return { session: 'closed', label: 'Markets Closed' };
+}
+
+// ============================================================================
 // STATIC FALLBACKS - Emergency only, updated Feb 11, 2026
 // These should RARELY be used if caching is working properly
 // ============================================================================
@@ -51,6 +103,75 @@ const CRYPTO_FALLBACK: Record<string, { price: number; change: number; changePer
 // ============================================================================
 // DATA FETCHING
 // ============================================================================
+
+/**
+ * Fetch extended hours data from Polygon.io
+ * Polygon provides pre-market and after-hours data from 4 AM to 8 PM ET
+ */
+async function fetchFromPolygon(symbols: string[]): Promise<Map<string, MarketPrice>> {
+  const result = new Map<string, MarketPrice>();
+  const apiKey = process.env.POLYGON_API_KEY;
+  
+  if (!apiKey) return result;
+  
+  try {
+    // Use the aggregates endpoint with extended hours
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    for (const symbol of symbols) {
+      try {
+        // Previous close for comparison
+        const prevCloseRes = await fetch(
+          `https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`,
+          { 
+            cache: 'no-store',
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        
+        if (!prevCloseRes.ok) continue;
+        const prevCloseData = await prevCloseRes.json();
+        const prevClose = prevCloseData.results?.[0]?.c || 0;
+        
+        // Current price (includes extended hours)
+        const snapshotRes = await fetch(
+          `https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/${symbol}?apiKey=${apiKey}`,
+          { 
+            cache: 'no-store',
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        
+        if (!snapshotRes.ok) continue;
+        const snapshotData = await snapshotRes.json();
+        
+        // Use extended hours price if available, otherwise regular price
+        const ticker = snapshotData.ticker;
+        const price = ticker?.preMarket?.p || ticker?.afterHours?.p || ticker?.day?.c || ticker?.prevDay?.c || 0;
+        
+        if (price > 0 && prevClose > 0) {
+          const change = price - prevClose;
+          const changePercent = (change / prevClose) * 100;
+          
+          result.set(symbol, {
+            symbol,
+            price,
+            change,
+            changePercent,
+            timestamp: Date.now(),
+          });
+        }
+      } catch (err) {
+        // Continue to next symbol
+      }
+    }
+  } catch (err) {
+    console.error('Polygon fetch error:', err instanceof Error ? err.message : err);
+  }
+  
+  return result;
+}
 
 async function fetchFromFMP(symbols: string[]): Promise<Map<string, MarketPrice>> {
   const result = new Map<string, MarketPrice>();
@@ -199,6 +320,9 @@ export async function GET(request: NextRequest) {
     cacheMisses: [] as string[],
   };
   
+  // Get current market session
+  const marketSession = getMarketSession();
+  
   // Results
   const stockData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
   const cryptoData: { symbol: string; name: string; price: number; change: number; changePercent: number }[] = [];
@@ -209,7 +333,16 @@ export async function GET(request: NextRequest) {
   // FETCH STOCKS
   // ========================================================================
   
-  // Try FMP first
+  // During extended hours, try Polygon first for extended hours data
+  let polygonPrices = new Map<string, MarketPrice>();
+  if (marketSession.session === 'pre-market' || marketSession.session === 'after-hours') {
+    polygonPrices = await fetchFromPolygon(STOCK_SYMBOLS);
+    if (polygonPrices.size > 0) {
+      diagnostics.sources.push('polygon:extended');
+    }
+  }
+  
+  // Try FMP for regular hours or as fallback
   const fmpPrices = await fetchFromFMP(STOCK_SYMBOLS);
   
   if (fmpPrices.size > 0) {
@@ -218,7 +351,13 @@ export async function GET(request: NextRequest) {
   
   // For each symbol, get best available data
   for (const symbol of STOCK_SYMBOLS) {
-    let price: MarketPrice | null = fmpPrices.get(symbol) || null;
+    // During extended hours, prefer Polygon data
+    let price: MarketPrice | null = polygonPrices.get(symbol) || null;
+    
+    // Fall back to FMP
+    if (!price) {
+      price = fmpPrices.get(symbol) || null;
+    }
     
     // If FMP failed for this symbol, try Yahoo
     if (!price) {
@@ -349,6 +488,8 @@ export async function GET(request: NextRequest) {
     timestamp: new Date().toISOString(),
     isLive: isLiveData,
     source: dataSource,
+    marketSession: marketSession.session,
+    marketLabel: marketSession.label,
     // Include diagnostics in development
     ...(process.env.NODE_ENV === 'development' && { diagnostics }),
   });
