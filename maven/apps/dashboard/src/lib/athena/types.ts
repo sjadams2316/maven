@@ -36,11 +36,12 @@ export type DataSourceId =
   | 'groq'
   | 'claude'
   | 'perplexity'
+  | 'xai' // xAI/Grok - Twitter/X sentiment (first-party)
   // Decentralized Bittensor (Signals + Cost)
   | 'chutes' // SN64 - Cheap inference
   | 'vanta' // SN8 - Taoshi trading signals
   | 'precog' // SN55 - BTC price forecasting
-  | 'desearch' // SN22 - Social sentiment
+  | 'desearch' // SN22 - Social sentiment (Reddit + Twitter validation)
   | 'mantis' // SN123 - Multi-asset forecast
   | 'bitquant' // SN15 - DeFi analysis
   | 'numinous' // SN6 - Event forecasting

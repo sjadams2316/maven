@@ -346,11 +346,16 @@ export interface MarketIntelligence {
     source: 'vanta';
   };
   
-  // Social sentiment
+  // Social sentiment (combined xAI + Desearch)
   sentiment?: {
     direction: 'bullish' | 'bearish' | 'neutral';
     score: number;
-    source: 'desearch';
+    confidence: number;
+    agreement: 'high' | 'medium' | 'low' | 'single-source';
+    sources: {
+      xai?: { sentiment: string; score: number };      // Twitter via xAI (primary)
+      desearch?: { sentiment: string; score: number }; // Twitter + Reddit (validation)
+    };
   };
   
   // Price forecast (BTC only)
@@ -372,24 +377,48 @@ export interface MarketIntelligence {
 
 /**
  * Get comprehensive market intelligence for a symbol
- * Aggregates signals from all available Bittensor subnets
+ * Aggregates signals from all available sources:
+ * - Vanta (SN8): Trading signals
+ * - xAI + Desearch: Combined social sentiment (Twitter primary, Reddit validation)
+ * - Precog (SN55): BTC price forecasting
  */
 export async function getMarketIntelligence(
   symbol: string
 ): Promise<MarketIntelligence> {
   const timestamp = new Date().toISOString();
   
+  // Import xAI functions dynamically to avoid circular deps
+  const { getCombinedSentiment, isXAIConfigured } = await import('./xai');
+  
   // Fetch from all sources in parallel
   const [vantaResult, desearchResult, precogResult] = await Promise.allSettled([
     getVantaConsensus(symbol),
-    getSentimentSummary(symbol),
+    fetchDesearchSentiment([symbol]),
     symbol.toUpperCase() === 'BTC' ? fetchPrecogForecast() : Promise.resolve(null),
   ]);
   
   // Extract results
   const vanta = vantaResult.status === 'fulfilled' ? vantaResult.value : null;
-  const desearch = desearchResult.status === 'fulfilled' ? desearchResult.value : null;
+  const desearchRaw = desearchResult.status === 'fulfilled' ? desearchResult.value : null;
   const precog = precogResult.status === 'fulfilled' ? precogResult.value : null;
+  
+  // Get Desearch data for the symbol
+  const desearchData = desearchRaw?.sentiments.find(s => s.symbol === symbol);
+  
+  // Get combined sentiment (xAI primary + Desearch validation)
+  let combinedSentiment: Awaited<ReturnType<typeof getCombinedSentiment>> | null = null;
+  try {
+    combinedSentiment = await getCombinedSentiment(
+      symbol,
+      desearchData ? {
+        sentiment: desearchData.sentiment,
+        score: desearchData.score,
+        sources: desearchData.sources,
+      } : undefined
+    );
+  } catch (error) {
+    console.error('Combined sentiment error:', error);
+  }
   
   // Build intelligence object
   const intel: MarketIntelligence = {
@@ -412,12 +441,23 @@ export async function getMarketIntelligence(
     };
   }
   
-  // Add sentiment
-  if (desearch) {
+  // Add combined sentiment (xAI + Desearch)
+  if (combinedSentiment) {
     intel.sentiment = {
-      direction: desearch.sentiment as 'bullish' | 'bearish' | 'neutral',
-      score: desearch.score,
-      source: 'desearch',
+      direction: combinedSentiment.combined.sentiment,
+      score: combinedSentiment.combined.score,
+      confidence: combinedSentiment.combined.confidence,
+      agreement: combinedSentiment.combined.agreement,
+      sources: {
+        xai: combinedSentiment.xaiSentiment ? {
+          sentiment: combinedSentiment.xaiSentiment.sentiment,
+          score: combinedSentiment.xaiSentiment.score,
+        } : undefined,
+        desearch: combinedSentiment.desearchSentiment ? {
+          sentiment: combinedSentiment.desearchSentiment.sentiment,
+          score: combinedSentiment.desearchSentiment.score,
+        } : undefined,
+      },
     };
   }
   
@@ -431,21 +471,25 @@ export async function getMarketIntelligence(
     };
   }
   
-  // Calculate consensus
-  const signals: Array<{ direction: string; weight: number }> = [];
+  // Calculate consensus across all sources
+  const signals: Array<{ direction: string; weight: number; source: string }> = [];
   
   if (vanta) {
     const dir = vanta.direction === 'LONG' ? 'bullish' : vanta.direction === 'SHORT' ? 'bearish' : 'neutral';
-    signals.push({ direction: dir, weight: vanta.confidence });
+    signals.push({ direction: dir, weight: vanta.confidence, source: 'vanta' });
   }
   
-  if (desearch) {
-    signals.push({ direction: desearch.sentiment, weight: Math.abs(desearch.score) });
+  if (intel.sentiment) {
+    signals.push({ 
+      direction: intel.sentiment.direction, 
+      weight: intel.sentiment.confidence,
+      source: 'sentiment',
+    });
   }
   
   if (precog) {
     const dir = precog.direction === 'up' ? 'bullish' : precog.direction === 'down' ? 'bearish' : 'neutral';
-    signals.push({ direction: dir, weight: precog.confidence });
+    signals.push({ direction: dir, weight: precog.confidence, source: 'precog' });
   }
   
   if (signals.length > 0) {
@@ -474,14 +518,15 @@ export async function getMarketIntelligence(
     
     // Build summary
     const sourcesUsed = [];
-    if (vanta) sourcesUsed.push('trading signals');
-    if (desearch) sourcesUsed.push('social sentiment');
-    if (precog) sourcesUsed.push('price forecasting');
+    if (vanta) sourcesUsed.push('Vanta trading signals');
+    if (intel.sentiment?.sources.xai) sourcesUsed.push('xAI Twitter');
+    if (intel.sentiment?.sources.desearch) sourcesUsed.push('Desearch (Reddit)');
+    if (precog) sourcesUsed.push('Precog forecasting');
     
     intel.consensus.summary = `${symbol} outlook: ${intel.consensus.direction} (${Math.round(intel.consensus.confidence * 100)}% confidence). ` +
       `${intel.consensus.agreementLevel} agreement across ${sourcesUsed.join(', ')}.`;
   } else {
-    intel.consensus.summary = `No Bittensor signals available for ${symbol}. Configure API keys for Vanta, Desearch, or Precog.`;
+    intel.consensus.summary = `No market intelligence available for ${symbol}. Configure API keys: XAI_API_KEY, VANTA_API_KEY, DESEARCH_API_KEY, PRECOG_API_KEY.`;
   }
   
   return intel;

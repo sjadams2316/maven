@@ -30,6 +30,21 @@ export {
   type GroqResponse,
 } from './groq';
 
+// xAI - First-party Twitter/X sentiment via Grok
+export {
+  xaiCompletion,
+  searchXSentiment,
+  batchXSentiment,
+  getCombinedSentiment,
+  isXAIConfigured,
+  getXAIStatus,
+  type XSearchResult,
+  type XSentimentResult,
+  type CombinedSentiment,
+  type GrokMessage,
+  type XAIResponse,
+} from './xai';
+
 // Bittensor - Decentralized intelligence signals
 export {
   // Availability
@@ -84,6 +99,11 @@ export function getAvailableProviders(): string[] {
   // Check Perplexity
   if (process.env.PERPLEXITY_API_KEY) {
     providers.push('perplexity');
+  }
+  
+  // Check xAI (Grok + X Search)
+  if (process.env.XAI_API_KEY) {
+    providers.push('xai');
   }
   
   return providers;
