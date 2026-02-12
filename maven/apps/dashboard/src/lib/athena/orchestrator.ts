@@ -28,6 +28,7 @@ import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { getVantaConsensus, isVantaConfigured } from './providers/bittensor';
 import { 
   perplexityResearch, 
+  researchStock,
   isPerplexityConfigured,
   formatResearchForOracle,
   type PerplexityCitation 
@@ -331,18 +332,35 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     const researchPromise = (async () => {
       const researchStart = Date.now();
       try {
-        const result = await perplexityResearch(input.query, {
-          recency: 'week',
-        });
-        researchData = {
-          content: result.content,
-          citations: result.citations,
-        };
+        // If we have symbols, use the specialized researchStock function
+        // which builds better queries like "comprehensive update on CIFR stock..."
+        if (relevantSymbols.length > 0) {
+          // Research the primary symbol with stock-specific context
+          const primarySymbol = relevantSymbols[0];
+          const stockResearch = await researchStock(primarySymbol, {
+            focus: 'general',
+            recency: 'week',
+          });
+          researchData = {
+            content: stockResearch.summary,
+            citations: stockResearch.citations,
+          };
+          console.log(`[Athena] Perplexity researched ${primarySymbol}: ${stockResearch.sentiment}, ${stockResearch.keyPoints.length} key points`);
+        } else {
+          // Generic research for non-symbol queries
+          const result = await perplexityResearch(input.query, {
+            recency: 'week',
+          });
+          researchData = {
+            content: result.content,
+            citations: result.citations,
+          };
+        }
         researchLatency = Date.now() - researchStart;
         providerResults.push({
           providerId: 'perplexity' as DataSourceId,
           success: true,
-          data: { citationCount: result.citations.length },
+          data: { citationCount: researchData.citations.length },
           latencyMs: researchLatency,
         });
       } catch (e: any) {
@@ -380,6 +398,19 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
         results.forEach((result, i) => {
           if (result.status === 'fulfilled' && result.value) {
             analystData.set(relevantSymbols[i], {
+              // Company profile (so Claude knows what the ticker actually is)
+              name: result.value.name,
+              description: result.value.description,
+              sector: result.value.sector,
+              industry: result.value.industry,
+              // Current price data
+              currentPrice: result.value.currentPrice,
+              previousClose: result.value.previousClose,
+              changePercent: result.value.changePercent,
+              fiftyTwoWeekHigh: result.value.fiftyTwoWeekHigh,
+              fiftyTwoWeekLow: result.value.fiftyTwoWeekLow,
+              marketCap: result.value.marketCap,
+              // Analyst data
               analystRating: result.value.analystRating,
               targetMean: result.value.targetMean,
               targetHigh: result.value.targetHigh,
@@ -388,6 +419,9 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
               numberOfAnalysts: result.value.numberOfAnalysts,
               earningsDate: result.value.earningsDate,
               peRatio: result.value.peRatio,
+              // Maven score
+              mavenScore: result.value.mavenScore,
+              scoreBreakdown: result.value.scoreBreakdown,
             });
           }
         });
