@@ -299,16 +299,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       // Check if demo mode is active
       const demoEnabled = isDemoModeEnabled();
       
-      // BUG FIX: If user is signed in, ALWAYS clear demo mode and use real profile
-      // Demo mode should never override a real authenticated session
-      if (isSignedIn) {
-        if (demoEnabled) {
-          console.log('[UserProvider] Signed-in user had demo mode enabled - clearing it');
-          disableDemoMode();
-          setIsDemoMode(false);
-        }
-      } else if (demoEnabled) {
-        // DEMO MODE: Only use demo profile when NOT signed in
+      // DEMO MODE: If explicitly enabled, use demo profile regardless of auth state
+      // Demo mode is an explicit user action (clicking "Try Demo") and should be respected
+      // even for signed-in users exploring the demo
+      if (demoEnabled) {
         setProfile(DEMO_PROFILE);
         setIsDemoMode(true);
         setIsLoading(false);
