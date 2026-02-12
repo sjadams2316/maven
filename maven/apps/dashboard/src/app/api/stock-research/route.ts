@@ -691,15 +691,52 @@ export async function GET(request: NextRequest) {
       includeSentiment ? getQuickSentiment(symbol).catch(() => null) : Promise.resolve(null),
     ]);
     
-    // Try FMP first (real data)
+    // Always fetch Yahoo data for real-time prices (FMP free tier is stale)
+    const yahooData = await fetchYahooData(symbol);
+    
+    // Try FMP for fundamentals (analyst ratings, financials, P/E, margins, etc.)
     const fmpClient = getFMPClient();
     if (fmpClient) {
       const fmpData = await fmpClient.getResearchData(symbol);
       if (fmpData) {
         const research = await buildFromFMP(fmpData, news);
+        
+        // Override price data with Yahoo (real-time) if available
+        if (yahooData) {
+          const meta = yahooData.meta;
+          const yahooPrice = meta.regularMarketPrice;
+          const yahooPrevClose = meta.chartPreviousClose || meta.previousClose || yahooPrice;
+          const yahooChange = yahooPrice - yahooPrevClose;
+          const yahooChangePercent = yahooPrevClose ? (yahooChange / yahooPrevClose) * 100 : 0;
+          
+          research.currentPrice = yahooPrice;
+          research.previousClose = yahooPrevClose;
+          research.change = yahooChange;
+          research.changePercent = yahooChangePercent;
+          
+          // Also update 52-week data from Yahoo if available
+          if (meta.fiftyTwoWeekHigh) research.fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh;
+          if (meta.fiftyTwoWeekLow) research.fiftyTwoWeekLow = meta.fiftyTwoWeekLow;
+          
+          // Recalculate currentToTarget with accurate price
+          if (research.targetMean) {
+            research.currentToTarget = ((research.targetMean - yahooPrice) / yahooPrice) * 100;
+          }
+          
+          // Recalculate technical levels with accurate price
+          research.technicalLevels = calculateTechnicalLevels({
+            currentPrice: yahooPrice,
+            fiftyTwoWeekHigh: research.fiftyTwoWeekHigh,
+            fiftyTwoWeekLow: research.fiftyTwoWeekLow,
+            fiftyDayAvg: research.fiftyDayAvg,
+            twoHundredDayAvg: research.twoHundredDayAvg,
+          });
+          
+          research.dataSource = 'fmp'; // fundamentals from FMP, prices from Yahoo
+        }
+        
         return NextResponse.json({
           ...research,
-          // Add social sentiment data
           socialSentiment: sentiment ? {
             sentiment: sentiment.sentiment,
             score: sentiment.score,
@@ -713,8 +750,7 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Fallback to Yahoo Finance
-    const yahooData = await fetchYahooData(symbol);
+    // Fallback: Yahoo-only (no FMP fundamentals)
     if (yahooData) {
       const research = await buildFromYahoo(yahooData, news);
       return NextResponse.json({
