@@ -171,7 +171,7 @@ export async function groqQuery(
 /**
  * Fast classification - ideal for routing decisions
  */
-export async function groqClassify(
+export async function groqClassifySimple(
   text: string,
   categories: string[],
   options?: {
@@ -198,4 +198,98 @@ Valid categories: ${categories.join(', ')}`;
     category: matchedCategory || categories[0],
     confidence: matchedCategory ? 0.9 : 0.5,
   };
+}
+
+type DataSourceId = 'groq' | 'claude' | 'perplexity' | 'xai' | 'chutes' | 'vanta' | 'precog' | 'desearch' | 'mantis' | 'bitquant' | 'numinous' | 'gopher';
+
+/**
+ * Query classification for Athena routing
+ * Returns structured classification with type, urgency, complexity
+ */
+export async function groqClassify(
+  query: string,
+  holdings?: string[]
+): Promise<{
+  type: 'chat' | 'trading_decision' | 'portfolio_analysis' | 'research' | 'simple_lookup';
+  urgency: 'realtime' | 'normal' | 'background';
+  complexity: 'low' | 'medium' | 'high';
+  dataSources: DataSourceId[];
+  confidence: number;
+  reasoning?: string;
+}> {
+  const systemPrompt = `You classify financial queries for routing. Respond with ONLY valid JSON, no markdown.
+
+Query Types:
+- chat: General conversation, greetings, off-topic
+- trading_decision: Buy/sell/hold decisions, timing, position sizing
+- portfolio_analysis: Allocation, rebalancing, risk, performance review
+- research: Deep analysis, company fundamentals, market research
+- simple_lookup: Price checks, quick facts, definitions
+
+Urgency:
+- realtime: Needs instant response (price, quick question)
+- normal: Standard response time ok
+- background: Can take longer for thorough analysis
+
+Complexity:
+- low: Simple question, single topic
+- medium: Multiple factors, some analysis
+- high: Complex reasoning, multiple assets, trade-offs
+
+Data Sources (pick relevant ones):
+- groq: Fast chat and classification
+- chutes: Bulk analysis, cost-effective
+- claude: Complex reasoning
+- xai: Twitter sentiment
+- vanta: Trading signals
+- desearch: Reddit sentiment
+
+${holdings ? `User holds: ${holdings.join(', ')}` : ''}
+
+Respond with JSON: {"type":"...", "urgency":"...", "complexity":"...", "dataSources":["..."], "confidence":0.X}`;
+
+  try {
+    const response = await groqCompletion({
+      model: GROQ_MODELS.llama3_8b,
+      messages: [{ role: 'user', content: query }],
+      systemPrompt,
+      maxTokens: 150,
+      temperature: 0,
+    });
+
+    // Parse JSON response
+    const content = response.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No JSON in response');
+    }
+    
+    const parsed = JSON.parse(jsonMatch[0]);
+    
+    // Validate dataSources
+    const validSources: DataSourceId[] = ['groq', 'claude', 'perplexity', 'xai', 'chutes', 'vanta', 'precog', 'desearch', 'mantis', 'bitquant', 'numinous', 'gopher'];
+    const dataSources = (parsed.dataSources || ['groq']).filter(
+      (s: string) => validSources.includes(s as DataSourceId)
+    ) as DataSourceId[];
+    
+    return {
+      type: parsed.type || 'chat',
+      urgency: parsed.urgency || 'normal',
+      complexity: parsed.complexity || 'low',
+      dataSources: dataSources.length > 0 ? dataSources : ['groq'],
+      confidence: parsed.confidence || 0.8,
+      reasoning: `Groq classification (${response.latencyMs}ms)`,
+    };
+  } catch (e) {
+    // Fallback to simple classification
+    console.warn('Groq classification parse error, using defaults:', e);
+    return {
+      type: 'chat',
+      urgency: 'normal',
+      complexity: 'low',
+      dataSources: ['groq'] as DataSourceId[],
+      confidence: 0.5,
+      reasoning: 'Fallback classification',
+    };
+  }
 }

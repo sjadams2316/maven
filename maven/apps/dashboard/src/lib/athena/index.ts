@@ -144,7 +144,7 @@ export {
   type CombinedSentiment,
 } from './providers/xai';
 
-// Synthesis Engine (the brain)
+// Synthesis Engine (signal combination)
 export {
   // Core synthesis
   synthesize,
@@ -161,3 +161,16 @@ export {
   type SynthesisInput,
   type SynthesisResult,
 } from './synthesis';
+
+// Orchestrator (THE BRAIN - coordinates all providers)
+export {
+  orchestrate,
+  quickOrchestrate,
+  isOrchestratorReady,
+  getOrchestratorStatus,
+  // Types
+  type OrchestratorConfig,
+  type OrchestratorInput,
+  type OrchestratorResult,
+  type ProviderResult,
+} from './orchestrator';
