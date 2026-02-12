@@ -1249,6 +1249,7 @@ export async function POST(request: NextRequest) {
         
         return NextResponse.json({
           response,
+          thinking: orchestratorResult.thinking,
           conversationId: convId,
           poweredBy,
           authenticated: !!clerkId,

@@ -79,6 +79,7 @@ export interface ClaudeSynthesisInput {
 
 export interface ClaudeResponse {
   content: string;
+  thinking?: string;
   model: string;
   usage: {
     inputTokens: number;
@@ -177,18 +178,32 @@ export async function claudeCompletion(
  * Takes all gathered intelligence and produces unified wisdom
  */
 export async function claudeSynthesize(
-  input: ClaudeSynthesisInput
+  input: ClaudeSynthesisInput,
+  options?: { thinkingBudget?: number }
 ): Promise<ClaudeResponse> {
   const client = getClient();
   const startTime = Date.now();
 
   // Build the synthesis prompt
   const synthesisPrompt = buildSynthesisPrompt(input);
+  
+  const thinkingBudget = options?.thinkingBudget || 0;
+  const useThinking = thinkingBudget > 0;
 
-  const response = await client.messages.create({
+  const requestParams: any = {
     model: CLAUDE_DEFAULT_MODEL,
-    max_tokens: 2048,
-    system: `You are Maven Oracle's synthesis brain. Your job is to take multiple intelligence sources and produce a unified, actionable response for wealth management.
+    max_tokens: useThinking ? 16000 : 2048,
+    messages: [{ role: 'user', content: synthesisPrompt }],
+  };
+
+  // Extended thinking requires system prompt via messages, not the system param
+  // Actually the Anthropic SDK supports system with thinking - let's use it
+  if (useThinking) {
+    requestParams.thinking = { type: 'enabled', budget_tokens: thinkingBudget };
+    // When thinking is enabled, system must be provided as top-level param (still supported)
+  }
+
+  requestParams.system = `You are Maven Oracle's synthesis brain. Your job is to take multiple intelligence sources and produce a unified, actionable response for wealth management.
 
 CRITICAL RULE: When "Real-Time Market Data (FMP)" is provided, you MUST use those exact prices. Your training data contains STALE prices - NEVER quote stock prices from memory. The FMP data is real-time and authoritative.
 
@@ -208,16 +223,19 @@ Your response should:
 5. Cite sources when relevant
 6. Consider the client's context
 
-Do NOT just summarize each source - SYNTHESIZE them into wisdom.`,
-    messages: [{ role: 'user', content: synthesisPrompt }],
-  });
+Do NOT just summarize each source - SYNTHESIZE them into wisdom.`;
 
-  const content = response.content[0].type === 'text' 
-    ? response.content[0].text 
-    : '';
+  const response = await client.messages.create(requestParams);
+
+  // Extract thinking and text blocks
+  const thinkingBlock = response.content.find((b: any) => b.type === 'thinking');
+  const textBlock = response.content.find((b: any) => b.type === 'text');
+  const content = textBlock && 'text' in textBlock ? textBlock.text : '';
+  const thinking = thinkingBlock && 'thinking' in thinkingBlock ? (thinkingBlock as any).thinking : undefined;
 
   return {
     content,
+    thinking,
     model: CLAUDE_DEFAULT_MODEL,
     usage: {
       inputTokens: response.usage.input_tokens,

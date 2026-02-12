@@ -6,12 +6,17 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  thinking?: string;
+  poweredBy?: string;
+  isStreaming?: boolean;
 }
 
 interface StoredMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  thinking?: string;
+  poweredBy?: string;
 }
 
 interface MavenChatProps {
@@ -39,6 +44,7 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [claudeEnabled, setClaudeEnabled] = useState<boolean | null>(null);
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+  const [showThinking, setShowThinking] = useState<Record<number, boolean>>({});
   
   // Voice features
   const [voiceAvailable, setVoiceAvailable] = useState(false);
@@ -132,7 +138,7 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
       
       if (savedHistory) {
         const parsed: StoredMessage[] = JSON.parse(savedHistory);
-        setMessages(parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) })));
+        setMessages(parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp), thinking: m.thinking, poweredBy: m.poweredBy })));
       }
       
       if (savedConversationId) {
@@ -153,7 +159,9 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
       const toStore: StoredMessage[] = messages.slice(-MAX_STORED_MESSAGES).map(m => ({
         role: m.role,
         content: m.content,
-        timestamp: m.timestamp.toISOString()
+        timestamp: m.timestamp.toISOString(),
+        thinking: m.thinking,
+        poweredBy: m.poweredBy,
       }));
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toStore));
     } catch (e) {
@@ -343,7 +351,8 @@ What's on your mind?`;
         .filter((m, idx) => !(idx === 0 && m.role === 'assistant' && m.content.includes("Maven")))
         .map(m => ({ role: m.role, content: m.content }));
       
-      const response = await fetch('/api/chat', {
+      // Try streaming first
+      const streamResponse = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -351,26 +360,116 @@ What's on your mind?`;
           conversationId,
           context: profile,
           history: historyForAPI,
-          voiceMode: speakerEnabled // Tell API to optimize for spoken output
+          voiceMode: speakerEnabled
         })
       });
 
-      const data = await response.json();
-      
-      if (data.conversationId) {
-        setConversationId(data.conversationId);
-      }
+      if (streamResponse.ok && streamResponse.headers.get('content-type')?.includes('text/event-stream')) {
+        // Handle SSE streaming
+        setIsTyping(false);
+        const placeholderMsg: Message = {
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+          isStreaming: true,
+        };
+        setMessages(prev => [...prev, placeholderMsg]);
+        
+        const reader = streamResponse.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let fullThinking = '';
+        let poweredBy = '';
+        let streamConvId = '';
+        
+        if (reader) {
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === 'thinking') {
+                  fullThinking += data.text;
+                } else if (data.type === 'text') {
+                  fullText += data.text;
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = { ...last, content: fullText };
+                    }
+                    return updated;
+                  });
+                } else if (data.type === 'meta') {
+                  poweredBy = data.poweredBy || '';
+                  streamConvId = data.conversationId || '';
+                } else if (data.type === 'done') {
+                  // Finalize
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = {
+                        ...last,
+                        content: fullText,
+                        thinking: fullThinking || undefined,
+                        poweredBy: poweredBy || undefined,
+                        isStreaming: false,
+                      };
+                    }
+                    return updated;
+                  });
+                }
+              } catch { /* skip malformed */ }
+            }
+          }
+        }
+        
+        if (streamConvId) setConversationId(streamConvId);
+        
+        // Speak if enabled
+        if (speakerEnabled && voiceAvailable && fullText) {
+          speakText(fullText);
+        }
+      } else {
+        // Fallback to non-streaming
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: userMessage,
+            conversationId,
+            context: profile,
+            history: historyForAPI,
+            voiceMode: speakerEnabled
+          })
+        });
 
-      const assistantMessage = data.response;
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: assistantMessage,
-        timestamp: new Date()
-      }]);
-      
-      // Speak the response if speaker is enabled
-      if (speakerEnabled && voiceAvailable) {
-        speakText(assistantMessage);
+        const data = await response.json();
+        
+        if (data.conversationId) {
+          setConversationId(data.conversationId);
+        }
+
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: data.response,
+          thinking: data.thinking,
+          poweredBy: data.poweredBy,
+          timestamp: new Date()
+        }]);
+        
+        if (speakerEnabled && voiceAvailable) {
+          speakText(data.response);
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -941,6 +1040,51 @@ What's on your mind?`;
                     className="text-[15px] leading-relaxed prose prose-invert prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
                   />
+                  {/* Provider badges */}
+                  {msg.role === 'assistant' && msg.poweredBy && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                      {msg.poweredBy.includes('claude') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/15 text-purple-400 border border-purple-500/20">Claude</span>
+                      )}
+                      {msg.poweredBy.includes('perplexity') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20">Perplexity</span>
+                      )}
+                      {msg.poweredBy.includes('xai') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">xAI Sentiment</span>
+                      )}
+                      {msg.poweredBy.includes('groq') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/15 text-orange-400 border border-orange-500/20">Groq</span>
+                      )}
+                      {msg.poweredBy.includes('vanta') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/20">Vanta Signals</span>
+                      )}
+                      {msg.poweredBy.includes('fmp') && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">FMP Data</span>
+                      )}
+                    </div>
+                  )}
+                  {/* Thinking toggle */}
+                  {msg.role === 'assistant' && msg.thinking && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => setShowThinking(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                        className="flex items-center gap-1.5 text-xs text-indigo-400/70 hover:text-indigo-400 transition"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        {showThinking[idx] ? 'Hide reasoning' : 'Show reasoning'}
+                        <svg className={`w-3 h-3 transition-transform ${showThinking[idx] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {showThinking[idx] && (
+                        <div className="mt-2 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-lg text-sm text-gray-400 italic whitespace-pre-wrap max-h-64 overflow-y-auto">
+                          {msg.thinking}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <p className={`text-xs mt-3 ${msg.role === 'user' ? 'text-indigo-200' : 'text-gray-500'}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>

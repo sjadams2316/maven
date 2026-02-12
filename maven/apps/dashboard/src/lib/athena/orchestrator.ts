@@ -95,6 +95,9 @@ export interface OrchestratorResult {
   // The final response
   response: string;
   
+  // Claude's reasoning chain (from extended thinking)
+  thinking?: string;
+  
   // What providers contributed
   providers: {
     llm: { provider: string; model: string; latencyMs: number };
@@ -512,6 +515,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   // STEP 6: CLAUDE SYNTHESIS (the multiplier)
   // -------------------------------------------------------------------------
   let finalResponse = llmResponse;
+  let finalThinking: string | undefined;
   let claudeLatency = 0;
   
   // Determine if we should use Claude to synthesize
@@ -590,9 +594,23 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
         }));
       }
       
+      // Determine thinking budget based on complexity
+      let thinkingBudget = 0;
+      if (classification.complexity === 'medium') {
+        thinkingBudget = 4000;
+      } else if (classification.complexity === 'high') {
+        thinkingBudget = 8000;
+      }
+      // Complex financial queries get max thinking
+      const complexPatterns = /\b(roth\s+conversion|tax\s+strateg|estate\s+plan|backdoor|mega\s+backdoor|asset\s+location|withdrawal\s+strateg|social\s+security\s+claim|required\s+minimum|charitable\s+giving\s+strateg)\b/i;
+      if (complexPatterns.test(input.query)) {
+        thinkingBudget = 10000;
+      }
+      
       // Claude synthesizes everything
-      const claudeResult = await claudeSynthesize(synthesisInput);
+      const claudeResult = await claudeSynthesize(synthesisInput, { thinkingBudget });
       finalResponse = claudeResult.content;
+      finalThinking = claudeResult.thinking;
       claudeLatency = claudeResult.latencyMs;
       
       providerResults.push({
@@ -647,6 +665,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   
   return {
     response: finalResponse,
+    thinking: finalThinking,
     providers: {
       llm: { provider: llmProvider, model: llmModel, latencyMs: llmLatency },
       ...(sentimentData.size > 0 && { sentiment: { symbols: [...sentimentData.keys()], latencyMs: sentimentLatency } }),
