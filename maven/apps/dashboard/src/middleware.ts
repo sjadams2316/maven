@@ -127,8 +127,34 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+// ============================================================================
+// PASSWORD GATE — Simple site-wide password protection
+// ============================================================================
+const SITE_PASSWORD = process.env.SITE_PASSWORD || 'BanksNavy10';
+const PASSWORD_COOKIE = 'maven_access';
+
+function checkPasswordGate(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+  
+  // Allow the password page itself, its API, and static assets
+  if (pathname === '/gate' || pathname === '/api/gate') return null;
+  
+  // Check for valid password cookie
+  const accessCookie = request.cookies.get(PASSWORD_COOKIE)?.value;
+  if (accessCookie === SITE_PASSWORD) return null;
+  
+  // Not authenticated — redirect to gate
+  const gateUrl = new URL('/gate', request.url);
+  gateUrl.searchParams.set('next', pathname);
+  return NextResponse.redirect(gateUrl);
+}
+
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
+  
+  // Password gate — blocks everything before any other logic
+  const gateResponse = checkPasswordGate(request);
+  if (gateResponse) return addSecurityHeaders(gateResponse);
   
   // Apply rate limiting to public API routes
   if (isRateLimitedRoute(request)) {
