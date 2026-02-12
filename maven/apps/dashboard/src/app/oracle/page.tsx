@@ -11,6 +11,7 @@ export default function OraclePage() {
   // Use centralized UserProvider
   const { profile, isLoading, isDemoMode } = useUserProfile();
   const [insights, setInsights] = useState<any[]>([]);
+  const [mobileTab, setMobileTab] = useState<'chat' | 'insights'>('chat');
 
   // Clear corrupted/old chat history for real users (demo mode handled by MavenChat)
   useEffect(() => {
@@ -41,11 +42,36 @@ export default function OraclePage() {
   }, [profile]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white">
+    <div className="min-h-screen md:min-h-screen bg-[#0a0a12] text-white flex flex-col h-screen md:h-auto">
       {/* Header */}
       <Header profile={profile} />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Mobile Tab Bar */}
+      <div className="md:hidden flex border-b border-white/10 bg-[#0a0a12] shrink-0">
+        <button
+          onClick={() => setMobileTab('chat')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition ${
+            mobileTab === 'chat'
+              ? 'text-white border-b-2 border-purple-500'
+              : 'text-gray-500'
+          }`}
+        >
+          💬 Chat
+        </button>
+        <button
+          onClick={() => setMobileTab('insights')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition ${
+            mobileTab === 'insights'
+              ? 'text-white border-b-2 border-purple-500'
+              : 'text-gray-500'
+          }`}
+        >
+          🔮 Insights
+        </button>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:block max-w-7xl mx-auto px-6 py-8 w-full">
         <div className="grid lg:grid-cols-3 gap-6">
           
           {/* Main Chat Area */}
@@ -72,104 +98,132 @@ export default function OraclePage() {
 
           {/* Insights Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            
-            {/* Proactive Insights */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>🔮</span> Proactive Insights
-              </h3>
-              
-              {insights.length > 0 ? (
-                <div className="space-y-3">
-                  {insights.map((insight, idx) => (
-                    <InsightCard key={idx} insight={insight} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm">
-                  Connect your accounts to unlock personalized insights.
-                </p>
-              )}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>⚡</span> Quick Analysis
-              </h3>
-              
-              <div className="space-y-2">
-                <QuickAction 
-                  icon="📊" 
-                  label="Portfolio Health Check" 
-                  prompt="Give me a complete health check on my portfolio"
-                />
-                <QuickAction 
-                  icon="💰" 
-                  label="Tax Opportunities" 
-                  prompt="What tax optimization opportunities do I have right now?"
-                />
-                <QuickAction 
-                  icon="⚖️" 
-                  label="Rebalancing Analysis" 
-                  prompt="Analyze my current allocation and suggest rebalancing"
-                />
-                <QuickAction 
-                  icon="🎯" 
-                  label="Concentration Check" 
-                  prompt="Am I over-concentrated in any positions?"
-                />
-                <QuickAction 
-                  icon="🔄" 
-                  label="Roth Conversion Analysis" 
-                  prompt="Should I do a Roth conversion this year? Analyze my situation."
-                />
-              </div>
-            </div>
-
-            {/* What I Know */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>🧠</span> What I Know
-              </h3>
-              
-              <div className="space-y-2 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <span className={profile?.firstName ? 'text-emerald-400' : 'text-gray-600'}>●</span>
-                  <span>Your profile & goals</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={countAccounts(profile) > 0 ? 'text-emerald-400' : 'text-gray-600'}>●</span>
-                  <span>{countAccounts(profile)} linked accounts</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={countHoldings(profile) > 0 ? 'text-emerald-400' : 'text-gray-600'}>●</span>
-                  <span>{countHoldings(profile)} holdings tracked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-400">●</span>
-                  <span>Tax strategies & rules</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-400">●</span>
-                  <span>Market data (live)</span>
-                </div>
-              </div>
-              
-              {countAccounts(profile) === 0 && (
-                <Link 
-                  href="/accounts"
-                  className="mt-4 block w-full text-center py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-lg text-indigo-400 text-sm transition"
-                >
-                  Link Accounts →
-                </Link>
-              )}
-            </div>
+            {renderSidebarContent()}
           </div>
         </div>
       </div>
+
+      {/* Mobile Layout - Full screen chat or insights */}
+      <div className="md:hidden flex-1 flex flex-col min-h-0">
+        {mobileTab === 'chat' ? (
+          <MavenChat 
+            userProfile={profile} 
+            mode="mobile-fullscreen" 
+            showContext={true}
+            isDemoMode={isDemoMode}
+          />
+        ) : (
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {renderSidebarContent()}
+          </div>
+        )}
+      </div>
     </div>
   );
+
+  function renderSidebarContent() {
+    return (
+      <>
+        {/* Proactive Insights */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <span>🔮</span> Proactive Insights
+          </h3>
+          
+          {insights.length > 0 ? (
+            <div className="space-y-3">
+              {insights.map((insight, idx) => (
+                <InsightCard key={idx} insight={insight} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">
+              Connect your accounts to unlock personalized insights.
+            </p>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <span>⚡</span> Quick Analysis
+          </h3>
+          
+          <div className="space-y-2">
+            <QuickAction 
+              icon="📊" 
+              label="Portfolio Health Check" 
+              prompt="Give me a complete health check on my portfolio"
+              onTap={() => setMobileTab('chat')}
+            />
+            <QuickAction 
+              icon="💰" 
+              label="Tax Opportunities" 
+              prompt="What tax optimization opportunities do I have right now?"
+              onTap={() => setMobileTab('chat')}
+            />
+            <QuickAction 
+              icon="⚖️" 
+              label="Rebalancing Analysis" 
+              prompt="Analyze my current allocation and suggest rebalancing"
+              onTap={() => setMobileTab('chat')}
+            />
+            <QuickAction 
+              icon="🎯" 
+              label="Concentration Check" 
+              prompt="Am I over-concentrated in any positions?"
+              onTap={() => setMobileTab('chat')}
+            />
+            <QuickAction 
+              icon="🔄" 
+              label="Roth Conversion Analysis" 
+              prompt="Should I do a Roth conversion this year? Analyze my situation."
+              onTap={() => setMobileTab('chat')}
+            />
+          </div>
+        </div>
+
+        {/* What I Know */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <span>🧠</span> What I Know
+          </h3>
+          
+          <div className="space-y-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <span className={profile?.firstName ? 'text-emerald-400' : 'text-gray-600'}>●</span>
+              <span>Your profile & goals</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={countAccounts(profile) > 0 ? 'text-emerald-400' : 'text-gray-600'}>●</span>
+              <span>{countAccounts(profile)} linked accounts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={countHoldings(profile) > 0 ? 'text-emerald-400' : 'text-gray-600'}>●</span>
+              <span>{countHoldings(profile)} holdings tracked</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400">●</span>
+              <span>Tax strategies & rules</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400">●</span>
+              <span>Market data (live)</span>
+            </div>
+          </div>
+          
+          {countAccounts(profile) === 0 && (
+            <Link 
+              href="/accounts"
+              className="mt-4 block w-full text-center py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-lg text-indigo-400 text-sm transition"
+            >
+              Link Accounts →
+            </Link>
+          )}
+        </div>
+      </>
+    );
+  }
 }
 
 // Insight Card Component
@@ -197,12 +251,13 @@ function InsightCard({ insight }: { insight: any }) {
 }
 
 // Quick Action Component
-function QuickAction({ icon, label, prompt }: { icon: string; label: string; prompt: string }) {
+function QuickAction({ icon, label, prompt, onTap }: { icon: string; label: string; prompt: string; onTap?: () => void }) {
   const handleClick = () => {
     // Store prompt and auto-submit
     localStorage.setItem('maven_chat_prompt', prompt);
     localStorage.setItem('maven_chat_autosubmit', 'true');
     window.dispatchEvent(new Event('maven_prompt'));
+    onTap?.();
   };
 
   return (

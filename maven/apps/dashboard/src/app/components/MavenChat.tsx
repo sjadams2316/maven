@@ -21,7 +21,7 @@ interface StoredMessage {
 
 interface MavenChatProps {
   userProfile?: any;
-  mode?: 'floating' | 'embedded' | 'fullscreen';
+  mode?: 'floating' | 'embedded' | 'fullscreen' | 'mobile-fullscreen';
   showContext?: boolean;
   isDemoMode?: boolean;
 }
@@ -101,6 +101,14 @@ export default function MavenChat({ userProfile, mode = 'floating', showContext 
       scrollToBottom(true);
     }
   }, [messages.length, scrollToBottom]);
+
+  // Auto-scroll during streaming
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.isStreaming) {
+      scrollToBottom();
+    }
+  }, [messages, scrollToBottom]);
 
   // Sync profile
   useEffect(() => {
@@ -868,6 +876,15 @@ What's on your mind?`;
     );
   }
 
+  // Mobile fullscreen mode - no border, no rounded corners, fills parent
+  if (mode === 'mobile-fullscreen') {
+    return (
+      <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a14]">
+        {renderOracleContent()}
+      </div>
+    );
+  }
+
   // Embedded or Fullscreen mode
   const containerClass = mode === 'fullscreen' 
     ? 'h-[calc(100vh-200px)] min-h-[500px] w-full bg-gradient-to-b from-[#12121f] to-[#0a0a14] border border-white/10 rounded-2xl'
@@ -883,29 +900,37 @@ What's on your mind?`;
     return (
       <>
         {/* Header */}
-        <div className="relative px-6 py-5 flex items-center gap-4 border-b border-white/5">
+        <div className={`relative flex items-center gap-3 border-b border-white/5 shrink-0 ${
+          mode === 'mobile-fullscreen' ? 'px-4 py-3' : 'px-6 py-5 gap-4'
+        }`}>
           {/* Orb Icon */}
           <div className="relative">
             <div 
-              className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg"
+              className={`rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg ${
+                mode === 'mobile-fullscreen' ? 'w-9 h-9 rounded-xl' : 'w-12 h-12'
+              }`}
               style={{ boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)' }}
             >
-              <span className="text-2xl">🔮</span>
+              <span className={mode === 'mobile-fullscreen' ? 'text-lg' : 'text-2xl'}>🔮</span>
             </div>
             {/* Status indicator */}
             <span 
-              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#12121f] ${
-                claudeEnabled ? 'bg-emerald-400' : 'bg-amber-400'
-              }`}
+              className={`absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-[#12121f] ${
+                mode === 'mobile-fullscreen' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'
+              } ${claudeEnabled ? 'bg-emerald-400' : 'bg-amber-400'}`}
               style={{ boxShadow: claudeEnabled ? '0 0 8px rgba(52, 211, 153, 0.6)' : '0 0 8px rgba(251, 191, 36, 0.6)' }}
             />
           </div>
           
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-white tracking-tight">Maven Oracle</h2>
-            <p className="text-sm text-gray-400">
-              {claudeEnabled === null ? 'Initializing...' : claudeEnabled ? 'AI-Powered Wealth Intelligence' : 'Limited Mode Active'}
-            </p>
+          <div className="flex-1 min-w-0">
+            <h2 className={`font-semibold text-white tracking-tight ${
+              mode === 'mobile-fullscreen' ? 'text-base' : 'text-xl'
+            }`}>Maven Oracle</h2>
+            {mode !== 'mobile-fullscreen' && (
+              <p className="text-sm text-gray-400">
+                {claudeEnabled === null ? 'Initializing...' : claudeEnabled ? 'AI-Powered Wealth Intelligence' : 'Limited Mode Active'}
+              </p>
+            )}
           </div>
           
           {/* Voice Controls */}
@@ -988,7 +1013,9 @@ What's on your mind?`;
 
         {/* Context Bar */}
         {showContext && profile && (
-          <div className="px-4 md:px-6 py-3 bg-white/[0.02] border-b border-white/5 flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm">
+          <div className={`bg-white/[0.02] border-b border-white/5 flex flex-wrap items-center shrink-0 ${
+            mode === 'mobile-fullscreen' ? 'px-3 py-2 gap-3 text-xs' : 'px-4 md:px-6 py-3 gap-3 md:gap-6 text-xs md:text-sm'
+          }`}>
             <div className="flex items-center gap-2 text-gray-400">
               <span className="text-emerald-400">💰</span>
               <span>Net Worth: <strong className="text-white">${calculateNetWorth(profile).toLocaleString()}</strong></span>
@@ -1012,7 +1039,9 @@ What's on your mind?`;
         {/* Messages Area */}
         <div 
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto px-6 py-6"
+          className={`flex-1 overflow-y-auto min-h-0 ${
+            mode === 'mobile-fullscreen' ? 'px-3 py-4' : 'px-6 py-6'
+          }`}
         >
           <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((msg, idx) => (
@@ -1124,15 +1153,23 @@ What's on your mind?`;
 
         {/* Quick Prompts */}
         {messages.length <= 1 && (
-          <div className="px-6 pb-4">
+          <div className={`shrink-0 ${mode === 'mobile-fullscreen' ? 'px-3 pb-2' : 'px-6 pb-4'}`}>
             <div className="max-w-3xl mx-auto">
-              <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">Suggested</p>
-              <div className="flex flex-wrap gap-2">
+              {mode !== 'mobile-fullscreen' && (
+                <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">Suggested</p>
+              )}
+              <div className={mode === 'mobile-fullscreen' 
+                ? 'flex overflow-x-auto gap-2 pb-1 scrollbar-hide' 
+                : 'flex flex-wrap gap-2'
+              }>
                 {quickPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
                     onClick={() => sendMessage(prompt)}
-                    className="text-sm px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-purple-500/30 rounded-xl text-gray-300 hover:text-white transition-all duration-200"
+                    className={mode === 'mobile-fullscreen'
+                      ? 'whitespace-nowrap px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-gray-400 hover:text-white hover:border-purple-500/30 transition shrink-0'
+                      : 'text-sm px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-purple-500/30 rounded-xl text-gray-300 hover:text-white transition-all duration-200'
+                    }
                   >
                     {prompt}
                   </button>
@@ -1143,7 +1180,9 @@ What's on your mind?`;
         )}
 
         {/* Input Area */}
-        <div className="px-6 py-5 border-t border-white/5 bg-white/[0.01]">
+        <div className={`border-t border-white/5 bg-white/[0.01] shrink-0 ${
+          mode === 'mobile-fullscreen' ? 'px-3 py-3 pb-[env(safe-area-inset-bottom,12px)]' : 'px-6 py-5'
+        }`}>
           <div className="max-w-3xl mx-auto">
             {/* Voice error indicator */}
             {voiceError && (
@@ -1247,12 +1286,14 @@ What's on your mind?`;
                 </svg>
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              {voiceAvailable 
-                ? 'Press Enter to send • Click 🎤 for voice • Speaker icon for audio responses'
-                : 'Press Enter to send • Shift+Enter for new line • Esc to close'
-              }
-            </p>
+            {mode !== 'mobile-fullscreen' && (
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                {voiceAvailable 
+                  ? 'Press Enter to send • Click 🎤 for voice • Speaker icon for audio responses'
+                  : 'Press Enter to send • Shift+Enter for new line • Esc to close'
+                }
+              </p>
+            )}
           </div>
         </div>
       </>
