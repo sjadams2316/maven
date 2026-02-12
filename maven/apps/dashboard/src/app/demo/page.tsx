@@ -26,6 +26,7 @@ import {
   GROWTH_RETIREMENT_TARGET,
   GROWTH_RETIREMENT_PROGRESS,
 } from '@/lib/demo-profile';
+import PortfolioSentiment from '@/components/PortfolioSentiment';
 
 // Insight type definition
 type InsightType = 'tax' | 'rebalance' | 'opportunity' | 'risk' | 'milestone';
@@ -484,6 +485,13 @@ export default function DemoPage() {
                 </div>
               </div>
             )}
+            
+            {/* Portfolio Pulse - Social Sentiment */}
+            <PortfolioSentiment
+              holdings={DEMO_HOLDINGS.map(h => ({ symbol: h.symbol, value: h.value }))}
+              showAlerts={true}
+              showHoldings={true}
+            />
             
             {/* Portfolio Summary */}
             <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6">
