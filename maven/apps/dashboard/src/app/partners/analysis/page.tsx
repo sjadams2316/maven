@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Search, TrendingUp, PieChart, Shield } from 'lucide-react';
+import { ArrowLeft, Search, TrendingUp, PieChart, Shield, GitCompare } from 'lucide-react';
 
 export default function AnalysisPage() {
   const searchParams = useSearchParams();
@@ -33,7 +33,7 @@ export default function AnalysisPage() {
       </div>
 
       {/* Analysis Types */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <button className="p-6 bg-[#12121a] border border-white/10 rounded-2xl hover:border-amber-500/50 transition-colors text-left group">
           <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-amber-500/30 transition-colors">
             <PieChart className="w-6 h-6 text-amber-400" />
@@ -57,6 +57,20 @@ export default function AnalysisPage() {
           <h3 className="text-white font-semibold mb-2">Risk Analysis</h3>
           <p className="text-gray-400 text-sm">Stress testing, concentration risk, and scenario modeling</p>
         </button>
+
+        <Link 
+          href={demoHref('/partners/analysis/divergence')} 
+          className="p-6 bg-[#12121a] border border-white/10 rounded-2xl hover:border-purple-500/50 transition-colors text-left group"
+        >
+          <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition-colors">
+            <GitCompare className="w-6 h-6 text-purple-400" />
+          </div>
+          <h3 className="text-white font-semibold mb-2">Divergence Scanner</h3>
+          <p className="text-gray-400 text-sm">Find where social sentiment disagrees with analyst consensus</p>
+          <span className="inline-flex items-center gap-1 mt-2 text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-full">
+            ✨ Athena-Powered
+          </span>
+        </Link>
       </div>
     </div>
   );

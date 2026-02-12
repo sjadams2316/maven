@@ -44,6 +44,17 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
     reliability: 0.97,
     enabled: true,
   },
+  xai: {
+    id: 'xai',
+    name: 'xAI (Grok)',
+    category: 'centralized',
+    description: 'First-party Twitter/X sentiment analysis via Grok',
+    capabilities: ['twitter-sentiment', 'social-analysis', 'influencer-tracking', 'real-time'],
+    latencyMs: { min: 500, max: 3000, typical: 1500 },
+    costPer1MTokens: { min: 0.3, max: 3 },
+    reliability: 0.95,
+    enabled: true,
+  },
 
   // Decentralized Bittensor Providers (Signals + Cost)
   chutes: {
@@ -299,10 +310,11 @@ export const SOURCE_WEIGHTS: Record<DataSourceId, number> = {
   groq: 0.7, // Fast but generic
   claude: 0.95, // High quality reasoning
   perplexity: 0.9, // Good research
+  xai: 0.9, // First-party Twitter sentiment
   chutes: 0.75, // Cost-effective
   vanta: 0.85, // Strong trading signals
   precog: 0.8, // BTC specific
-  desearch: 0.75, // Social sentiment
+  desearch: 0.75, // Social sentiment (validation)
   mantis: 0.78, // Multi-asset
   bitquant: 0.72, // DeFi focus
   numinous: 0.7, // Event forecasting

@@ -15,7 +15,8 @@ import {
   analyzePortfolioSentiment,
   type QuickSentiment,
 } from '@/lib/athena/intelligence';
-import { isXAIConfigured, isDesearchConfigured } from '@/lib/athena/providers/xai';
+import { isXAIConfigured } from '@/lib/athena/providers/xai';
+import { isDesearchConfigured } from '@/lib/athena/providers/bittensor';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     
     // Get aggregated intelligence for each symbol
     const intelligence = await Promise.all(
-      symbols.map(s => getMarketIntelligence(s))
+      symbols.map((s: string) => getMarketIntelligence(s))
     );
     
     return NextResponse.json({
