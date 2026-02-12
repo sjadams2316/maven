@@ -10,6 +10,7 @@ import {
   extractSymbols,
   isSentimentQuery,
 } from '@/lib/athena/intelligence';
+import { orchestrate, type OrchestratorResult } from '@/lib/athena/orchestrator';
 
 // In-memory store for Oracle memories (matches memory/route.ts)
 const memoryStore = new Map<string, Map<string, any>>();
@@ -1025,12 +1026,55 @@ async function callOracle(
     }
   }
   
-  // === ATHENA INTELLIGENCE ENRICHMENT ===
-  // Detect if query mentions stocks/crypto and enrich with real-time sentiment
+  // === ATHENA ORCHESTRATOR ===
+  // For financial queries with symbols, use full Athena pipeline
+  // (Groq classify → Perplexity research → xAI sentiment → FMP analyst → Claude synthesis)
   const detectedSymbols = extractSymbols(query);
+  const isFinancialQuery = detectedSymbols.length > 0 || 
+    /\b(buy|sell|invest|portfolio|stock|market|analyst|sentiment|research)\b/i.test(query);
+  
+  if (isFinancialQuery && process.env.ANTHROPIC_API_KEY) {
+    try {
+      console.log(`[Athena] Using full orchestrator for financial query. Symbols: ${detectedSymbols.join(', ') || 'none detected'}`);
+      
+      // Extract holdings from user context for better routing
+      const allHoldings = userContext?.topHoldings?.map(h => h.symbol) || [];
+      
+      const orchestratorResult = await orchestrate({
+        query,
+        systemPrompt, // Pass the full Maven Oracle prompt with user context
+        history: messages.slice(-6).map(m => ({ role: m.role, content: m.content })), // Last 6 messages for context
+        context: {
+          holdings: allHoldings,
+          riskTolerance: userContext?.riskTolerance as 'conservative' | 'moderate' | 'aggressive' | undefined,
+        },
+        config: {
+          useGroqClassification: true,
+          includeSentiment: true,
+          includeResearch: true,
+          useClaudeSynthesis: true, // THE MULTIPLIER - Claude synthesizes all sources
+        }
+      });
+      
+      console.log(`[Athena] Orchestrator complete in ${orchestratorResult.totalLatencyMs}ms. Providers: ${orchestratorResult.providers.llm.provider}`);
+      if (orchestratorResult.providers.sentiment) {
+        console.log(`[Athena] Sentiment for: ${orchestratorResult.providers.sentiment.symbols.join(', ')}`);
+      }
+      
+      // Return the Claude-synthesized response directly
+      return orchestratorResult.response;
+      
+    } catch (e) {
+      console.error('[Athena] Orchestrator failed, falling back to direct Claude:', e);
+      // Fall through to direct Claude call below
+    }
+  }
+  
+  // === FALLBACK: Direct Claude call for simple queries or if orchestrator fails ===
+  // Still enrich with basic sentiment if symbols detected
   if (detectedSymbols.length > 0) {
     try {
-      console.log(`[Athena] Enriching query with intelligence for: ${detectedSymbols.join(', ')}`);
+      console.log(`[Athena] Fallback enrichment for: ${detectedSymbols.join(', ')}`);
       const intelligence = await enrichWithIntelligence(query, {
         maxSymbols: 3,
         includeSentiment: true,
@@ -1043,7 +1087,6 @@ async function callOracle(
       }
     } catch (e) {
       console.error('[Athena] Intelligence enrichment failed:', e);
-      // Continue without enrichment - graceful degradation
     }
   }
 
