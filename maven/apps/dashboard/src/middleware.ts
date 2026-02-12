@@ -130,7 +130,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 // ============================================================================
 // PASSWORD GATE — Simple site-wide password protection
 // ============================================================================
-const SITE_PASSWORD = process.env.SITE_PASSWORD || 'BanksNavy10';
+const SITE_PASSWORD = (process.env.SITE_PASSWORD || 'BanksNavy10').trim();
 const PASSWORD_COOKIE = 'maven_access';
 
 function checkPasswordGate(request: NextRequest): NextResponse | null {
@@ -141,7 +141,7 @@ function checkPasswordGate(request: NextRequest): NextResponse | null {
   
   // Check for valid password cookie
   const accessCookie = request.cookies.get(PASSWORD_COOKIE)?.value;
-  if (accessCookie === SITE_PASSWORD) return null;
+  if (accessCookie === 'authenticated') return null;
   
   // Not authenticated — redirect to gate
   const gateUrl = new URL('/gate', request.url);

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SITE_PASSWORD = process.env.SITE_PASSWORD || 'BanksNavy10';
+const SITE_PASSWORD = (process.env.SITE_PASSWORD || 'BanksNavy10').trim();
 
 export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json();
 
-    if (password === SITE_PASSWORD) {
+    if (password.trim() === SITE_PASSWORD) {
       const response = NextResponse.json({ ok: true });
-      response.cookies.set('maven_access', SITE_PASSWORD, {
+      response.cookies.set('maven_access', 'authenticated', {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
