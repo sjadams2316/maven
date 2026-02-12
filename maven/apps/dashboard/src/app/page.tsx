@@ -4,11 +4,14 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useMemeRedirect } from './components/MemeInterstitial';
 import { useUserProfile } from '@/providers/UserProvider';
 import DemoModal from './components/DemoModal';
 import FirstWinModal from './components/FirstWinModal';
 import { enableDemoMode } from '@/lib/demo-profile';
+
+const MarketOverview = dynamic(() => import('./components/MarketOverview'), { ssr: false });
 
 // Fallback market data - shown if API fails or takes too long
 const FALLBACK_MARKET_DATA = {
@@ -335,214 +338,10 @@ export default function LandingPage() {
               <span className="text-amber-500/80 text-sm">Maven Partners</span>
             </Link>
 
-            {/* DEBUG: Show raw marketData state */}
-            {process.env.NODE_ENV === 'development' && marketData && (
-              <div className="text-xs text-left bg-gray-900 p-2 rounded mb-4 max-h-32 overflow-auto">
-                <pre>{JSON.stringify(marketData, null, 2)}</pre>
-              </div>
-            )}
-            
-            {/* Live Market Ticker - Yahoo Finance Style */}
-            {marketData && (
-              <div className="w-full max-w-4xl mx-auto">
-                {/* Market Status */}
-                <div className="flex items-center justify-center gap-3 mb-3 text-xs text-gray-500">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${
-                      !marketData?.marketSession ? 'bg-gray-500' : 
-                      marketData.marketSession === 'regular' ? 'bg-emerald-500 animate-pulse' : 
-                      marketData.marketSession === 'pre-market' || marketData.marketSession === 'after-hours' ? 'bg-amber-500 animate-pulse' : 
-                      'bg-red-500'
-                    }`}></span>
-                    <span>{marketData?.marketLabel || 'Loading...'}</span>
-                  </div>
-                  <span className="text-gray-600">•</span>
-                  <span>As of {new Date(marketData.timestamp).toLocaleString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true 
-                  })}</span>
-                </div>
-                
-                {/* Index Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                  {/* S&P 500 */}
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.sp500?.name || 'S&P 500'}</div>
-                    <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-sm font-medium ${marketData.indices?.sp500?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {marketData.indices?.sp500?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.sp500?.changePercent || 0).toFixed(2)}%
-                      </span>
-                      {/* After-hours indicator */}
-                      {marketData.marketSession === 'after-hours' && marketData.indices?.sp500?.afterHoursChangePercent !== undefined && (
-                        <span className={`text-xs ${marketData.indices?.sp500?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
-                          🌙 {marketData.indices?.sp500?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.sp500?.afterHoursChangePercent.toFixed(2)}%
-                        </span>
-                      )}
-                      {/* Realistic sparkline with gradient */}
-                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="sparkGreen1" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={marketData.indices?.sp500?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>
-                            <stop offset="100%" stopColor={marketData.indices?.sp500?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        <path 
-                          d={marketData.indices?.sp500?.changePercent >= 0 
-                            ? "M0,24 C4,22 8,26 12,20 C16,14 20,18 24,15 C28,12 32,16 36,10 C40,6 44,9 48,7 C52,5 56,8 60,5 L64,4" 
-                            : "M0,8 C4,10 8,6 12,12 C16,18 20,14 24,17 C28,20 32,16 36,22 C40,26 44,23 48,25 C52,27 56,24 60,27 L64,28"}
-                          fill="url(#sparkGreen1)"
-                        />
-                        <path 
-                          d={marketData.indices?.sp500?.changePercent >= 0 
-                            ? "M0,24 C4,22 8,26 12,20 C16,14 20,18 24,15 C28,12 32,16 36,10 C40,6 44,9 48,7 C52,5 56,8 60,5 L64,4" 
-                            : "M0,8 C4,10 8,6 12,12 C16,18 20,14 24,17 C28,20 32,16 36,22 C40,26 44,23 48,25 C52,27 56,24 60,27 L64,28"}
-                          fill="none" 
-                          stroke={marketData.indices?.sp500?.changePercent >= 0 ? '#10b981' : '#ef4444'} 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          className="group-hover:stroke-[2.5] transition-all"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Dow 30 */}
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.dow?.name || 'Dow 30'}</div>
-                    <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.dow?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-sm font-medium ${marketData.indices?.dow?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {marketData.indices?.dow?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.dow?.changePercent || 0).toFixed(2)}%
-                      </span>
-                      {/* After-hours indicator */}
-                      {marketData.marketSession === 'after-hours' && marketData.indices?.dow?.afterHoursChangePercent !== undefined && (
-                        <span className={`text-xs ${marketData.indices?.dow?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
-                          🌙 {marketData.indices?.dow?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.dow?.afterHoursChangePercent.toFixed(2)}%
-                        </span>
-                      )}
-                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="sparkGreen2" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={marketData.indices?.dow?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>
-                            <stop offset="100%" stopColor={marketData.indices?.dow?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        <path 
-                          d={marketData.indices?.dow?.changePercent >= 0 
-                            ? "M0,22 C4,24 8,20 12,18 C16,16 20,19 24,14 C28,10 32,13 36,9 C40,7 44,10 48,6 C52,4 56,7 60,4 L64,3" 
-                            : "M0,10 C4,8 8,12 12,14 C16,16 20,13 24,18 C28,22 32,19 36,23 C40,25 44,22 48,26 C52,28 56,25 60,28 L64,29"}
-                          fill="url(#sparkGreen2)"
-                        />
-                        <path 
-                          d={marketData.indices?.dow?.changePercent >= 0 
-                            ? "M0,22 C4,24 8,20 12,18 C16,16 20,19 24,14 C28,10 32,13 36,9 C40,7 44,10 48,6 C52,4 56,7 60,4 L64,3" 
-                            : "M0,10 C4,8 8,12 12,14 C16,16 20,13 24,18 C28,22 32,19 36,23 C40,25 44,22 48,26 C52,28 56,25 60,28 L64,29"}
-                          fill="none" 
-                          stroke={marketData.indices?.dow?.changePercent >= 0 ? '#10b981' : '#ef4444'} 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          className="group-hover:stroke-[2.5] transition-all"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Nasdaq */}
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="text-xs text-gray-500 mb-1">{marketData.indices?.nasdaq?.name || 'Nasdaq'}</div>
-                    <div className="text-lg sm:text-xl font-bold text-white">
-                      {marketData.indices?.nasdaq?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-sm font-medium ${marketData.indices?.nasdaq?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {marketData.indices?.nasdaq?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.indices?.nasdaq?.changePercent || 0).toFixed(2)}%
-                      </span>
-                      {/* After-hours indicator */}
-                      {marketData.marketSession === 'after-hours' && marketData.indices?.nasdaq?.afterHoursChangePercent !== undefined && (
-                        <span className={`text-xs ${marketData.indices?.nasdaq?.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
-                          🌙 {marketData.indices?.nasdaq?.afterHoursChangePercent >= 0 ? '+' : ''}{marketData.indices?.nasdaq?.afterHoursChangePercent.toFixed(2)}%
-                        </span>
-                      )}
-                      <svg className="w-12 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="sparkGreen3" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={marketData.indices?.nasdaq?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0.3"/>
-                            <stop offset="100%" stopColor={marketData.indices?.nasdaq?.changePercent >= 0 ? '#10b981' : '#ef4444'} stopOpacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        <path 
-                          d={marketData.indices?.nasdaq?.changePercent >= 0 
-                            ? "M0,26 C4,23 8,27 12,21 C16,17 20,20 24,16 C28,13 32,17 36,11 C40,8 44,12 48,7 C52,5 56,9 60,5 L64,4" 
-                            : "M0,6 C4,9 8,5 12,11 C16,15 20,12 24,16 C28,19 32,15 36,21 C40,24 44,20 48,25 C52,27 56,23 60,27 L64,28"}
-                          fill="url(#sparkGreen3)"
-                        />
-                        <path 
-                          d={marketData.indices?.nasdaq?.changePercent >= 0 
-                            ? "M0,26 C4,23 8,27 12,21 C16,17 20,20 24,16 C28,13 32,17 36,11 C40,8 44,12 48,7 C52,5 56,9 60,5 L64,4" 
-                            : "M0,6 C4,9 8,5 12,11 C16,15 20,12 24,16 C28,19 32,15 36,21 C40,24 44,20 48,25 C52,27 56,23 60,27 L64,28"}
-                          fill="none" 
-                          stroke={marketData.indices?.nasdaq?.changePercent >= 0 ? '#10b981' : '#ef4444'} 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          className="group-hover:stroke-[2.5] transition-all"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Bitcoin - 24/7 */}
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/[0.07] transition group">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-xs text-gray-500">Bitcoin</span>
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        24/7
-                      </span>
-                    </div>
-                    <div className="text-lg sm:text-xl font-bold text-white">
-                      ${marketData.crypto?.BTC?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-sm font-medium ${marketData.crypto?.BTC?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {marketData.crypto?.BTC?.changePercent >= 0 ? '▲' : '▼'} {Math.abs(marketData.crypto?.BTC?.changePercent || 0).toFixed(2)}%
-                      </span>
-                      <svg className="w-16 h-8 ml-auto" viewBox="0 0 64 32" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="sparkBTC" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={marketData.crypto?.BTC?.changePercent >= 0 ? '#f59e0b' : '#ef4444'} stopOpacity="0.3"/>
-                            <stop offset="100%" stopColor={marketData.crypto?.BTC?.changePercent >= 0 ? '#f59e0b' : '#ef4444'} stopOpacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        <path 
-                          d={marketData.crypto?.BTC?.changePercent >= 0 
-                            ? "M0,28 C4,26 8,24 12,22 C16,20 20,24 24,18 C28,14 32,16 36,12 C40,8 44,10 48,6 C52,4 56,6 60,4 L64,2" 
-                            : "M0,4 C4,6 8,8 12,10 C16,12 20,8 24,14 C28,18 32,16 36,20 C40,24 44,22 48,26 C52,28 56,26 60,28 L64,30"}
-                          fill="url(#sparkBTC)"
-                        />
-                        <path 
-                          d={marketData.crypto?.BTC?.changePercent >= 0 
-                            ? "M0,28 C4,26 8,24 12,22 C16,20 20,24 24,18 C28,14 32,16 36,12 C40,8 44,10 48,6 C52,4 56,6 60,4 L64,2" 
-                            : "M0,4 C4,6 8,8 12,10 C16,12 20,8 24,14 C28,18 32,16 36,20 C40,24 44,22 48,26 C52,28 56,26 60,28 L64,30"}
-                          fill="none" 
-                          stroke={marketData.crypto?.BTC?.changePercent >= 0 ? '#f59e0b' : '#ef4444'} 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          className="group-hover:stroke-[2.5] transition-all"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Live Market Overview — All 6 indices with clickable charts */}
+            <div className="w-full max-w-4xl mx-auto">
+              <MarketOverview />
+            </div>
           </div>
         </div>
       </div>
