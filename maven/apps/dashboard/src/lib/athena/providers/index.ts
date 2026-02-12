@@ -45,6 +45,24 @@ export {
   type XAIResponse,
 } from './xai';
 
+// Perplexity - Real-time research with citations
+export {
+  perplexityCompletion,
+  perplexityResearch,
+  researchStock,
+  researchMarket,
+  isPerplexityConfigured,
+  getPerplexityStatus,
+  formatCitations,
+  formatResearchForOracle,
+  PERPLEXITY_MODELS,
+  PERPLEXITY_DEFAULT_MODEL,
+  type PerplexityMessage,
+  type PerplexityCitation,
+  type PerplexityResponse,
+  type PerplexityCompletionOptions,
+} from './perplexity';
+
 // Bittensor - Decentralized intelligence signals
 export {
   // Availability

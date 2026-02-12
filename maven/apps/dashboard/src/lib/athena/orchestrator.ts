@@ -19,6 +19,12 @@ import { chutesQuery, isChutesConfigured, CHUTES_MODELS } from './providers/chut
 import { groqQuery, groqClassify, isGroqConfigured, GROQ_MODELS } from './providers/groq';
 import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { getVantaConsensus, isVantaConfigured } from './providers/bittensor';
+import { 
+  perplexityResearch, 
+  isPerplexityConfigured, 
+  formatResearchForOracle,
+  type PerplexityCitation 
+} from './providers/perplexity';
 import { synthesize, NormalizedSignal, normalizeSentiment, normalizeTradingSignal } from './synthesis';
 import type { QueryClassification, RoutingDecision, RoutingPath, DataSourceId } from './types';
 
@@ -409,7 +415,7 @@ async function fetchLLMResponse(
   path: RoutingPath,
   history?: Array<{ role: 'user' | 'assistant'; content: string }>,
   config?: OrchestratorConfig
-): Promise<{ response: string; provider: string; model: string }> {
+): Promise<{ response: string; provider: string; model: string; citations?: PerplexityCitation[] }> {
   
   // Speed path: Use Groq (sub-second)
   if (path === 'speed' && isGroqConfigured()) {
@@ -419,6 +425,21 @@ async function fetchLLMResponse(
       maxTokens: 2048,
     });
     return { response, provider: 'groq', model: GROQ_MODELS.llama3_70b };
+  }
+  
+  // Deep/Research path: Use Perplexity (real-time research with citations)
+  if (path === 'deep' && isPerplexityConfigured()) {
+    const result = await perplexityResearch(query, {
+      systemPrompt,
+      recency: 'week',
+    });
+    const response = formatResearchForOracle(result.content, result.citations);
+    return { 
+      response, 
+      provider: 'perplexity', 
+      model: 'sonar-pro',
+      citations: result.citations,
+    };
   }
   
   // Cost path: Use Chutes (95% cheaper)
@@ -432,7 +453,7 @@ async function fetchLLMResponse(
     return { response, provider: 'chutes', model };
   }
   
-  // Deep path: Use Chutes reasoning model (or Claude as fallback)
+  // Deep fallback: Use Chutes reasoning model
   if (path === 'deep' && isChutesConfigured()) {
     const response = await chutesQuery(query, {
       model: CHUTES_MODELS.reasoning,
@@ -542,6 +563,7 @@ export function getOrchestratorStatus(): {
   providers: {
     groq: boolean;
     chutes: boolean;
+    perplexity: boolean;
     xai: boolean;
     vanta: boolean;
   };
@@ -551,6 +573,7 @@ export function getOrchestratorStatus(): {
     providers: {
       groq: isGroqConfigured(),
       chutes: isChutesConfigured(),
+      perplexity: isPerplexityConfigured(),
       xai: isXAIConfigured(),
       vanta: isVantaConfigured(),
     },

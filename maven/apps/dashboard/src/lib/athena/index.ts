@@ -144,6 +144,19 @@ export {
   type CombinedSentiment,
 } from './providers/xai';
 
+// Perplexity Provider (real-time research with citations)
+export {
+  perplexityResearch,
+  researchStock,
+  researchMarket,
+  isPerplexityConfigured,
+  formatCitations,
+  formatResearchForOracle,
+  PERPLEXITY_MODELS,
+  type PerplexityCitation,
+  type PerplexityResponse,
+} from './providers/perplexity';
+
 // Synthesis Engine (signal combination)
 export {
   // Core synthesis
