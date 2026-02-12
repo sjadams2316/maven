@@ -31,6 +31,7 @@
 
 | Date | Report | Key Insight |
 |------|--------|-------------|
+| 2026-02-12 | [Altruist Hazel AI Shockwave](wealthtech-trends/2026-02-12-altruist-hazel-ai-shockwave.md) | Altruist's Hazel AI launch crashed LPL 8.3%, validates Maven thesis |
 
 ---
 
