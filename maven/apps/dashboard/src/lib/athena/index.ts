@@ -143,3 +143,21 @@ export {
   type XSentimentResult,
   type CombinedSentiment,
 } from './providers/xai';
+
+// Synthesis Engine (the brain)
+export {
+  // Core synthesis
+  synthesize,
+  synthesizeSymbol,
+  synthesizeBatch,
+  // Normalization helpers
+  normalizeSentiment,
+  normalizeTradingSignal,
+  normalizeForecast,
+  // Display formatting
+  formatSynthesisForDisplay,
+  // Types
+  type NormalizedSignal,
+  type SynthesisInput,
+  type SynthesisResult,
+} from './synthesis';
