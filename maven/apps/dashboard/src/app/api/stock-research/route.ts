@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFMPClient, FMPResearchData } from '@/lib/fmp-client';
+import { getQuickSentiment } from '@/lib/athena/intelligence';
 
 interface ResearchData extends FMPResearchData {
   // Additional computed fields
@@ -677,14 +678,18 @@ async function buildFromYahoo(yahooData: any, news: any[]): Promise<ResearchData
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol')?.toUpperCase();
+  const includeSentiment = searchParams.get('sentiment') !== 'false'; // Default true
   
   if (!symbol) {
     return NextResponse.json({ error: 'Symbol required' }, { status: 400 });
   }
   
   try {
-    // Fetch news (works with both sources)
-    const news = await fetchNews(symbol);
+    // Fetch news and sentiment in parallel
+    const [news, sentiment] = await Promise.all([
+      fetchNews(symbol),
+      includeSentiment ? getQuickSentiment(symbol).catch(() => null) : Promise.resolve(null),
+    ]);
     
     // Try FMP first (real data)
     const fmpClient = getFMPClient();
@@ -692,7 +697,19 @@ export async function GET(request: NextRequest) {
       const fmpData = await fmpClient.getResearchData(symbol);
       if (fmpData) {
         const research = await buildFromFMP(fmpData, news);
-        return NextResponse.json(research);
+        return NextResponse.json({
+          ...research,
+          // Add social sentiment data
+          socialSentiment: sentiment ? {
+            sentiment: sentiment.sentiment,
+            score: sentiment.score,
+            confidence: sentiment.confidence,
+            twitterMentions: sentiment.twitterMentions,
+            redditMentions: sentiment.redditMentions,
+            trending: sentiment.trending,
+            lastUpdated: sentiment.lastUpdated,
+          } : null,
+        });
       }
     }
     
@@ -700,7 +717,18 @@ export async function GET(request: NextRequest) {
     const yahooData = await fetchYahooData(symbol);
     if (yahooData) {
       const research = await buildFromYahoo(yahooData, news);
-      return NextResponse.json(research);
+      return NextResponse.json({
+        ...research,
+        socialSentiment: sentiment ? {
+          sentiment: sentiment.sentiment,
+          score: sentiment.score,
+          confidence: sentiment.confidence,
+          twitterMentions: sentiment.twitterMentions,
+          redditMentions: sentiment.redditMentions,
+          trending: sentiment.trending,
+          lastUpdated: sentiment.lastUpdated,
+        } : null,
+      });
     }
     
     return NextResponse.json({ error: 'Unable to fetch research data' }, { status: 404 });

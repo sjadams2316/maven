@@ -114,3 +114,32 @@ export {
   type TaskPriority,
   type TaskStatus,
 } from './scheduler';
+
+// Intelligence Layer (unified enrichment for all surfaces)
+export {
+  // Symbol detection
+  extractSymbols,
+  isSentimentQuery,
+  isTradingQuery,
+  // Query enrichment
+  enrichWithIntelligence,
+  formatIntelligenceForPrompt,
+  // Quick lookups for UI
+  getQuickSentiment,
+  getBatchSentiment,
+  // Portfolio analysis
+  analyzePortfolioSentiment,
+  // Types
+  type IntelligenceContext,
+  type QuickSentiment,
+  type PortfolioSentimentSummary,
+} from './intelligence';
+
+// xAI Provider (Twitter sentiment)
+export {
+  searchXSentiment,
+  getCombinedSentiment,
+  isXAIConfigured,
+  type XSentimentResult,
+  type CombinedSentiment,
+} from './providers/xai';

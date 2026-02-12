@@ -4,6 +4,12 @@ import { MAVEN_KNOWLEDGE_BASE, getRelevantKnowledge } from '@/lib/knowledge-base
 import { parseLocalStorageProfile, buildContextForChat, UserContext } from '@/lib/user-context';
 import { extractMemories, formatMemoriesForPrompt } from '@/app/api/oracle/memory/route';
 import { shouldUseAthena, athenaOracleQuery, formatMetrics } from '@/lib/athena';
+import { 
+  enrichWithIntelligence, 
+  formatIntelligenceForPrompt, 
+  extractSymbols,
+  isSentimentQuery,
+} from '@/lib/athena/intelligence';
 
 // In-memory store for Oracle memories (matches memory/route.ts)
 const memoryStore = new Map<string, Map<string, any>>();
@@ -1016,6 +1022,28 @@ async function callOracle(
     const memories = getUserMemories(clerkId);
     if (memories.length > 0) {
       systemPrompt += formatMemoriesForPrompt(memories);
+    }
+  }
+  
+  // === ATHENA INTELLIGENCE ENRICHMENT ===
+  // Detect if query mentions stocks/crypto and enrich with real-time sentiment
+  const detectedSymbols = extractSymbols(query);
+  if (detectedSymbols.length > 0) {
+    try {
+      console.log(`[Athena] Enriching query with intelligence for: ${detectedSymbols.join(', ')}`);
+      const intelligence = await enrichWithIntelligence(query, {
+        maxSymbols: 3,
+        includeSentiment: true,
+        includeTrading: true,
+      });
+      
+      if (intelligence.sentiment.size > 0 || intelligence.tradingSignals.size > 0) {
+        systemPrompt += formatIntelligenceForPrompt(intelligence);
+        console.log(`[Athena] Injected intelligence (${intelligence.enrichmentLatencyMs}ms): ${intelligence.providersUsed.join(', ')}`);
+      }
+    } catch (e) {
+      console.error('[Athena] Intelligence enrichment failed:', e);
+      // Continue without enrichment - graceful degradation
     }
   }
 
