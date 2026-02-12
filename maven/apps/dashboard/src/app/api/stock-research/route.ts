@@ -33,7 +33,32 @@ interface ResearchData extends FMPResearchData {
 }
 
 /**
- * Fetch stock data from Yahoo Finance chart API (fallback)
+ * Fetch real-time price from Yahoo Finance (1d range for accurate previousClose)
+ */
+async function fetchYahooPrice(symbol: string): Promise<{ price: number; previousClose: number } | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d&includePrePost=false`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      },
+      next: { revalidate: 60 }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const meta = data.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    return {
+      price: meta.regularMarketPrice,
+      previousClose: meta.chartPreviousClose || meta.regularMarketPrice,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch stock data from Yahoo Finance chart API (fallback — 3mo for historical data)
  */
 async function fetchYahooData(symbol: string): Promise<any> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=3mo&includePrePost=false`;
@@ -692,7 +717,12 @@ export async function GET(request: NextRequest) {
     ]);
     
     // Always fetch Yahoo data for real-time prices (FMP free tier is stale)
-    const yahooData = await fetchYahooData(symbol);
+    // fetchYahooData uses range=3mo (for chart data) but chartPreviousClose is stale
+    // fetchYahooPrice uses range=1d and gives accurate previousClose
+    const [yahooData, yahooPriceData] = await Promise.all([
+      fetchYahooData(symbol),
+      fetchYahooPrice(symbol),
+    ]);
     
     // Try FMP for fundamentals (analyst ratings, financials, P/E, margins, etc.)
     const fmpClient = getFMPClient();
@@ -702,10 +732,11 @@ export async function GET(request: NextRequest) {
         const research = await buildFromFMP(fmpData, news);
         
         // Override price data with Yahoo (real-time) if available
-        if (yahooData) {
-          const meta = yahooData.meta;
-          const yahooPrice = meta.regularMarketPrice;
-          const yahooPrevClose = meta.chartPreviousClose || meta.previousClose || yahooPrice;
+        if (yahooPriceData || yahooData) {
+          // Use yahooPriceData (range=1d) for accurate price + previousClose
+          // Fall back to yahooData (range=3mo) for price only
+          const yahooPrice = yahooPriceData?.price || yahooData?.meta?.regularMarketPrice;
+          const yahooPrevClose = yahooPriceData?.previousClose || yahooPrice;
           const yahooChange = yahooPrice - yahooPrevClose;
           const yahooChangePercent = yahooPrevClose ? (yahooChange / yahooPrevClose) * 100 : 0;
           
@@ -714,9 +745,10 @@ export async function GET(request: NextRequest) {
           research.change = yahooChange;
           research.changePercent = yahooChangePercent;
           
-          // Also update 52-week data from Yahoo if available
-          if (meta.fiftyTwoWeekHigh) research.fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh;
-          if (meta.fiftyTwoWeekLow) research.fiftyTwoWeekLow = meta.fiftyTwoWeekLow;
+          // Also update 52-week data from Yahoo 3mo data if available
+          const yahooMeta = yahooData?.meta;
+          if (yahooMeta?.fiftyTwoWeekHigh) research.fiftyTwoWeekHigh = yahooMeta.fiftyTwoWeekHigh;
+          if (yahooMeta?.fiftyTwoWeekLow) research.fiftyTwoWeekLow = yahooMeta.fiftyTwoWeekLow;
           
           // Recalculate currentToTarget with accurate price
           if (research.targetMean) {
