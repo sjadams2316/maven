@@ -287,18 +287,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const financials = profile ? calculateFinancials(profile) : null;
   const isOnboarded = profile?.onboardingComplete ?? false;
   
-  // Check for demo mode on mount - set profile IMMEDIATELY if enabled
-  // This ensures demo profile is available before Clerk finishes loading
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const demoEnabled = isDemoModeEnabled();
-      if (demoEnabled) {
-        setIsDemoMode(true);
-        setProfile(DEMO_PROFILE);
-        setIsLoading(false);
-      }
-    }
-  }, []);
+  // NOTE: Removed early demo mode check that was causing race condition
+  // Demo mode is now ONLY set in the main loadProfile effect after checking auth state
+  // This prevents demo mode from overriding signed-in users
 
   // Load profile on mount and auth changes
   useEffect(() => {
