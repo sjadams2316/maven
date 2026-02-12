@@ -305,11 +305,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     async function loadProfile() {
       setIsLoading(true);
       
-      // Check if demo mode is active - PRIORITIZE demo mode over auth state
-      // This ensures demo works even with stale Clerk sessions
+      // Check if demo mode is active
       const demoEnabled = isDemoModeEnabled();
-      if (demoEnabled) {
-        // DEMO MODE: Use demo profile regardless of auth state
+      
+      // BUG FIX: If user is signed in, ALWAYS clear demo mode and use real profile
+      // Demo mode should never override a real authenticated session
+      if (isSignedIn) {
+        if (demoEnabled) {
+          console.log('[UserProvider] Signed-in user had demo mode enabled - clearing it');
+          disableDemoMode();
+          setIsDemoMode(false);
+        }
+      } else if (demoEnabled) {
+        // DEMO MODE: Only use demo profile when NOT signed in
         setProfile(DEMO_PROFILE);
         setIsDemoMode(true);
         setIsLoading(false);
