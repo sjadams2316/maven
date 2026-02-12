@@ -89,17 +89,22 @@ export default function NetWorthCard({
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   
-  // Mock data for different periods
-  const periodData: Record<string, { change: number; percent: number }> = {
-    '1D': { change: 2340, percent: 0.20 },
-    '1W': { change: 8900, percent: 0.78 },
-    '1M': { change: 12400, percent: 1.09 },
-    '3M': { change: 45200, percent: 4.09 },
-    'YTD': { change: 78500, percent: 7.32 },
-    '1Y': { change: 156000, percent: 15.68 },
+  // Historical change data - currently illustrative until we have real tracking
+  // TODO: Integrate with historical price data for accurate period changes
+  const hasRealHistoricalData = false; // Will be true when we have actual historical tracking
+  
+  // Calculate illustrative changes based on typical market movements
+  // These are NOT real values - just reasonable estimates for demonstration
+  const illustrativeChanges: Record<string, { change: number; percent: number }> = {
+    '1D': { change: Math.round(netWorth * 0.002), percent: 0.20 },
+    '1W': { change: Math.round(netWorth * 0.008), percent: 0.80 },
+    '1M': { change: Math.round(netWorth * 0.011), percent: 1.10 },
+    '3M': { change: Math.round(netWorth * 0.04), percent: 4.00 },
+    'YTD': { change: Math.round(netWorth * 0.073), percent: 7.30 },
+    '1Y': { change: Math.round(netWorth * 0.157), percent: 15.70 },
   };
   
-  const currentData = periodData[selectedPeriod];
+  const currentData = illustrativeChanges[selectedPeriod];
   const currentIsPositive = currentData.change >= 0;
   
   // Generate historical data for chart
@@ -198,9 +203,14 @@ export default function NetWorthCard({
         {/* Change */}
         <div className="flex items-center gap-2 mb-4">
           <span className={`text-lg font-semibold ${currentIsPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-            {currentIsPositive ? '+' : ''}{currentData.change.toLocaleString()} ({currentIsPositive ? '+' : ''}{currentData.percent.toFixed(2)}%)
+            {currentIsPositive ? '+' : ''}${currentData.change.toLocaleString()} ({currentIsPositive ? '+' : ''}{currentData.percent.toFixed(2)}%)
           </span>
           <span className="text-gray-500 text-sm">{selectedPeriod}</span>
+          {!hasRealHistoricalData && (
+            <span className="text-[10px] text-gray-600 bg-gray-800/50 px-1.5 py-0.5 rounded" title="Based on typical market returns, not your actual historical performance">
+              illustrative
+            </span>
+          )}
         </div>
         
         {/* Period Selector */}
