@@ -4,39 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// Dynamic import to avoid SSR issues with framer-motion
+// Dynamic imports to avoid SSR issues
 const OracleWelcome = dynamic(() => import('../components/OracleWelcome'), { ssr: false });
+const MarketOverview = dynamic(() => import('../components/MarketOverview'), { ssr: false });
 
 export default function LandingPage() {
   const router = useRouter();
-  const [marketData, setMarketData] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/market-data')
-      .then(res => res.json())
-      .then(data => {
-        // Transform API response to expected format
-        const stocks = data.stocks || [];
-        const crypto = data.crypto || [];
-        
-        // Map stocks array to indices object
-        const spyData = stocks.find((s: { symbol: string }) => s.symbol === 'SPY');
-        
-        // Map crypto array to object
-        const btcData = crypto.find((c: { symbol: string }) => c.symbol === 'BTC');
-        
-        setMarketData({
-          indices: {
-            sp500: spyData ? { price: spyData.price, changePercent: spyData.changePercent } : null,
-          },
-          crypto: {
-            BTC: btcData ? { price: btcData.price, changePercent: btcData.changePercent } : null,
-          },
-        });
-      })
-      .catch(() => {});
-  }, []);
   
   const handleEnterDemo = () => {
     // Check if user has seen the welcome before (in this session)
@@ -127,26 +101,10 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Live Market Ticker */}
-            {marketData && (
-              <div className="inline-flex items-center gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">SPY</span>
-                  <span className="font-semibold">{marketData.indices?.sp500?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  <span className={`text-sm ${marketData.indices?.sp500?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {marketData.indices?.sp500?.changePercent >= 0 ? '+' : ''}{marketData.indices?.sp500?.changePercent?.toFixed(2)}%
-                  </span>
-                </div>
-                <div className="w-px h-6 bg-white/10" />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">BTC</span>
-                  <span className="font-semibold">${marketData.crypto?.BTC?.price?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  <span className={`text-sm ${marketData.crypto?.BTC?.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {marketData.crypto?.BTC?.changePercent >= 0 ? '+' : ''}{marketData.crypto?.BTC?.changePercent?.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Live Market Overview — All 6 indices, clickable charts */}
+            <div className="w-full max-w-3xl mx-auto mt-4">
+              <MarketOverview />
+            </div>
           </div>
         </div>
       </div>
