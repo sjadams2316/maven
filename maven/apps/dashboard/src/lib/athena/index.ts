@@ -77,3 +77,22 @@ export {
   getRoutingInfo,
   formatMetrics,
 } from './oracle-bridge';
+
+// Scheduler (autonomous task execution)
+export {
+  executeTask,
+  formatTaskSummary,
+  parseActionItems,
+  queueTask,
+  getTaskResult,
+  processNextTask,
+  getQueueStatus,
+  TASK_TEMPLATES,
+  type ScheduledTask,
+  type TaskResult,
+  type TaskSummary,
+  type ActionItem,
+  type TaskType,
+  type TaskPriority,
+  type TaskStatus,
+} from './scheduler';
