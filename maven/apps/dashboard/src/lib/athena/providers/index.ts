@@ -63,6 +63,20 @@ export {
   type PerplexityCompletionOptions,
 } from './perplexity';
 
+// Claude - The synthesis brain (THE MULTIPLIER)
+export {
+  claudeCompletion,
+  claudeSynthesize,
+  claudeQuery,
+  isClaudeConfigured,
+  getClaudeStatus,
+  CLAUDE_MODELS,
+  CLAUDE_DEFAULT_MODEL,
+  type ClaudeMessage,
+  type ClaudeSynthesisInput,
+  type ClaudeResponse,
+} from './claude';
+
 // Bittensor - Decentralized intelligence signals
 export {
   // Availability
@@ -94,34 +108,34 @@ export {
 export function getAvailableProviders(): string[] {
   const providers: string[] = [];
   
-  // Check Chutes
-  if (process.env.CHUTES_API_KEY) {
-    providers.push('chutes');
-  }
-  
-  // Check Anthropic/Claude
-  if (process.env.ANTHROPIC_API_KEY) {
-    providers.push('claude');
-  }
-  
-  // Check OpenAI (for Groq-like fast inference)
-  if (process.env.OPENAI_API_KEY) {
-    providers.push('openai');
-  }
-  
-  // Check Groq
+  // Check Groq (speed)
   if (process.env.GROQ_API_KEY) {
     providers.push('groq');
   }
   
-  // Check Perplexity
+  // Check Chutes (cost)
+  if (process.env.CHUTES_API_KEY) {
+    providers.push('chutes');
+  }
+  
+  // Check Perplexity (research)
   if (process.env.PERPLEXITY_API_KEY) {
     providers.push('perplexity');
   }
   
-  // Check xAI (Grok + X Search)
+  // Check Claude (synthesis brain)
+  if (process.env.ANTHROPIC_API_KEY) {
+    providers.push('claude');
+  }
+  
+  // Check xAI (Twitter sentiment)
   if (process.env.XAI_API_KEY) {
     providers.push('xai');
+  }
+  
+  // Check Vanta (trading signals)
+  if (process.env.VANTA_API_KEY) {
+    providers.push('vanta');
   }
   
   return providers;

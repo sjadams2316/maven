@@ -3,15 +3,22 @@
  * 
  * THE BRAIN - Coordinates multiple AI providers into unified intelligence.
  * 
+ * Architecture:
+ * - Groq: Fast classification + simple chat (speed)
+ * - Chutes: Cost-effective analysis (cost)
+ * - Perplexity: Research with citations (research)
+ * - xAI: Twitter sentiment (signals)
+ * - Claude: THE SYNTHESIS BRAIN - takes all inputs and produces wisdom
+ * 
  * Flow:
  * 1. Query arrives
  * 2. Groq classifies instantly (~10ms)
- * 3. Router determines which providers to call
- * 4. Parallel fetch from: LLM (Groq/Chutes/Claude) + Signals (Vanta) + Sentiment (xAI)
- * 5. Synthesis engine combines all sources
- * 6. Return unified, intelligent response
+ * 3. Router determines providers needed
+ * 4. Parallel fetch: Perplexity (research) + xAI (sentiment)
+ * 5. Claude synthesizes EVERYTHING into final response
  * 
- * This is what makes Athena a hybrid intelligence layer, not just an LLM wrapper.
+ * Claude isn't competing with other models - it's DIRECTING them
+ * and making sense of their outputs. This is the multiplier.
  */
 
 import { classifyQuery, routeQuery, extractTickers } from './router';
@@ -21,10 +28,15 @@ import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { getVantaConsensus, isVantaConfigured } from './providers/bittensor';
 import { 
   perplexityResearch, 
-  isPerplexityConfigured, 
+  isPerplexityConfigured,
   formatResearchForOracle,
   type PerplexityCitation 
 } from './providers/perplexity';
+import {
+  claudeSynthesize,
+  isClaudeConfigured,
+  type ClaudeSynthesisInput,
+} from './providers/claude';
 import { synthesize, NormalizedSignal, normalizeSentiment, normalizeTradingSignal } from './synthesis';
 import type { QueryClassification, RoutingDecision, RoutingPath, DataSourceId } from './types';
 
@@ -41,6 +53,12 @@ export interface OrchestratorConfig {
   
   // Include trading signals from Vanta
   includeTradingSignals: boolean;
+  
+  // Include Perplexity research for research queries
+  includeResearch: boolean;
+  
+  // Use Claude for final synthesis (THE MULTIPLIER)
+  useClaudeSynthesis: boolean;
   
   // Maximum parallel fetches
   maxParallelFetches: number;
@@ -109,9 +127,11 @@ export interface OrchestratorResult {
 // ============================================================================
 
 const DEFAULT_CONFIG: OrchestratorConfig = {
-  useGroqClassification: true,  // Use Groq for fast classification
-  includeSentiment: true,        // Enrich with sentiment when relevant
-  includeTradingSignals: true,   // Include Vanta trading signals
+  useGroqClassification: true,   // Use Groq for fast classification
+  includeSentiment: true,         // Enrich with sentiment when relevant
+  includeTradingSignals: true,    // Include Vanta trading signals
+  includeResearch: true,          // Include Perplexity research
+  useClaudeSynthesis: true,       // Claude synthesizes all sources (THE MULTIPLIER)
   maxParallelFetches: 5,
   providerTimeoutMs: 10000,
   claudeFallbackEnabled: true,
@@ -298,6 +318,45 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     fetchPromises.push(signalsPromise);
   }
   
+  // 4d. Perplexity Research (if research query or complex)
+  let researchData: { content: string; citations: PerplexityCitation[] } | null = null;
+  let researchLatency = 0;
+  
+  const shouldFetchResearch = config.includeResearch &&
+    isPerplexityConfigured() &&
+    ['research', 'trading_decision'].includes(classification.type) &&
+    classification.complexity !== 'low';
+  
+  if (shouldFetchResearch) {
+    const researchPromise = (async () => {
+      const researchStart = Date.now();
+      try {
+        const result = await perplexityResearch(input.query, {
+          recency: 'week',
+        });
+        researchData = {
+          content: result.content,
+          citations: result.citations,
+        };
+        researchLatency = Date.now() - researchStart;
+        providerResults.push({
+          providerId: 'perplexity' as DataSourceId,
+          success: true,
+          data: { citationCount: result.citations.length },
+          latencyMs: researchLatency,
+        });
+      } catch (e: any) {
+        providerResults.push({
+          providerId: 'perplexity' as DataSourceId,
+          success: false,
+          error: e.message,
+          latencyMs: Date.now() - researchStart,
+        });
+      }
+    })();
+    fetchPromises.push(researchPromise);
+  }
+  
   // Wait for all fetches
   await Promise.allSettled(fetchPromises);
   
@@ -363,15 +422,102 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   }
   
   // -------------------------------------------------------------------------
-  // STEP 6: ENRICH RESPONSE (inject synthesis into response if relevant)
+  // STEP 6: CLAUDE SYNTHESIS (the multiplier)
   // -------------------------------------------------------------------------
   let finalResponse = llmResponse;
+  let claudeLatency = 0;
   
-  if (synthesisResults && Object.keys(synthesisResults.consensus).length > 0) {
-    // Add synthesis summary to response
+  // Determine if we should use Claude to synthesize
+  const hasMultipleSources = (
+    (sentimentData.size > 0 ? 1 : 0) +
+    (tradingSignals.size > 0 ? 1 : 0) +
+    (researchData ? 1 : 0)
+  ) >= 1;
+  
+  const shouldUseClaude = config.useClaudeSynthesis &&
+    isClaudeConfigured() &&
+    hasMultipleSources &&
+    classification.complexity !== 'low';
+  
+  if (shouldUseClaude) {
+    try {
+      const claudeStart = Date.now();
+      
+      // Build synthesis input
+      const synthesisInput: ClaudeSynthesisInput = {
+        query: input.query,
+        initialResponse: llmResponse,
+        context: input.context,
+      };
+      
+      // Add research if available
+      if (researchData) {
+        synthesisInput.research = researchData;
+      }
+      
+      // Add sentiment if available
+      if (sentimentData.size > 0) {
+        synthesisInput.sentiment = Array.from(sentimentData.entries()).map(([symbol, data]) => ({
+          symbol,
+          direction: data.combined?.sentiment || 'neutral',
+          score: data.combined?.score || 0,
+          confidence: data.combined?.confidence || 0.5,
+          summary: data.combined?.summary || '',
+        }));
+      }
+      
+      // Add trading signals if available
+      if (tradingSignals.size > 0) {
+        synthesisInput.tradingSignals = Array.from(tradingSignals.entries()).map(([symbol, data]) => ({
+          symbol,
+          direction: data.direction || 'FLAT',
+          confidence: data.confidence || 0.5,
+        }));
+      }
+      
+      // Claude synthesizes everything
+      const claudeResult = await claudeSynthesize(synthesisInput);
+      finalResponse = claudeResult.content;
+      claudeLatency = claudeResult.latencyMs;
+      
+      providerResults.push({
+        providerId: 'claude',
+        success: true,
+        data: { 
+          usage: claudeResult.usage,
+          synthesizedSources: [
+            llmProvider,
+            ...(researchData ? ['perplexity'] : []),
+            ...(sentimentData.size > 0 ? ['xai'] : []),
+            ...(tradingSignals.size > 0 ? ['vanta'] : []),
+          ],
+        },
+        latencyMs: claudeLatency,
+      });
+      
+      // Update provider info to show Claude as final synthesizer
+      llmProvider = 'claude (synthesis)';
+      llmModel = 'claude-sonnet-4';
+      
+    } catch (e: any) {
+      console.error('Claude synthesis error, using original response:', e);
+      providerResults.push({
+        providerId: 'claude',
+        success: false,
+        error: e.message,
+        latencyMs: Date.now(),
+      });
+      
+      // Fall back to original response with signal summary
+      if (synthesisResults && Object.keys(synthesisResults.consensus).length > 0) {
+        const signalSummary = formatSignalSummary(synthesisResults);
+        finalResponse = `${llmResponse}\n\n---\n\n**📊 Real-Time Signals:**\n${signalSummary}`;
+      }
+    }
+  } else if (synthesisResults && Object.keys(synthesisResults.consensus).length > 0) {
+    // No Claude synthesis, but we have signals - append summary
     const signalSummary = formatSignalSummary(synthesisResults);
     
-    // Append to response if it doesn't already contain signal info
     if (!finalResponse.toLowerCase().includes('sentiment') && 
         !finalResponse.toLowerCase().includes('signal')) {
       finalResponse = `${llmResponse}\n\n---\n\n**📊 Real-Time Signals:**\n${signalSummary}`;
@@ -564,6 +710,7 @@ export function getOrchestratorStatus(): {
     groq: boolean;
     chutes: boolean;
     perplexity: boolean;
+    claude: boolean;
     xai: boolean;
     vanta: boolean;
   };
@@ -574,6 +721,7 @@ export function getOrchestratorStatus(): {
       groq: isGroqConfigured(),
       chutes: isChutesConfigured(),
       perplexity: isPerplexityConfigured(),
+      claude: isClaudeConfigured(),
       xai: isXAIConfigured(),
       vanta: isVantaConfigured(),
     },
