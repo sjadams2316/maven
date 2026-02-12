@@ -35,6 +35,21 @@ const INDEX_CLEAN_SYMBOLS: Record<string, string> = {
 // Legacy ETF symbols for fallback data
 const ETF_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM'];
 
+// Futures symbols — trade nearly 24/5, used for pre-market/after-hours
+const FUTURES_SYMBOLS: Record<string, string> = {
+  '^GSPC': 'ES=F',   // S&P 500 E-mini
+  '^DJI': 'YM=F',    // Dow E-mini
+  '^IXIC': 'NQ=F',   // Nasdaq E-mini
+  '^RUT': 'RTY=F',   // Russell 2000 E-mini
+};
+
+const FUTURES_NAMES: Record<string, string> = {
+  'ES=F': 'S&P 500 Futures',
+  'YM=F': 'Dow Futures',
+  'NQ=F': 'Nasdaq Futures',
+  'RTY=F': 'Russell 2000 Futures',
+};
+
 // ============================================================================
 // MARKET SESSION DETECTION
 // All times in Eastern Time
@@ -230,6 +245,50 @@ async function fetchIndexFromYahoo(symbol: string): Promise<ExtendedMarketPrice 
     console.error(`Yahoo index fetch error for ${symbol}:`, err instanceof Error ? err.message : err);
   }
   
+  return null;
+}
+
+/**
+ * Fetch futures data from Yahoo Finance
+ * Futures (ES=F, NQ=F, YM=F, RTY=F) trade nearly 24/5 and provide
+ * real-time price movement during pre-market and after-hours.
+ */
+async function fetchFuturesFromYahoo(futuresSymbol: string): Promise<MarketPrice | null> {
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(futuresSymbol)}?interval=1d&range=1d`,
+      {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+
+    if (meta?.regularMarketPrice) {
+      const price = meta.regularMarketPrice;
+      const prevClose = meta.chartPreviousClose || meta.previousClose || price;
+      const change = price - prevClose;
+      const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
+
+      return {
+        symbol: futuresSymbol,
+        price,
+        change,
+        changePercent,
+        timestamp: Date.now(),
+      };
+    }
+  } catch (err) {
+    console.error(`Yahoo futures fetch error for ${futuresSymbol}:`, err instanceof Error ? err.message : err);
+  }
+
   return null;
 }
 
@@ -459,6 +518,8 @@ export async function GET(request: NextRequest) {
     price: number; 
     change: number; 
     changePercent: number;
+    previousClose?: number;
+    isFutures?: boolean;
     afterHoursPrice?: number;
     afterHoursChange?: number;
     afterHoursChangePercent?: number;
@@ -468,21 +529,35 @@ export async function GET(request: NextRequest) {
   let dataSource = 'live';
   
   // ========================================================================
-  // FETCH INDICES (actual index values, not ETFs)
+  // FETCH INDICES — Use futures during pre-market/after-hours for live data
   // ========================================================================
   
-  // Fetch actual index data from Yahoo Finance
-  // Yahoo is the best free source for actual index values (^GSPC, ^DJI, etc.)
+  const usesFutures = marketSession.session === 'pre-market' || marketSession.session === 'after-hours';
+  
   for (const symbol of INDEX_SYMBOLS) {
-    let price: MarketPrice | null = await fetchIndexFromYahoo(symbol);
+    let price: MarketPrice | null = null;
+    let futuresPrice: MarketPrice | null = null;
     let freshlyFetched = false;
     
+    // Always fetch the index close price (for reference)
+    price = await fetchIndexFromYahoo(symbol);
     if (price) {
       diagnostics.sources.push(`yahoo:${symbol}`);
       freshlyFetched = true;
     }
     
-    // If live failed, try persistent cache
+    // During pre-market/after-hours, ALSO fetch futures for live movement
+    if (usesFutures) {
+      const futuresSymbol = FUTURES_SYMBOLS[symbol];
+      if (futuresSymbol) {
+        futuresPrice = await fetchFuturesFromYahoo(futuresSymbol);
+        if (futuresPrice) {
+          diagnostics.sources.push(`yahoo:${futuresSymbol}:futures`);
+        }
+      }
+    }
+    
+    // If live index failed, try persistent cache
     if (!price) {
       price = await getCachedPrice(symbol);
       if (price) {
@@ -517,34 +592,22 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Cast to ExtendedMarketPrice to access after-hours fields
-    const extPrice = price as ExtendedMarketPrice;
-    
-    // During after-hours, fetch ETF data for extended hours pricing
-    // Indices don't trade after hours, but their ETFs (SPY, DIA, QQQ) do
-    let afterHoursData: { afterHoursPrice: number; afterHoursChange: number; afterHoursChangePercent: number } | null = null;
-    
-    if (marketSession.session === 'after-hours' || marketSession.session === 'pre-market') {
-      const etfSymbol = INDEX_TO_ETF[symbol];
-      if (etfSymbol) {
-        afterHoursData = await fetchETFAfterHours(etfSymbol);
-        if (afterHoursData) {
-          diagnostics.sources.push(`yahoo:${etfSymbol}:afterhours`);
-        }
-      }
-    }
+    // Build the stock entry — use futures as primary during extended hours
+    const futuresSymbol = FUTURES_SYMBOLS[symbol];
     
     stockData.push({
       symbol: INDEX_CLEAN_SYMBOLS[symbol] || symbol,
-      name: INDEX_NAMES[symbol] || symbol,
-      price: price.price,
-      change: price.change,
-      changePercent: price.changePercent,
-      // After-hours data from ETF proxy (if available)
-      ...(afterHoursData && {
-        afterHoursPrice: afterHoursData.afterHoursPrice,
-        afterHoursChange: afterHoursData.afterHoursChange,
-        afterHoursChangePercent: afterHoursData.afterHoursChangePercent,
+      name: usesFutures && futuresPrice
+        ? FUTURES_NAMES[futuresSymbol] || INDEX_NAMES[symbol] || symbol
+        : INDEX_NAMES[symbol] || symbol,
+      // During extended hours with futures: show futures price as main price
+      price: usesFutures && futuresPrice ? futuresPrice.price : price.price,
+      change: usesFutures && futuresPrice ? futuresPrice.change : price.change,
+      changePercent: usesFutures && futuresPrice ? futuresPrice.changePercent : price.changePercent,
+      // Include the index close as reference during extended hours
+      ...(usesFutures && futuresPrice && {
+        previousClose: price.price,
+        isFutures: true,
       }),
     });
   }

@@ -8,6 +8,8 @@ interface MarketQuote {
   price: number;
   change: number;
   changePercent: number;
+  previousClose?: number;
+  isFutures?: boolean;
   afterHoursPrice?: number;
   afterHoursChange?: number;
   afterHoursChangePercent?: number;
@@ -261,11 +263,15 @@ export default function MarketOverview() {
                   : '—'}
               </p>
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">{idx.name}</p>
-                {/* Show after-hours change inline when applicable */}
-                {(marketSession === 'after-hours' || marketSession === 'pre-market') && idx.afterHoursChangePercent !== undefined && (
-                  <span className={`text-[10px] ${idx.afterHoursChangePercent >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
-                    AH {idx.afterHoursChangePercent >= 0 ? '+' : ''}{idx.afterHoursChangePercent.toFixed(2)}%
+                <p className="text-xs text-gray-500">
+                  {idx.isFutures ? (
+                    <span className="text-amber-400/80">{idx.name}</span>
+                  ) : idx.name}
+                </p>
+                {/* Show previous close reference during futures */}
+                {idx.isFutures && idx.previousClose && (
+                  <span className="text-[10px] text-gray-600">
+                    Close: ${idx.previousClose.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 )}
               </div>
