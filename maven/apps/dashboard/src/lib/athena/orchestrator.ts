@@ -376,11 +376,13 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   }
   
   // 4e. FMP Analyst Data (ratings, price targets, earnings)
+  // CRITICAL: ALWAYS fetch real market data when symbols are detected
+  // LLMs hallucinate stale prices - we must ground them with real data
   let analystData: Map<string, any> = new Map();
   let analystLatency = 0;
   
-  const shouldFetchAnalyst = relevantSymbols.length > 0 &&
-    ['trading_decision', 'portfolio_analysis', 'research'].includes(classification.type);
+  // ALWAYS fetch FMP data for any query with symbols - no exceptions
+  const shouldFetchAnalyst = relevantSymbols.length > 0;
   
   if (shouldFetchAnalyst) {
     const analystPromise = (async () => {
@@ -513,6 +515,9 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   let claudeLatency = 0;
   
   // Determine if we should use Claude to synthesize
+  // CRITICAL: If we have ANY real market data, we MUST use Claude to ensure
+  // the response uses real prices, not hallucinated LLM training data
+  const hasRealMarketData = analystData.size > 0;
   const hasMultipleSources = (
     (sentimentData.size > 0 ? 1 : 0) +
     (tradingSignals.size > 0 ? 1 : 0) +
@@ -520,10 +525,10 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     (analystData.size > 0 ? 1 : 0)
   ) >= 1;
   
+  // Always use Claude when we have market data - prevents price hallucinations
   const shouldUseClaude = config.useClaudeSynthesis &&
     isClaudeConfigured() &&
-    hasMultipleSources &&
-    classification.complexity !== 'low';
+    (hasMultipleSources || hasRealMarketData);
   
   if (shouldUseClaude) {
     try {
@@ -561,10 +566,19 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
         }));
       }
       
-      // Add analyst data if available
+      // Add analyst data if available - CRITICAL: include current prices
       if (analystData.size > 0) {
         synthesisInput.analystData = Array.from(analystData.entries()).map(([symbol, data]) => ({
           symbol,
+          name: data.name,
+          // CRITICAL: Real-time price data to prevent hallucinations
+          currentPrice: data.currentPrice || 0,
+          previousClose: data.previousClose,
+          changePercent: data.changePercent,
+          fiftyTwoWeekHigh: data.fiftyTwoWeekHigh,
+          fiftyTwoWeekLow: data.fiftyTwoWeekLow,
+          marketCap: data.marketCap,
+          // Analyst data
           analystRating: data.analystRating || 'hold',
           targetMean: data.targetMean || 0,
           targetHigh: data.targetHigh || 0,

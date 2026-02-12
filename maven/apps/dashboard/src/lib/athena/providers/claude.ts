@@ -34,9 +34,16 @@ export interface ClaudeSynthesisInput {
     citations: Array<{ url: string; title?: string }>;
   };
   
-  // Analyst data from FMP
+  // Analyst data from FMP (includes REAL CURRENT PRICE - critical!)
   analystData?: {
     symbol: string;
+    name?: string;
+    currentPrice: number;  // CRITICAL: Real-time price from FMP
+    previousClose?: number;
+    changePercent?: number;
+    fiftyTwoWeekHigh?: number;
+    fiftyTwoWeekLow?: number;
+    marketCap?: number;
     analystRating: string;
     targetMean: number;
     targetHigh: number;
@@ -183,19 +190,23 @@ export async function claudeSynthesize(
     max_tokens: 2048,
     system: `You are Maven Oracle's synthesis brain. Your job is to take multiple intelligence sources and produce a unified, actionable response for wealth management.
 
+CRITICAL RULE: When "Real-Time Market Data (FMP)" is provided, you MUST use those exact prices. Your training data contains STALE prices - NEVER quote stock prices from memory. The FMP data is real-time and authoritative.
+
 You have access to:
-- Initial analysis from fast/cheap models
-- Real-time research with citations from Perplexity
+- Real-time market data from FMP (AUTHORITATIVE - use these prices!)
+- Real-time research with citations from Perplexity  
 - Twitter sentiment from xAI
 - Trading signals from Vanta (when available)
+- Initial analysis from fast/cheap models (WARNING: may have stale prices)
 - Client context (holdings, risk tolerance)
 
 Your response should:
-1. Synthesize all sources into coherent advice
-2. Highlight where sources agree or disagree
-3. Be specific and actionable
-4. Cite sources when relevant
-5. Consider the client's context
+1. ALWAYS use real-time FMP prices when provided (never make up prices)
+2. Synthesize all sources into coherent advice
+3. Highlight where sources agree or disagree
+4. Be specific and actionable with real numbers
+5. Cite sources when relevant
+6. Consider the client's context
 
 Do NOT just summarize each source - SYNTHESIZE them into wisdom.`,
     messages: [{ role: 'user', content: synthesisPrompt }],
@@ -248,16 +259,26 @@ function buildSynthesisPrompt(input: ClaudeSynthesisInput): string {
   
   if (input.analystData && input.analystData.length > 0) {
     const analystLines = input.analystData.map(a => {
+      // CRITICAL: Start with the real current price - this grounds the entire response
       const lines = [
-        `- **${a.symbol}**: ${a.analystRating} (${a.numberOfAnalysts} analysts)`,
-        `  - Price Target: $${a.targetMean?.toFixed(2)} (low: $${a.targetLow?.toFixed(2)}, high: $${a.targetHigh?.toFixed(2)})`,
-        `  - Upside to Target: ${a.currentToTarget?.toFixed(1)}%`,
+        `### ${a.symbol}${a.name ? ` (${a.name})` : ''}`,
+        `**CURRENT PRICE: $${a.currentPrice?.toFixed(2) || 'N/A'}**${a.changePercent ? ` (${a.changePercent > 0 ? '+' : ''}${a.changePercent.toFixed(2)}% today)` : ''}`,
       ];
-      if (a.peRatio) lines.push(`  - P/E Ratio: ${a.peRatio.toFixed(1)}`);
-      if (a.earningsDate) lines.push(`  - Next Earnings: ${a.earningsDate}`);
+      if (a.fiftyTwoWeekHigh && a.fiftyTwoWeekLow) {
+        lines.push(`52-Week Range: $${a.fiftyTwoWeekLow.toFixed(2)} - $${a.fiftyTwoWeekHigh.toFixed(2)}`);
+      }
+      if (a.marketCap) {
+        const mcFormatted = a.marketCap >= 1e9 ? `$${(a.marketCap / 1e9).toFixed(2)}B` : `$${(a.marketCap / 1e6).toFixed(0)}M`;
+        lines.push(`Market Cap: ${mcFormatted}`);
+      }
+      lines.push(`Analyst Rating: ${a.analystRating} (${a.numberOfAnalysts} analysts)`);
+      lines.push(`Price Target: $${a.targetMean?.toFixed(2)} (low: $${a.targetLow?.toFixed(2)}, high: $${a.targetHigh?.toFixed(2)})`);
+      lines.push(`Upside to Target: ${a.currentToTarget?.toFixed(1)}%`);
+      if (a.peRatio) lines.push(`P/E Ratio: ${a.peRatio.toFixed(1)}`);
+      if (a.earningsDate) lines.push(`Next Earnings: ${a.earningsDate}`);
       return lines.join('\n');
     });
-    sections.push(`## Wall Street Analyst Data (FMP)\n${analystLines.join('\n\n')}`);
+    sections.push(`## Real-Time Market Data (FMP)\n⚠️ USE THESE PRICES - they are real-time. Do NOT use training data prices.\n\n${analystLines.join('\n\n')}`);
   }
   
   if (input.sentiment && input.sentiment.length > 0) {
