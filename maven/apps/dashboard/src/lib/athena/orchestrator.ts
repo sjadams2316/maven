@@ -318,13 +318,13 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     fetchPromises.push(signalsPromise);
   }
   
-  // 4d. Perplexity Research (if research query or complex)
+  // 4d. Perplexity Research (for any non-trivial financial query)
   let researchData: { content: string; citations: PerplexityCitation[] } | null = null;
   let researchLatency = 0;
   
   const shouldFetchResearch = config.includeResearch &&
     isPerplexityConfigured() &&
-    ['research', 'trading_decision'].includes(classification.type) &&
+    ['research', 'trading_decision', 'portfolio_analysis'].includes(classification.type) &&
     classification.complexity !== 'low';
   
   if (shouldFetchResearch) {
@@ -355,6 +355,57 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
       }
     })();
     fetchPromises.push(researchPromise);
+  }
+  
+  // 4e. FMP Analyst Data (ratings, price targets, earnings)
+  let analystData: Map<string, any> = new Map();
+  let analystLatency = 0;
+  
+  const shouldFetchAnalyst = relevantSymbols.length > 0 &&
+    ['trading_decision', 'portfolio_analysis', 'research'].includes(classification.type);
+  
+  if (shouldFetchAnalyst) {
+    const analystPromise = (async () => {
+      const analystStart = Date.now();
+      try {
+        // Fetch from our stock-research API which has FMP data
+        const results = await Promise.allSettled(
+          relevantSymbols.slice(0, 3).map(async (symbol) => {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'https://mavenwealth.ai'}/api/stock-research?symbol=${symbol}&sentiment=false`);
+            if (res.ok) return res.json();
+            return null;
+          })
+        );
+        
+        results.forEach((result, i) => {
+          if (result.status === 'fulfilled' && result.value) {
+            analystData.set(relevantSymbols[i], {
+              analystRating: result.value.analystRating,
+              targetMean: result.value.targetMean,
+              targetHigh: result.value.targetHigh,
+              targetLow: result.value.targetLow,
+              currentToTarget: result.value.currentToTarget,
+              numberOfAnalysts: result.value.numberOfAnalysts,
+              earningsDate: result.value.earningsDate,
+              peRatio: result.value.peRatio,
+            });
+          }
+        });
+        
+        analystLatency = Date.now() - analystStart;
+        if (analystData.size > 0) {
+          providerResults.push({
+            providerId: 'claude' as DataSourceId, // Using claude as placeholder for FMP
+            success: true,
+            data: { symbols: [...analystData.keys()], source: 'fmp' },
+            latencyMs: analystLatency,
+          });
+        }
+      } catch (e: any) {
+        console.error('Analyst data fetch error:', e);
+      }
+    })();
+    fetchPromises.push(analystPromise);
   }
   
   // Wait for all fetches
@@ -431,7 +482,8 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   const hasMultipleSources = (
     (sentimentData.size > 0 ? 1 : 0) +
     (tradingSignals.size > 0 ? 1 : 0) +
-    (researchData ? 1 : 0)
+    (researchData ? 1 : 0) +
+    (analystData.size > 0 ? 1 : 0)
   ) >= 1;
   
   const shouldUseClaude = config.useClaudeSynthesis &&
@@ -475,6 +527,21 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
         }));
       }
       
+      // Add analyst data if available
+      if (analystData.size > 0) {
+        synthesisInput.analystData = Array.from(analystData.entries()).map(([symbol, data]) => ({
+          symbol,
+          analystRating: data.analystRating || 'hold',
+          targetMean: data.targetMean || 0,
+          targetHigh: data.targetHigh || 0,
+          targetLow: data.targetLow || 0,
+          currentToTarget: data.currentToTarget || 0,
+          numberOfAnalysts: data.numberOfAnalysts || 0,
+          earningsDate: data.earningsDate,
+          peRatio: data.peRatio,
+        }));
+      }
+      
       // Claude synthesizes everything
       const claudeResult = await claudeSynthesize(synthesisInput);
       finalResponse = claudeResult.content;
@@ -488,6 +555,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
           synthesizedSources: [
             llmProvider,
             ...(researchData ? ['perplexity'] : []),
+            ...(analystData.size > 0 ? ['fmp'] : []),
             ...(sentimentData.size > 0 ? ['xai'] : []),
             ...(tradingSignals.size > 0 ? ['vanta'] : []),
           ],

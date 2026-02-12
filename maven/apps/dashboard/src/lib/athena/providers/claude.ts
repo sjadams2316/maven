@@ -34,6 +34,19 @@ export interface ClaudeSynthesisInput {
     citations: Array<{ url: string; title?: string }>;
   };
   
+  // Analyst data from FMP
+  analystData?: {
+    symbol: string;
+    analystRating: string;
+    targetMean: number;
+    targetHigh: number;
+    targetLow: number;
+    currentToTarget: number;
+    numberOfAnalysts: number;
+    earningsDate?: string;
+    peRatio?: number;
+  }[];
+  
   // Sentiment from xAI
   sentiment?: {
     symbol: string;
@@ -231,6 +244,20 @@ function buildSynthesisPrompt(input: ClaudeSynthesisInput): string {
         .join('\n');
     }
     sections.push(researchSection);
+  }
+  
+  if (input.analystData && input.analystData.length > 0) {
+    const analystLines = input.analystData.map(a => {
+      const lines = [
+        `- **${a.symbol}**: ${a.analystRating} (${a.numberOfAnalysts} analysts)`,
+        `  - Price Target: $${a.targetMean?.toFixed(2)} (low: $${a.targetLow?.toFixed(2)}, high: $${a.targetHigh?.toFixed(2)})`,
+        `  - Upside to Target: ${a.currentToTarget?.toFixed(1)}%`,
+      ];
+      if (a.peRatio) lines.push(`  - P/E Ratio: ${a.peRatio.toFixed(1)}`);
+      if (a.earningsDate) lines.push(`  - Next Earnings: ${a.earningsDate}`);
+      return lines.join('\n');
+    });
+    sections.push(`## Wall Street Analyst Data (FMP)\n${analystLines.join('\n\n')}`);
   }
   
   if (input.sentiment && input.sentiment.length > 0) {
