@@ -3,14 +3,10 @@ import { auth } from '@clerk/nextjs/server';
 import { MAVEN_KNOWLEDGE_BASE, getRelevantKnowledge } from '@/lib/knowledge-base';
 import { parseLocalStorageProfile, buildContextForChat, UserContext } from '@/lib/user-context';
 import { extractMemories, formatMemoriesForPrompt } from '@/app/api/oracle/memory/route';
-import { shouldUseAthena, athenaOracleQuery, formatMetrics } from '@/lib/athena';
 import { 
-  enrichWithIntelligence, 
-  formatIntelligenceForPrompt, 
   extractSymbols,
-  isSentimentQuery,
 } from '@/lib/athena/intelligence';
-import { orchestrate, type OrchestratorResult } from '@/lib/athena/orchestrator';
+import { orchestrate, isOrchestratorReady, type OrchestratorResult } from '@/lib/athena/orchestrator';
 
 // In-memory store for Oracle memories (matches memory/route.ts)
 const memoryStore = new Map<string, Map<string, any>>();
@@ -988,7 +984,8 @@ async function executeTool(name: string, input: any, userContext: UserContext, c
 }
 
 /**
- * Call Claude with full Oracle context
+ * Call Claude directly (fallback for non-financial queries or orchestrator failure)
+ * This is a simpler path that uses Claude with tools but no Athena enrichment
  */
 async function callOracle(
   messages: { role: 'user' | 'assistant'; content: string }[],
@@ -1025,71 +1022,8 @@ async function callOracle(
       systemPrompt += formatMemoriesForPrompt(memories);
     }
   }
-  
-  // === ATHENA ORCHESTRATOR ===
-  // For financial queries with symbols, use full Athena pipeline
-  // (Groq classify → Perplexity research → xAI sentiment → FMP analyst → Claude synthesis)
-  const detectedSymbols = extractSymbols(query);
-  const isFinancialQuery = detectedSymbols.length > 0 || 
-    /\b(buy|sell|invest|portfolio|stock|market|analyst|sentiment|research)\b/i.test(query);
-  
-  if (isFinancialQuery && process.env.ANTHROPIC_API_KEY) {
-    try {
-      console.log(`[Athena] Using full orchestrator for financial query. Symbols: ${detectedSymbols.join(', ') || 'none detected'}`);
-      
-      // Extract holdings from user context for better routing
-      const allHoldings = userContext?.topHoldings?.map(h => h.symbol) || [];
-      
-      const orchestratorResult = await orchestrate({
-        query,
-        systemPrompt, // Pass the full Maven Oracle prompt with user context
-        history: messages.slice(-6).map(m => ({ role: m.role, content: m.content })), // Last 6 messages for context
-        context: {
-          holdings: allHoldings,
-          riskTolerance: userContext?.riskTolerance as 'conservative' | 'moderate' | 'aggressive' | undefined,
-        },
-        config: {
-          useGroqClassification: true,
-          includeSentiment: true,
-          includeResearch: true,
-          useClaudeSynthesis: true, // THE MULTIPLIER - Claude synthesizes all sources
-        }
-      });
-      
-      console.log(`[Athena] Orchestrator complete in ${orchestratorResult.totalLatencyMs}ms. Providers: ${orchestratorResult.providers.llm.provider}`);
-      if (orchestratorResult.providers.sentiment) {
-        console.log(`[Athena] Sentiment for: ${orchestratorResult.providers.sentiment.symbols.join(', ')}`);
-      }
-      
-      // Return the Claude-synthesized response directly
-      return orchestratorResult.response;
-      
-    } catch (e) {
-      console.error('[Athena] Orchestrator failed, falling back to direct Claude:', e);
-      // Fall through to direct Claude call below
-    }
-  }
-  
-  // === FALLBACK: Direct Claude call for simple queries or if orchestrator fails ===
-  // Still enrich with basic sentiment if symbols detected
-  if (detectedSymbols.length > 0) {
-    try {
-      console.log(`[Athena] Fallback enrichment for: ${detectedSymbols.join(', ')}`);
-      const intelligence = await enrichWithIntelligence(query, {
-        maxSymbols: 3,
-        includeSentiment: true,
-        includeTrading: true,
-      });
-      
-      if (intelligence.sentiment.size > 0 || intelligence.tradingSignals.size > 0) {
-        systemPrompt += formatIntelligenceForPrompt(intelligence);
-        console.log(`[Athena] Injected intelligence (${intelligence.enrichmentLatencyMs}ms): ${intelligence.providersUsed.join(', ')}`);
-      }
-    } catch (e) {
-      console.error('[Athena] Intelligence enrichment failed:', e);
-    }
-  }
 
+  // Direct Claude call (orchestrator already tried for financial queries)
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1206,7 +1140,7 @@ export async function POST(request: NextRequest) {
 
     const convId = conversationId || `conv_${Date.now()}`;
     let response: string = '';
-    let usedClaude = false;
+    let poweredBy: string = 'fallback';
 
     // Parse user context
     const userContext = context ? parseLocalStorageProfile(context) : {
@@ -1225,101 +1159,137 @@ export async function POST(request: NextRequest) {
       concentrationRisks: []
     };
 
-    // Check if we should use Athena (A/B test)
-    const athenaCheck = shouldUseAthena(message);
-    let usedAthena = false;
-    let athenaMetrics: string | undefined;
-    
-    if (athenaCheck.useAthena) {
-      // --- ATHENA PATH (A/B Test Treatment) ---
-      try {
-        // Build system prompt (simplified for Athena)
-        let systemPrompt = `You are Maven, an AI wealth partner. Be concise, specific, and actionable.
-Respond naturally as a financial advisor would. Use specific numbers when available.`;
-        
-        if (voiceMode) {
-          systemPrompt += ' Keep responses conversational for voice output. No bullet points or markdown.';
-        }
-        
-        // Build history
-        let history: { role: 'user' | 'assistant'; content: string }[] = [];
-        if (clientHistory && Array.isArray(clientHistory)) {
-          history = clientHistory
-            .filter((m: any) => m.role && m.content)
-            .slice(-10) // Shorter history for Athena (cost control)
-            .map((m: any) => ({ role: m.role, content: m.content }));
-        }
-        
-        const athenaResult = await athenaOracleQuery(message, systemPrompt, {
-          history,
-          context: userContext,
-        });
-        
-        response = athenaResult.response;
-        usedAthena = true;
-        athenaMetrics = formatMetrics(athenaResult);
-        console.log(athenaMetrics);
-        
-        // Still update conversation cache
-        history.push({ role: 'user', content: message });
-        history.push({ role: 'assistant', content: response });
-        conversationHistory.set(convId, history);
-        
-      } catch (athenaError: any) {
-        console.error('Athena error, falling back to Claude:', athenaError);
-        // Fall through to Claude
+    // Build conversation history
+    let history: { role: 'user' | 'assistant'; content: string }[] = [];
+    if (clientHistory && Array.isArray(clientHistory)) {
+      history = clientHistory
+        .filter((m: any) => m.role && m.content)
+        .map((m: any) => ({ role: m.role, content: m.content }));
+    } else {
+      history = conversationHistory.get(convId) || [];
+    }
+    history.push({ role: 'user', content: message });
+    if (history.length > 30) {
+      history = history.slice(-30);
+    }
+
+    // Detect if this is a financial query (for Athena routing)
+    const detectedSymbols = extractSymbols(message);
+    const isFinancialQuery = detectedSymbols.length > 0 || 
+      /\b(buy|sell|invest|portfolio|stock|market|analyst|sentiment|research|price|earnings|dividend|etf|fund|crypto|bitcoin|eth|tao|position|holding|allocation|rebalance|tax|harvest|capital gain)\b/i.test(message);
+
+    // Build system prompt
+    let systemPrompt = MAVEN_ORACLE_PROMPT;
+    if (voiceMode) {
+      systemPrompt += VOICE_MODE_PROMPT;
+    }
+    systemPrompt += '\n\n' + MAVEN_KNOWLEDGE_BASE;
+    systemPrompt += getRelevantKnowledge(message);
+    systemPrompt += '\n\n' + buildContextForChat(userContext);
+    if (clerkId) {
+      const memories = getUserMemories(clerkId);
+      if (memories.length > 0) {
+        systemPrompt += formatMemoriesForPrompt(memories);
       }
     }
-    
-    // --- CLAUDE PATH (Control or Fallback) ---
-    if (!usedAthena && ANTHROPIC_API_KEY) {
+
+    // =========================================================================
+    // ATHENA ORCHESTRATOR - THE DEFAULT PATH FOR FINANCIAL QUERIES
+    // Uses: Groq classify → Perplexity research → xAI sentiment → FMP analyst → Claude synthesis
+    // =========================================================================
+    if (isFinancialQuery && isOrchestratorReady()) {
       try {
-        // Build conversation history from client-provided history (survives server restarts)
-        // Client sends previous messages, we add the new user message
-        let history: { role: 'user' | 'assistant'; content: string }[] = [];
+        const allHoldings = userContext?.topHoldings?.map(h => h.symbol) || [];
         
-        // Use client history if provided (this is the source of truth now)
-        if (clientHistory && Array.isArray(clientHistory)) {
-          history = clientHistory
-            .filter((m: any) => m.role && m.content)
-            .map((m: any) => ({ role: m.role, content: m.content }));
-        } else {
-          // Fallback to server-side cache (for backwards compat)
-          history = conversationHistory.get(convId) || [];
+        console.log(`[Athena] Orchestrating financial query. Symbols: ${detectedSymbols.join(', ') || 'inferred from keywords'}`);
+        
+        const orchestratorResult = await orchestrate({
+          query: message,
+          systemPrompt,
+          history: history.slice(-8), // Recent context
+          context: {
+            holdings: allHoldings,
+            riskTolerance: userContext?.riskTolerance as 'conservative' | 'moderate' | 'aggressive' | undefined,
+          },
+          config: {
+            useGroqClassification: true,
+            includeSentiment: true,
+            includeResearch: true,
+            includeTradingSignals: true,
+            useClaudeSynthesis: true, // THE MULTIPLIER - Claude synthesizes all sources
+          }
+        });
+        
+        response = orchestratorResult.response;
+        
+        // Build poweredBy string with all providers used
+        const providers = [orchestratorResult.providers.llm.provider];
+        if (orchestratorResult.providers.sentiment) providers.push('xai');
+        if (orchestratorResult.providers.signals) providers.push('vanta');
+        if (orchestratorResult.debug?.providerResults.find(p => p.providerId === 'perplexity' && p.success)) {
+          providers.push('perplexity');
         }
+        poweredBy = `athena (${providers.join('+')})`;
         
-        // Add the new user message
-        history.push({ role: 'user', content: message });
+        console.log(`[Athena] Complete in ${orchestratorResult.totalLatencyMs}ms. ${poweredBy}`);
         
-        // Keep last 30 messages for context (increased for longer conversations)
-        if (history.length > 30) {
-          history = history.slice(-30);
-        }
-        
-        response = await callOracle(history, userContext, message, clerkId, voiceMode);
-        usedClaude = true;
-        
-        // Update server-side cache (backup)
+        // Update conversation cache
         history.push({ role: 'assistant', content: response });
         conversationHistory.set(convId, history);
         
-        // Extract and store memories from this conversation (if authenticated)
+        // Extract memories
         if (clerkId) {
           try {
             const newMemories = extractMemories(message, response);
             for (const memory of newMemories) {
-              if (memory.key && memory.value) {
-                storeMemory(clerkId, memory);
-              }
+              if (memory.key && memory.value) storeMemory(clerkId, memory);
             }
-          } catch (memError) {
-            console.error('Memory extraction error:', memError);
-            // Don't fail the request if memory extraction fails
+          } catch { /* ignore memory errors */ }
+        }
+        
+        return NextResponse.json({
+          response,
+          conversationId: convId,
+          poweredBy,
+          authenticated: !!clerkId,
+          athenaMetrics: {
+            totalLatencyMs: orchestratorResult.totalLatencyMs,
+            classification: orchestratorResult.classification.type,
+            complexity: orchestratorResult.classification.complexity,
+            providers: orchestratorResult.providers,
+            synthesis: orchestratorResult.synthesis,
           }
+        });
+        
+      } catch (athenaError: any) {
+        console.error('[Athena] Orchestrator failed, falling back to direct Claude:', athenaError);
+        // Fall through to Claude
+      }
+    }
+
+    // =========================================================================
+    // FALLBACK: Direct Claude (for non-financial queries or orchestrator failure)
+    // =========================================================================
+    if (ANTHROPIC_API_KEY) {
+      try {
+        response = await callOracle(history, userContext, message, clerkId, voiceMode);
+        poweredBy = 'claude-sonnet';
+        
+        // Update conversation cache
+        history.push({ role: 'assistant', content: response });
+        conversationHistory.set(convId, history);
+        
+        // Extract memories
+        if (clerkId) {
+          try {
+            const newMemories = extractMemories(message, response);
+            for (const memory of newMemories) {
+              if (memory.key && memory.value) storeMemory(clerkId, memory);
+            }
+          } catch { /* ignore memory errors */ }
         }
       } catch (error: any) {
         console.error('Claude error:', error);
-        // Include error details for debugging (remove in production later)
         response = generateFallbackResponse(message);
         return NextResponse.json({
           response,
@@ -1329,17 +1299,8 @@ Respond naturally as a financial advisor would. Use specific numbers when availa
           debug: { error: error.message || String(error) }
         });
       }
-    } else if (!usedAthena) {
-      // No Athena, no Claude API key
+    } else {
       response = generateFallbackResponse(message);
-    }
-
-    // Determine which provider was used
-    let poweredBy = 'fallback';
-    if (usedAthena) {
-      poweredBy = 'athena';
-    } else if (usedClaude) {
-      poweredBy = 'claude-sonnet';
     }
 
     return NextResponse.json({
@@ -1347,7 +1308,6 @@ Respond naturally as a financial advisor would. Use specific numbers when availa
       conversationId: convId,
       poweredBy,
       authenticated: !!clerkId,
-      ...(athenaMetrics ? { athenaMetrics } : {})
     });
   } catch (error) {
     console.error('Chat API error:', error);
