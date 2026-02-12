@@ -68,6 +68,24 @@ export {
   type GroqMessage,
   type GroqCompletionOptions,
   type GroqResponse,
+  // Bittensor
+  isVantaConfigured,
+  isDesearchConfigured,
+  isPrecogConfigured,
+  getBittensorStatus,
+  fetchVantaSignals,
+  getVantaConsensus,
+  fetchDesearchSentiment,
+  getSentimentSummary,
+  fetchPrecogForecast,
+  getMarketIntelligence,
+  type TradingSignal,
+  type VantaResponse,
+  type SentimentData,
+  type DesearchResponse,
+  type PrecogForecast,
+  type MarketIntelligence,
+  type SignalDirection,
 } from './providers';
 
 // Oracle Bridge (A/B testing between Claude and Athena)

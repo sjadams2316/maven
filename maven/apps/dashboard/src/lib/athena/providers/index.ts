@@ -30,6 +30,33 @@ export {
   type GroqResponse,
 } from './groq';
 
+// Bittensor - Decentralized intelligence signals
+export {
+  // Availability
+  isVantaConfigured,
+  isDesearchConfigured,
+  isPrecogConfigured,
+  getBittensorStatus,
+  // Vanta (SN8) - Trading signals
+  fetchVantaSignals,
+  getVantaConsensus,
+  // Desearch (SN22) - Social sentiment
+  fetchDesearchSentiment,
+  getSentimentSummary,
+  // Precog (SN55) - BTC forecasting
+  fetchPrecogForecast,
+  // Aggregated intelligence
+  getMarketIntelligence,
+  // Types
+  type TradingSignal,
+  type VantaResponse,
+  type SentimentData,
+  type DesearchResponse,
+  type PrecogForecast,
+  type MarketIntelligence,
+  type SignalDirection,
+} from './bittensor';
+
 // Provider availability check
 export function getAvailableProviders(): string[] {
   const providers: string[] = [];

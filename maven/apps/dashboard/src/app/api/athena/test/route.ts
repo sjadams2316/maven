@@ -15,6 +15,7 @@ import {
   classifyAndRoute,
   isGroqConfigured,
   GROQ_MODELS,
+  getBittensorStatus,
 } from '@/lib/athena';
 
 export async function GET() {
@@ -37,6 +38,7 @@ export async function GET() {
         configured: isGroqConfigured(),
         models: isGroqConfigured() ? GROQ_MODELS : null,
       },
+      bittensor: getBittensorStatus(),
     },
     timestamp: new Date().toISOString(),
   });
