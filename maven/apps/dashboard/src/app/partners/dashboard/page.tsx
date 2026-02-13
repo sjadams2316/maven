@@ -7,6 +7,7 @@ import Sparkline from '@/components/Sparkline';
 
 // Quick action definitions
 const QUICK_ACTIONS = [
+  { id: 'research', icon: '🔮', label: 'Research', shortcut: '⌘R', href: '#research', isResearch: true },
   { id: 'add-client', icon: '➕', label: 'Add Client', shortcut: '⌘N', href: '/partners/clients/new' },
   { id: 'run-analysis', icon: '📊', label: 'Run Analysis', shortcut: '⌘A', href: '/partners/analysis' },
   { id: 'generate-report', icon: '📄', label: 'Generate Report', shortcut: '⌘R', href: '/partners/reports/new' },
@@ -113,12 +114,16 @@ function formatCurrency(value: number): string {
 }
 
 export default function PartnersDashboard() {
+  const [researchMode, setResearchMode] = useState(false);
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
   const [prepModal, setPrepModal] = useState<{ open: boolean; meeting: typeof DEMO_MEETINGS[0] | null }>({ open: false, meeting: null });
   const [livePrep, setLivePrep] = useState<{ summary: string; actionItems: string[]; talkingPoints: string[]; marketContext: string } | null>(null);
   const [prepLoading, setPrepLoading] = useState(false);
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
+  
+  // Toggle research mode
+  const toggleResearch = () => setResearchMode(!researchMode);
   
   // Helper to preserve demo param in links
   const demoHref = (href: string) => isDemoMode ? `${href}?demo=true` : href;
@@ -336,22 +341,73 @@ export default function PartnersDashboard() {
           <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {QUICK_ACTIONS.map((action) => (
-              <Link
-                key={action.id}
-                href={demoHref(action.href)}
-                className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
-                style={{ minWidth: '48px', minHeight: '48px' }}
-              >
-                <span className="text-2xl">{action.icon}</span>
-                <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
-                {/* Keyboard shortcut tooltip */}
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {action.shortcut}
-                </span>
-              </Link>
+              action.isResearch ? (
+                <button
+                  key={action.id}
+                  onClick={toggleResearch}
+                  className={`group relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all min-h-[80px] md:min-h-[88px] ${
+                    researchMode 
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-500' 
+                      : 'bg-white/5 border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10'
+                  }`}
+                  style={{ minWidth: '48px', minHeight: '48px' }}
+                >
+                  <span className="text-2xl">{action.icon}</span>
+                  <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
+                </button>
+              ) : (
+                <Link
+                  key={action.id}
+                  href={demoHref(action.href)}
+                  className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
+                  style={{ minWidth: '48px', minHeight: '48px' }}
+                >
+                  <span className="text-2xl">{action.icon}</span>
+                  <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
+                  {/* Keyboard shortcut tooltip */}
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    {action.shortcut}
+                  </span>
+                </Link>
+              )
             ))}
           </div>
         </div>
+
+        {/* Research Mode Panel */}
+        {researchMode && (
+          <div className="lg:col-span-3 bg-[#0f0f1a] border border-indigo-500/30 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🔮</span>
+                <h2 className="text-xl font-semibold text-white">Maven Research</h2>
+              </div>
+              <button
+                onClick={() => setResearchMode(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-gray-400 mb-4">Research any stock, ETF, or crypto. Try searching for SPY, QQQ, AAPL, NVDA, BTC, or TAO.</p>
+            <div className="flex gap-2 mb-4">
+              {['SPY', 'QQQ', 'AAPL', 'NVDA', 'BTC', 'TAO'].map((symbol) => (
+                <button
+                  key={symbol}
+                  onClick={() => {}}
+                  className="px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 text-sm rounded-lg transition-colors"
+                >
+                  {symbol}
+                </button>
+              ))}
+            </div>
+            <div className="bg-[#12121a] rounded-xl p-4 text-gray-400 text-center">
+              Connect to Oracle to search stocks →
+            </div>
+          </div>
+        )}
 
         {/* Recent Actions */}
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
