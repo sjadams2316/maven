@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
+import AdvisorOracle from './components/AdvisorOracle';
 
 // Mock data for MVP - will be replaced with real data
 const MOCK_CLIENTS = [
@@ -160,6 +161,7 @@ function getRelativeTime(date: Date): string {
 
 export default function AdvisorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [oracleOpen, setOracleOpen] = useState(false);
   
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -206,6 +208,22 @@ export default function AdvisorDashboard() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white">{getGreeting()}, Jon</h1>
               <p className="text-gray-400 text-sm">Advisor Dashboard</p>
             </div>
+          </div>
+          
+          {/* Oracle Button */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setOracleOpen(!oracleOpen)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition ${
+                oracleOpen 
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white'
+                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+              }`}
+            >
+              <span>🔮</span>
+              <span className="font-medium">Maven Oracle</span>
+              <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded-full">Research</span>
+            </button>
           </div>
         </div>
         
@@ -464,6 +482,21 @@ export default function AdvisorDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Maven Oracle Panel */}
+      {oracleOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setOracleOpen(false)}
+          />
+          {/* Oracle Panel */}
+          <div className="relative w-full max-w-md h-full">
+            <AdvisorOracle />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

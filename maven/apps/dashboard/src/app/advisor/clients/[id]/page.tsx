@@ -766,6 +766,8 @@ export default function ClientDetailPage() {
                 allocation: client.allocation,
                 accounts: client.accounts,
                 notes: client.notes,
+                dateOfBirth: client.dateOfBirth,
+                state: client.state,
               }}
             />
           </div>

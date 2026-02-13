@@ -13,6 +13,8 @@ interface ClientContext {
   allocation: any;
   accounts: any[];
   notes?: string;
+  dateOfBirth?: string;
+  state?: string;
 }
 
 interface AdvisorOracleProps {
@@ -106,19 +108,52 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
     setIsLoading(true);
 
     try {
-      // Build context for the query
-      let context = '';
+      // Build context for the query - send as structured object for API compatibility
+      let context: any = null;
       if (client) {
-        context = `
-Client Context:
-- Name: ${client.firstName} ${client.lastName}
-- AUM: $${client.aum.toLocaleString()}
-- Risk Tolerance: ${client.riskTolerance}
-- Holdings: ${client.holdings.map((h: any) => `${h.ticker}: $${h.value?.toLocaleString() || 'N/A'} (${h.allocation}%)`).join(', ')}
-- Allocation: US Equity ${client.allocation?.usEquity}%, Intl ${client.allocation?.intlEquity}%, Fixed Income ${client.allocation?.fixedIncome}%, Crypto ${client.allocation?.crypto}%, Cash ${client.allocation?.cash}%
-- Accounts: ${client.accounts?.map((a: any) => `${a.name} (${a.type}): $${a.balance?.toLocaleString()}`).join(', ')}
-${client.notes ? `- Notes: ${client.notes}` : ''}
-`;
+        // Calculate age from date of birth if available
+        let age: number | undefined;
+        if (client.dateOfBirth) {
+          const birthDate = new Date(client.dateOfBirth);
+          const today = new Date();
+          age = today.getFullYear() - birthDate.getFullYear();
+        }
+        
+        context = {
+          firstName: client.firstName,
+          lastName: client.lastName,
+          riskTolerance: client.riskTolerance,
+          age,
+          state: client.state || 'VA',
+          netWorth: client.aum,
+          totalInvestments: client.aum,
+          retirementAccounts: client.accounts?.filter((a: any) => a.type?.includes('Retirement')).map((a: any) => ({
+            name: a.name,
+            type: a.type,
+            balance: a.balance,
+            holdings: client.holdings?.filter((h: any) => a.name.includes(h.ticker)) || [],
+          })) || [],
+          investmentAccounts: client.accounts?.filter((a: any) => !a.type?.includes('Retirement')).map((a: any) => ({
+            name: a.name,
+            type: a.type,
+            balance: a.balance,
+            holdings: client.holdings || [],
+          })) || [],
+          topHoldings: client.holdings?.map((h: any) => ({
+            symbol: h.ticker,
+            name: h.name,
+            value: h.value,
+            allocation: h.allocation,
+          })) || [],
+          assetAllocation: {
+            usEquity: client.allocation?.usEquity || 0,
+            intlEquity: client.allocation?.intlEquity || 0,
+            bonds: client.allocation?.fixedIncome || 0,
+            cash: client.allocation?.cash || 0,
+            crypto: client.allocation?.crypto || 0,
+            other: 0,
+          },
+        };
       }
 
       const response = await fetch('/api/chat', {
@@ -159,19 +194,52 @@ ${client.notes ? `- Notes: ${client.notes}` : ''}
     setIsLoading(true);
 
     try {
-      // Build context for the query
-      let context = '';
+      // Build context for the query - send as structured object for API compatibility
+      let context: any = null;
       if (client) {
-        context = `
-Client Context:
-- Name: ${client.firstName} ${client.lastName}
-- AUM: $${client.aum.toLocaleString()}
-- Risk Tolerance: ${client.riskTolerance}
-- Holdings: ${client.holdings.map((h: any) => `${h.ticker}: $${h.value?.toLocaleString() || 'N/A'} (${h.allocation}%)`).join(', ')}
-- Allocation: US Equity ${client.allocation?.usEquity}%, Intl ${client.allocation?.intlEquity}%, Fixed Income ${client.allocation?.fixedIncome}%, Crypto ${client.allocation?.crypto}%, Cash ${client.allocation?.cash}%
-- Accounts: ${client.accounts?.map((a: any) => `${a.name} (${a.type}): $${a.balance?.toLocaleString()}`).join(', ')}
-${client.notes ? `- Notes: ${client.notes}` : ''}
-`;
+        // Calculate age from date of birth if available
+        let age: number | undefined;
+        if (client.dateOfBirth) {
+          const birthDate = new Date(client.dateOfBirth);
+          const today = new Date();
+          age = today.getFullYear() - birthDate.getFullYear();
+        }
+        
+        context = {
+          firstName: client.firstName,
+          lastName: client.lastName,
+          riskTolerance: client.riskTolerance,
+          age,
+          state: client.state || 'VA',
+          netWorth: client.aum,
+          totalInvestments: client.aum,
+          retirementAccounts: client.accounts?.filter((a: any) => a.type?.includes('Retirement')).map((a: any) => ({
+            name: a.name,
+            type: a.type,
+            balance: a.balance,
+            holdings: client.holdings?.filter((h: any) => a.name.includes(h.ticker)) || [],
+          })) || [],
+          investmentAccounts: client.accounts?.filter((a: any) => !a.type?.includes('Retirement')).map((a: any) => ({
+            name: a.name,
+            type: a.type,
+            balance: a.balance,
+            holdings: client.holdings || [],
+          })) || [],
+          topHoldings: client.holdings?.map((h: any) => ({
+            symbol: h.ticker,
+            name: h.name,
+            value: h.value,
+            allocation: h.allocation,
+          })) || [],
+          assetAllocation: {
+            usEquity: client.allocation?.usEquity || 0,
+            intlEquity: client.allocation?.intlEquity || 0,
+            bonds: client.allocation?.fixedIncome || 0,
+            cash: client.allocation?.cash || 0,
+            crypto: client.allocation?.crypto || 0,
+            other: 0,
+          },
+        };
       }
 
       const response = await fetch('/api/chat', {
