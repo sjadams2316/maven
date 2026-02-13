@@ -1,103 +1,36 @@
-# Estate & Gift Tax Fundamentals
+# Estate & Gift Tax Basics: 2025-2026 Planning Guide
 
-> **Last Updated:** February 2026  
-> **Standard:** Advisory-ready for $15M+ households  
-> **Sources:** IRS Publications, Tax Foundation, ACTEC, Morgan Lewis, Fidelity, Schwab
-
----
-
-## Executive Summary: Post-OBBB Landscape
-
-The **One Big Beautiful Bill Act (OBBB)**, signed July 4, 2025, fundamentally changed the estate planning landscape:
-
-| Item | 2025 | 2026+ (Post-OBBB) |
-|------|------|-------------------|
-| **Federal Exemption** | $13.99M/person | $15M/person (indexed) |
-| **Married Couple** | $27.98M | $30M |
-| **Top Rate** | 40% | 40% |
-| **Sunset** | Was scheduled | **ELIMINATED** |
-| **Annual Gift Exclusion** | $19,000 | $19,000 |
-
-**Critical Change:** The TCJA sunset that would have dropped exemptions to ~$7M in 2026 **did not occur**. The OBBB made the higher exemptions permanent with continued inflation indexing starting 2027.
+*Maven Research Document — Track 4: Estate & Gifting*
+*Date: February 13, 2026*
+*Author: Eli*
 
 ---
 
-## 1. Gift Tax Fundamentals
+## Executive Summary
 
-### Annual Exclusion ($19,000 for 2025-2026)
+The estate and gift tax system in the United States offers significant planning opportunities for wealth transfer. With the One Big Beautiful Bill Act (OBBBA) of 2025 making the $15 million lifetime exemption permanent and inflation-adjusted, clients have unprecedented certainty for large transfers.
 
-- **Per-donee, per-year**: Can give $19,000 to unlimited recipients each year
-- **No form required**: Annual exclusion gifts don't require Form 709
-- **Married couples**: Each spouse has own $19,000 exclusion = $38,000/person/year without gift splitting
-- **Non-citizen spouse exception**: $194,000 annual exclusion for gifts to non-citizen spouse (2026)
-
-### Lifetime Gift Tax Exemption
-
-| Year | Individual | Married Couple |
-|------|-----------|----------------|
-| 2024 | $13.61M | $27.22M |
-| 2025 | $13.99M | $27.98M |
-| 2026 | $15.00M | $30.00M |
-| 2027+ | Indexed for inflation | Indexed |
-
-**IRS Anti-Clawback Rule (Nov 2019):** The IRS confirmed in final regulations that gifts made using the higher exemption amounts will NOT be "clawed back" if exemptions are later reduced. This was relevant to TCJA sunset concerns and provides comfort for future legislative changes.
-
-### Gift Splitting for Married Couples (IRC §2513)
-
-**What It Is:** Married couples can elect to treat gifts made by one spouse as made 50% by each spouse.
-
-**Requirements:**
-- Both spouses must consent (sign Form 709)
-- Both must be U.S. citizens or residents
-- Must apply to ALL gifts made during the year
-- Each spouse must file Form 709
-
-**Example:** Husband gives $100,000 to child. With gift splitting:
-- Husband: $50,000 gift (uses $31,000 of lifetime exemption after $19K annual exclusion)
-- Wife: $50,000 gift (uses $31,000 of lifetime exemption after $19K annual exclusion)
-
-**Deadline:** Election must be made by April 15 (or extended deadline) of following year.
-
-### What Counts as a Gift?
-
-**Direct Transfers:**
-- Cash, securities, real estate
-- Forgiveness of debt
-- Adding someone to title (partial gift)
-
-**Below-Market Loans (IRC §7872):**
-- Loans charging less than AFR (Applicable Federal Rate) are treated as gifts
-- The forgone interest (difference between AFR and actual interest) = gift
-- **De minimis exception:** Loans of $10,000 or less are generally exempt if not used to buy income-producing assets
-- **$100,000 exception:** For loans between $10K-$100K, imputed interest limited to borrower's net investment income
-
-**Special Situations:**
-- **Crummey notices:** Powers of withdrawal make trust contributions present-interest gifts
-- **529 contributions:** Can front-load 5 years of annual exclusions ($95,000 in 2025)
-- **UTMA/UGMA:** Immediate gifts to minors
-- **Payment of another's expenses:** Generally taxable (except below)
-
-**NOT Gifts (Exclusions):**
-- Direct payment of tuition to educational institution (unlimited)
-- Direct payment of medical expenses to provider (unlimited)
-- Gifts to spouse (unlimited marital deduction, if U.S. citizen)
-- Political contributions
-- Charitable gifts (deductible, not excluded)
+**Key thresholds for 2026:**
+- **Annual gift exclusion:** $19,000 per recipient ($38,000 married couple)
+- **Lifetime gift/estate exemption:** $15 million per individual ($30 million married)
+- **Estate tax rate:** Up to 40% on amounts above exemption
+- **Gift tax rate:** Progressive, same as estate tax
 
 ---
 
-## 2. Estate Tax Fundamentals
+## 1. Federal Estate Tax Fundamentals
 
-### Basic Exclusion Amount (2026)
+### The Basic Exemption
 
-| Status | Exclusion | Rate |
-|--------|-----------|------|
-| Individual | $15,000,000 | 40% max |
-| Married (with portability) | $30,000,000 | 40% max |
+| Year | Lifetime Exemption (Individual) | Lifetime Exemption (Married) |
+|------|----------------------------------|------------------------------|
+| 2024 | $13.61 million | $27.22 million |
+| 2025 | $14.13 million | $28.26 million |
+| 2026 | $15.00 million | $30.00 million |
 
-### Tax Rate Structure
+**Note:** OBBBA (July 2025) made the exemption permanent and inflation-adjusted going forward.
 
-The federal estate tax is progressive with rates from 18% to 40%:
+### Estate Tax Rates
 
 | Taxable Estate | Rate |
 |----------------|------|
@@ -112,462 +45,475 @@ The federal estate tax is progressive with rates from 18% to 40%:
 | $250,001 - $500,000 | 34% |
 | $500,001 - $750,000 | 37% |
 | $750,001 - $1,000,000 | 39% |
-| Over $1,000,000 | 40% |
+| $1,000,001+ | 40% |
 
-**Effective Rate:** Due to unified credit, only amounts above exemption are taxed at graduated rates.
+**Effective rates are much lower** due to the large exemption. For estates at $15 million, the effective rate is around 12-15%.
 
-### The 2026 Sunset That Didn't Happen
+### Filing Requirements
 
-**Original TCJA Provision (2017):**
-- Doubled exemption from ~$5.5M to ~$11M
-- Set to expire December 31, 2025
-- Would have dropped to ~$7M (inflation-adjusted $5M base)
+| Situation | Filing Requirement |
+|-----------|-------------------|
+| Gross estate ≤ exemption | No federal return required |
+| Gross estate > exemption | Form 706 due 9 months after death |
+| Annual gifts > annual exclusion | Form 709 due April 15 |
 
-**OBBB Resolution (July 2025):**
-- Raised exemption to $15M starting January 1, 2026
-- **No sunset provision** - permanent
-- Inflation indexing continues from 2027
+### Portability Election
 
-### Portability (DSUE - Deceased Spousal Unused Exclusion)
+**Key feature:** Surviving spouse can inherit deceased spouse's unused exemption ("DSUE").
 
-**What It Is:** Surviving spouse can use deceased spouse's unused exemption.
-
-**Requirements:**
-1. **File Form 706** within 9 months of death (or 15 months with extension)
-2. **Election is automatic** unless opted out (complete Part 6, Section B)
-3. Doesn't require estate to owe tax - just requires filing
-
-**Key Rules:**
-- DSUE amount = Deceased spouse's unused applicable exclusion
-- Surviving spouse can use for both lifetime gifts AND estate
-- Only **last deceased spouse** counts (remarriage resets DSUE)
-- **5-year rule:** Rev. Proc. 2022-32 allows portability election up to 5 years after death for estates below filing threshold
+**Process:** File Form 706 (even if no tax due) to elect portability within 9 months of death.
 
 **Example:**
-- Husband dies in 2026 with $3M taxable estate, exemption is $15M
-- DSUE = $15M - $3M = $12M
-- Wife files Form 706 electing portability
-- Wife now has: $15M (own) + $12M (DSUE) = $27M exemption
+- Husband dies 2025 with $7 million estate (half of $14.13M exemption)
+- Wife inherits his $7.065M DSUE
+- Wife's total exemption: $7.065M (her own) + $7.065M (inherited) = $14.13M
 
-**Strategic Note:** Even with OBBB's permanent high exemptions, portability filing is still valuable as:
-- Congress can change laws
-- Provides flexibility
-- State estate taxes don't have portability
-
-### Form 706 Filing Requirements
-
-**Must File If:**
-- Gross estate + adjusted taxable gifts + specific exemption > filing threshold ($15M in 2026)
-- OR electing portability (regardless of estate size)
-
-**Due Date:** 9 months after death (automatic 6-month extension via Form 4768)
-
-**Attachments Required:**
-- Death certificate
-- Will and trust documents
-- Appraisals for real estate, business interests, unique assets
-- Prior gift tax returns (Forms 709)
+**Planning implication:** portability eliminates need for "credit shelter trusts" in many cases.
 
 ---
 
-## 3. Step-Up in Basis (IRC §1014)
+## 2. Gift Tax: The Annual Exclusion
+
+### Annual Exclusion Amounts
+
+| Year | Per Recipient (Individual) | Per Recipient (Married Couple) |
+|------|----------------------------|--------------------------------|
+| 2025 | $19,000 | $38,000 |
+| 2026 | $19,000 | $38,000 |
+
+**Key points:**
+- Unlimited number of recipients
+- No reporting requirement for gifts within exclusion
+- Reduces lifetime exemption only for amounts exceeding exclusion
+
+### Gift Splitting
+
+Married couples can combine their annual exclusions:
+
+- File Form 709 to show "split gifts"
+- Each spouse's exclusion applied separately
+- Must consent in writing (spousal consent rules)
+
+### Who Can Receive Gifts
+
+| Recipient | Rules |
+|-----------|-------|
+| Anyone | No limit on number of recipients |
+| Minor children | Uniform Gift to Minors Act (UGMA) or 529 plan recommended |
+| Non-citizen spouse | $194,000 annual limit (2026, up from $190,000 in 2025) |
+| Foreign individuals | No gift tax, but may have reporting (Form 3520) |
+| Trusts | Possible, but more complex (Crummey withdrawals, etc.) |
+
+### Examples
+
+**Example 1: Grandchildren**
+- 4 grandchildren × $19,000 = $76,000 total gift per grandparent
+- Married couple = $152,000 total
+- All from annual exclusion, no lifetime exemption used
+
+**Example 2: Education gifts**
+- Pay tuition directly to institution = unlimited (not a completed gift)
+- Books, supplies = unlimited (if required for enrollment)
+- Room and board = counted as gift (use annual exclusion)
+
+**Example 3: Medical gifts**
+- Pay medical bills directly to provider = unlimited
+- Reimburse patient = counted as gift
+
+---
+
+## 3. Lifetime Exemption Strategy
 
 ### How It Works
 
-**General Rule:** Property acquired from a decedent receives a basis equal to fair market value at date of death (or alternate valuation date).
+Every gift above the annual exclusion reduces the $15 million (2026) lifetime exemption:
+
+| Gift Amount | Annual Exclusion Used | Lifetime Exemption Used |
+|-------------|----------------------|------------------------|
+| $19,000 | $19,000 | $0 |
+| $100,000 | $19,000 | $81,000 |
+| $1,000,000 | $19,000 | $981,000 |
+
+### Gift Tax Calculation
+
+**Formula:** Gift Tax = (Taxable Gift × Rate) - Credit Against Tax
+
+The credit equals the tax on the exemption amount, effectively zeroing out tax on gifts up to the exemption.
+
+### The "Clawback" Concern (Resolved)
+
+**Pre-2026 concern:** If exemption decreased, prior large gifts might be "taxed back."
+
+**OBBBA resolution:** The new law includes a **no-clawback rule**. Gifts made during higher exemption periods are safe even if exemption decreases in the future.
+
+**Planning implication:** Large gifts made before 2026 (or whenever exemption peaks) are now permanently protected.
+
+### Optimal Gift Amounts
+
+| Client Situation | Recommended Gift Strategy |
+|-----------------|-------------------------|
+| Wealth > $15M exemption | Use remaining exemption aggressively |
+| Wealth > $30M married | Both spouses maximize gifts |
+| Expecting appreciation | Gift appreciating assets now (freeze strategy) |
+| Business owner | Consider S corporation or partnership interest gifts |
+
+---
+
+## 4. Step-Up in Basis: Critical Context
+
+### What Is Step-Up?
+
+When someone dies, their appreciated assets receive a "step-up" in cost basis to fair market value at death.
+
+| Asset | Basis Before Death | Basis After Death |
+|-------|-------------------|-------------------|
+| Stock bought at $10, now $100 | $10 | $100 |
+| Real estate bought at $100K, now $1M | $100K | $1M |
+
+**Benefit:** Eliminates capital gains tax on appreciation during lifetime.
+
+### Step-Up vs. Lifetime Gifting
+
+| Factor | Step-Up (Death) | Lifetime Gift |
+|--------|----------------|---------------|
+| Basis | Steps up to FMV | Carryover basis |
+| Capital gains tax | Eliminated | Taxed at transfer |
+| Gift tax | N/A | May apply |
+| Control | Lost | Retained during lifetime |
 
 **Example:**
-- Parent bought stock for $50,000
-- Stock worth $500,000 at death
-- Child inherits with $500,000 basis
-- **$450,000 gain is permanently eliminated**
+- Grandmother owns stock worth $1M (basis $100K)
+- Options:
+  1. Hold until death: Heirs get $1M basis, no tax
+  2. Gift now: Heirs get $100K basis, owe ~$180K capital gains (at 20% rate)
 
-### What Gets Step-Up
+### When Gifting Beats Step-Up
 
-**Included:**
-- Property in decedent's gross estate
-- Property passing by will or intestacy
-- Jointly-held property (proportionate to ownership)
-- Trust assets included in estate
-- POD/TOD accounts
-- Life insurance (basis doesn't matter, but proceeds included)
+Despite losing step-up, gifts can be better when:
 
-**Excluded:**
-- IRD (Income in Respect of Decedent) - IRAs, 401(k)s, deferred annuities
-- Property gifted before death (carryover basis)
-- Irrevocable trust assets not in estate
-- Assets sold before death
+1. **Asset will appreciate more:** Lock in current value for gift tax purposes
+2. **Income needs:** Donor needs cash flow, donee can wait
+3. **Multi-generational planning:** Shifting future appreciation to lower-bracket recipients
+4. **Business interests:** Reduce estate while maintaining some control
 
-### Community Property Double Step-Up (IRC §1014(b)(6))
+### Step-Up Elimination Proposals
 
-**The Big Advantage:** In community property states, BOTH halves of community property receive step-up at first spouse's death.
+**Historical proposals:** Eliminate step-up in basis at death
+**Current status:** Not in OBBBA, but remains a potential future reform
 
-**Example (Community Property - California):**
-- Couple bought stock for $100,000 as community property
-- Worth $1,000,000 at first spouse's death
-- Surviving spouse's basis: **$1,000,000** (100% step-up)
-- All $900,000 gain eliminated
-
-**Example (Separate Property - New York):**
-- Same facts, joint account in separate property state
-- Surviving spouse's basis: $550,000 (only 50% step-up)
-- $450,000 gain remains on surviving spouse's half
-
-**Community Property States (9):**
-1. Arizona
-2. California
-3. Idaho
-4. Louisiana
-5. Nevada
-6. New Mexico
-7. Texas
-8. Washington
-9. Wisconsin
-
-**Opt-In Community Property Trust States (3):**
-1. Alaska (since 1998)
-2. Tennessee (since 2010)
-3. Kentucky (since 2020)
-4. South Dakota (community property trusts)
-
-**Key Point:** Non-community property state residents can potentially create community property trusts in opt-in states to gain double step-up benefits.
-
-### Basis Consistency Rules (IRC §1014(f) / Form 8971)
-
-**Enacted 2015:** Beneficiary's basis cannot exceed value reported on estate tax return.
-
-**Form 8971 Requirements:**
-- Filed by executor within 30 days of Form 706 filing
-- Schedule A sent to each beneficiary
-- Reports value of inherited property
-
-**When Required:**
-- Estate is required to file Form 706 (above filing threshold)
-- Property generates estate tax liability
-
-**When NOT Required:**
-- Estate doesn't need to file Form 706
-- Property qualifies for marital or charitable deduction (no tax generated)
-- Property excluded from reporting (cash, IRD, etc.)
-
-### Planning Implications
-
-**Gift vs. Bequest Analysis:**
-
-| Factor | Lifetime Gift | Bequest at Death |
-|--------|--------------|------------------|
-| Basis | Carryover (donor's basis) | Step-up to FMV |
-| Capital gains | Beneficiary inherits | Eliminated |
-| Best for | Low-basis assets you'll hold | High-appreciation assets |
-| Exemption use | Uses lifetime exemption | Uses estate exemption |
-
-**Rule of Thumb:** For assets with significant unrealized gains, inheritance (step-up) often beats gifts (carryover basis) from an income tax perspective.
-
-**Spousal Planning in Separate Property States:**
-- Consider retitling appreciated assets to terminally ill spouse
-- **1-year rule (IRC §1014(e)):** Assets gifted to decedent within 1 year of death that return to donor do NOT get step-up
-- Solution: Leave to other beneficiaries, not back to donor spouse
+**Planning implication:** Clients with large unrealized gains should consider the possibility of future elimination, but not panic given current law.
 
 ---
 
-## 4. State Estate and Inheritance Taxes
+## 5. State Estate Taxes
 
-### States with Estate Tax (12 + DC as of 2026)
+### States With Estate Tax
 
-| State | Exemption | Top Rate | Notes |
-|-------|-----------|----------|-------|
-| **Connecticut** | $15,000,000 (federal tie) | 12% (flat) | Only state matching federal; has gift tax |
-| **Hawaii** | $5,490,000 | 20% | Rates increased 2020 |
-| **Illinois** | $4,000,000 | 16% | No inflation adjustment |
-| **Maine** | $7,000,000 | 12% | Indexed for inflation |
-| **Maryland** | $5,000,000 | 16% | Has portability; ALSO has inheritance tax |
-| **Massachusetts** | $2,000,000 | 16% | Lowest exemption; retroactive to 2023 |
-| **Minnesota** | $3,000,000 | 16% | |
-| **New York** | $7,350,000 (2026 est.) | 16% | **"Cliff" tax** - lose exemption if >105% |
-| **Oregon** | $1,000,000 | 16% | **Lowest exemption** tied with MA |
-| **Rhode Island** | $1,838,056 | 16% | Indexed |
-| **Vermont** | $5,000,000 | 16% (flat) | |
-| **Washington** | $3,076,000 | 35% | **Highest rate** (increased 2025) |
-| **Washington DC** | $4,988,400 | 16% | Indexed |
+| State | Exemption (2025-2026) | Top Rate |
+|-------|----------------------|----------|
+| Connecticut | ~$15.99M (2026, matches federal) | 12% |
+| District of Columbia | ~$4.71M | 16% |
+| Hawaii | ~$5.49M | 20% |
+| Illinois | ~$4M | 16% |
+| Maine | ~$6.8M | 12% |
+| Maryland | ~$5M | 16% |
+| Massachusetts | ~$2M | 16% |
+| Minnesota | ~$3M | 16% |
+| New York | ~$6.94M (2026) | 16% |
+| Oregon | ~$1M | 16% |
+| Rhode Island | ~$1.77M | 16% |
+| Vermont | ~$5M | 16% |
+| Washington | ~$2.193M | 20% |
+| Connecticut | ~$13.61M (matches federal) | 12% |
 
-### States with Inheritance Tax (5)
+**Note:** Connecticut matches the federal exemption (highest state threshold).
 
-| State | Rates | Who Pays | Exemptions |
-|-------|-------|----------|------------|
-| **Kentucky** | 4-16% | Non-lineal heirs | Spouse, parents, children, siblings exempt |
-| **Maryland** | 10% (flat) | Collateral heirs | Close relatives exempt |
-| **Nebraska** | 1%, 11%, 15% | Based on relationship | $100K (immediate), $40K (remote), $25K (others) |
-| **New Jersey** | 11-16% | Non-immediate family | Spouse, descendants, ancestors exempt |
-| **Pennsylvania** | 4.5%, 12%, 15% | All except spouses | **No exemption** except spouse; 4.5% for lineal |
+### States With Inheritance Tax
 
-**Key Distinction:**
-- **Estate Tax:** Paid by the estate before distribution
-- **Inheritance Tax:** Paid by beneficiary after receipt
+| State | Tax Rates | Exemptions |
+|-------|-----------|------------|
+| Iowa | 0-10% (on inherited amount) | Spouse, lineal descendants exempt |
+| Kentucky | 4-16% | Spouse, children exempt |
+| Maryland | 0-10% | Spouse, parents, children exempt |
+| Nebraska | 1-18% | Spouse, children, parents, siblings exempt |
+| New Jersey | 0-16% | Class A beneficiaries exempt |
+| Pennsylvania | 4.5-15% | Spouse, children exempt |
 
-**Maryland:** Only state with BOTH estate tax AND inheritance tax
+### States With NO Estate or Inheritance Tax
 
-### 2025 Notable Changes
+- Alabama
+- Alaska
+- Arizona
+- Arkansas
+- California
+- Colorado
+- Delaware
+- Florida
+- Georgia
+- Idaho
+- Indiana
+- Kansas
+- Louisiana
+- Mississippi
+- Missouri
+- Montana
+- Nevada
+- New Hampshire
+- New Mexico
+- North Carolina
+- North Dakota
+- Ohio
+- Oklahoma
+- South Carolina
+- South Dakota
+- Tennessee
+- Texas
+- Utah
+- Virginia
+- West Virginia
+- Wisconsin
+- Wyoming
 
-1. **Iowa:** Inheritance tax fully repealed January 1, 2025
-2. **Washington:** Increased rates (top rate now 35%, up from 20%); exemption also increased to $3M
+### Planning for State Taxes
 
-### State Planning Strategies
-
-**Residence Planning:**
-- Consider domicile in states without estate tax (FL, TX, NV, etc.)
-- Must establish genuine connections (driver's license, voting, time spent)
-- IRS and states examine "domicile of choice"
-
-**Real Property Considerations:**
-- Real property taxed by situs state regardless of domicile
-- Vacation homes in estate tax states create exposure
-- Consider LLCs or trusts (but watch state look-through rules)
-
-**State QTIP Elections:**
-- Most estate tax states allow separate state QTIP election
-- Allows marital deduction at state level while funding bypass trust
-
----
-
-## 5. Community Property Regimes
-
-### The 9 Community Property States
-
-| State | Income from Separate Property | Notes |
-|-------|------------------------------|-------|
-| **Arizona** | Separate | Quasi-community property rules |
-| **California** | Separate | Strictest rules |
-| **Idaho** | Community | |
-| **Louisiana** | Community | Based on civil law tradition |
-| **Nevada** | Separate | |
-| **New Mexico** | Separate | |
-| **Texas** | Community | |
-| **Washington** | Separate | |
-| **Wisconsin** | Community | "Marital property" terminology |
-
-### Community vs. Separate Property
-
-**Community Property:**
-- Acquired during marriage through earnings of either spouse
-- Belongs 50/50 to each spouse regardless of title
-- Gets double step-up at first death
-
-**Separate Property:**
-- Owned before marriage
-- Received by gift or inheritance during marriage
-- Purchased with separate funds (must trace)
-- Keeps original basis
-
-### Common Law (Separate Property) States
-
-**All other 41 states** follow common law/separate property rules:
-- Property belongs to spouse who earns/acquires it
-- Joint accounts = 50/50 ownership
-- Only decedent's share gets step-up
-
-### Opt-In Community Property Trust States
-
-**Alaska (1998):**
-- Allows community property trusts
-- Both spouses must consent
-- Property transferred to trust becomes community property
-
-**Tennessee (2010):**
-- Similar to Alaska
-- "Community property trust" statutory framework
-
-**Kentucky (2020):**
-- Newest opt-in state
-- Requires proper trust documentation
-
-**South Dakota:**
-- Allows community property trusts under special provisions
-
-**Planning Use:** Residents of separate property states can establish trusts in opt-in states to achieve double step-up benefits.
-
-### Moving Between Regimes
-
-**Community → Separate Property State:**
-- Property retains community character
-- Gets double step-up benefit
-- Must maintain documentation
-
-**Separate → Community Property State:**
-- Existing separate property stays separate
-- Future earnings become community
-- Can transmute by agreement
-
-**Documentation Critical:**
-- Keep records of property character
-- Written agreements for transmutation
-- Title alone doesn't determine character
+| Client Situation | Strategy |
+|-----------------|----------|
+| Domiciled in estate tax state | Consider domicile change (no state income tax states: FL, TX, NV, etc.) |
+| Owns property in estate tax state | Residency matters more than property location |
+| Married couples | Portability varies by state (not all states have it) |
+| Multi-state assets | Most states tax based on decedent's domicile, not asset location |
 
 ---
 
-## 6. Planning Strategies in the OBBB Era
+## 6. Common Gifting Strategies
 
-### The New Landscape (Post-OBBB)
+### Strategy 1: Annual Exclusion Gifting
 
-**What Changed:**
-- $15M exemption permanent (no sunset)
-- Urgency of "use it or lose it" reduced
-- Focus shifts to income tax planning (step-up)
-- State estate taxes become relatively more important
+**Mechanics:** Give $19K/year to as many recipients as desired.
 
-**What Didn't Change:**
-- 40% top rate
-- Annual exclusion mechanics
-- Portability rules
-- Step-up in basis rules
-- State estate taxes
+**Best for:** Gradual wealth transfer, teaching financial literacy.
 
-### Still-Relevant Planning Strategies
+**Example:**
+- Married couple with 3 grandchildren
+- 6 gifts × $19K = $114K/year
+- Over 10 years = $1.14M transferred, $0 exemption used
 
-#### A. Spousal Lifetime Access Trust (SLAT)
+### Strategy 2: 529 Plan Education Gifting
 
-**What It Is:** Irrevocable trust created by one spouse for benefit of other spouse (and descendants).
+**Limits:** Up to $19K/year (or $38K married) without gift tax consequences.
+**Special rule:** Can front-load 5 years of gifts = $95K single/$190K married.
 
 **Benefits:**
-- Removes assets from donor spouse's estate
-- Future appreciation excluded from both estates
-- Beneficiary spouse can receive distributions if needed
-- Grantor trust = no income tax on growth
+- Section 529 plan grows tax-free
+- Withdrawals for qualified education expenses = tax-free
+- Control over investments (if custodial account rules followed)
+- Beneficiary can be changed
 
-**2026 Funding Limits:**
-- Individual: Up to $15M
-- Couple (each creates SLAT): Up to $30M total
+**Qualified expenses:**
+- Tuition
+- Fees
+- Books
+- Room and board (if half-time student)
+- Computers/internet
+- Special needs equipment
 
-**Key Risks:**
-1. **Divorce:** Beneficiary spouse may retain trust benefits
-2. **Predeceased beneficiary spouse:** Lose indirect access
-3. **Reciprocal trust doctrine:** If both spouses create "mirror" SLATs, IRS may collapse them
+### Strategy 3: Direct Payment of Medical/Educational Expenses
 
-**Reciprocal Trust Mitigation:**
-- Create at different times
-- Different trustees
-- Different distribution standards
-- Different beneficiary classes
-- Different investment provisions
+**Mechanics:** Pay directly to institution/provider (not to the individual).
 
-#### B. Grantor Retained Annuity Trust (GRAT)
+**Benefits:**
+- Unlimited amount (no annual exclusion limit)
+- No gift tax consequences
+- No reduction of lifetime exemption
 
-**How It Works:**
-- Transfer appreciating assets to trust
-- Retain annuity payments for term
-- Remainder passes to beneficiaries gift-tax-free if appreciation exceeds IRS rate (Section 7520 rate)
+**Documentation:** Keep records showing payment was for tuition/medical, not cash to individual.
 
-**Best For:** Assets expected to significantly appreciate
+### Strategy 4: Irrevocable Life Insurance Trust (ILIT)
 
-#### C. Intentionally Defective Grantor Trust (IDGT)
+**Mechanics:**
+1. Create irrevocable trust
+2. Trust purchases/life insurance owned by trust
+3. Trust pays premiums (via gifts from insured)
+4. Upon death, death benefit paid to trust → beneficiaries
 
-**How It Works:**
-- Sell assets to grantor trust in exchange for promissory note
-- Trust grows outside estate
-- Grantor pays income tax on trust income (further reducing estate)
-- Note payments return to grantor
+**Benefits:**
+- Removes life insurance from taxable estate
+- Provides liquidity for estate taxes
+- Creates tax-free wealth transfer
 
-**Best For:** Business interests, high-growth assets
+**Downsides:**
+- Irrevocable (cannot change)
+- Loss of control
+- Must survive 3 years after transfer (Section 2035)
 
-#### D. Charitable Planning
+### Strategy 5: Grantor Retained Annuity Trust (GRAT)
 
-**Charitable Remainder Trust (CRT):**
-- Income stream to donor for life
-- Remainder to charity
-- Immediate income tax deduction
-- Removes assets from estate
+**Mechanics:**
+- Transfer appreciating asset to trust
+- Receive fixed annuity for term (typically 2-10 years)
+- Remainder goes to beneficiaries (gift tax free if zeroed out)
+- If you die during term, asset returns to estate
 
-**Charitable Lead Trust (CLT):**
-- Income to charity for term
-- Remainder to family
-- Estate/gift tax reduction
+**Benefits:**
+- Zeroed-out GRAT uses no exemption
+- Appreciation above IRS 7520 rate goes to beneficiaries tax-free
+- Can "roll" GRATs (create new ones as old ones expire)
 
-#### E. Life Insurance Planning
+**Ideal for:** Highly appreciated assets, business interests, real estate
 
-**Irrevocable Life Insurance Trust (ILIT):**
-- Trustee owns policy
-- Proceeds excluded from estate
-- Provides liquidity for estate taxes/expenses
+### Strategy 6: Family Limited Partnership (FLP/LLC)
 
-### Gift vs. Bequest Decision Framework
+**Mechanics:**
+- Create partnership/LLC
+- Transfer assets to entity
+- Gift partnership interests to family
+- Retain management control
 
-**Favor Lifetime Gifts When:**
-- Assets have low basis AND low expected appreciation
-- Using annual exclusion gifts
-- Leveraging gift tax exemption before potential law changes
-- Funding education (529 plans)
-- State has no gift tax but has estate tax
+**Benefits:**
+- Valuation discounts (minority interest, lack of marketability)
+- Maintain control during lifetime
+- Gift at discounted values
 
-**Favor Bequest (Hold Until Death) When:**
-- Assets have significant unrealized gains
-- Step-up will eliminate substantial capital gains
-- Uncertain about future need for assets
-- Asset may decline in value
-- Beneficiary likely to sell immediately
-
-### Portability vs. Bypass Trust
-
-**Portability Advantages:**
-- Simpler (just file Form 706)
-- Surviving spouse has full control
-- Step-up on second death
-- No trust administration costs
-
-**Bypass Trust Advantages:**
-- Protects from creditors
-- Protects from remarriage
-- Can benefit multiple generations
-- May reduce state estate tax
-- Locks in exemption amount (no future legislative risk)
-
-**Modern Approach:** "Wait and see" or "disclaimer" trusts that allow post-death flexibility.
+**Downsides:**
+- IRS scrutiny (adequate business purpose required)
+- Complex setup and maintenance
+- Potential GST tax issues
 
 ---
 
-## Quick Reference Tables
+## 7. Community Property vs. Common Law States
 
-### 2026 Federal Gift & Estate Tax Numbers
+### The Difference
 
-| Item | Amount |
-|------|--------|
-| Lifetime Gift/Estate Exemption | $15,000,000 |
-| Married Couple Combined | $30,000,000 |
-| Annual Gift Exclusion | $19,000 |
-| Annual Exclusion (Non-Citizen Spouse) | $194,000 |
-| Top Estate/Gift Tax Rate | 40% |
-| GST Exemption | $15,000,000 |
+| Feature | Community Property | Common Law |
+|---------|-------------------|------------|
+| Ownership during marriage | Equal (50/50) | Based on title |
+| Income during marriage | Community property | Separate (unless commingled) |
+| Inheritance | May have special rules | Standard rules |
 
-### State Estate Tax Quick Reference (2026)
+**Community property states:** AZ, CA, ID, LA, NV, NM, TX, WA, WI (and AK for opt-in)
 
-| Risk Level | States | Exemption Range |
-|------------|--------|-----------------|
-| **High Risk** | MA, OR | $1-2M |
-| **Medium Risk** | WA, MN, IL, DC | $3-5M |
-| **Lower Risk** | MD, VT, HI, ME, NY, RI | $5-7.5M |
-| **Federal Match** | CT | $15M |
+### Double Step-Up Basis
 
-### Key IRS Forms
+**In community property states:** Surviving spouse gets **double step-up** on community property.
 
-| Form | Purpose | Due Date |
-|------|---------|----------|
-| **Form 706** | Estate Tax Return | 9 months after death (+6 mo. extension) |
-| **Form 709** | Gift Tax Return | April 15 following gift year |
-| **Form 8971** | Basis Reporting to Beneficiaries | 30 days after filing Form 706 |
-| **Form 4768** | Extension for Form 706 | Before Form 706 due date |
+**What this means:**
+- Both halves of community property get step-up at death
+- Effectively eliminates capital gains on all community property appreciation
+
+**Common law equivalent:** Only deceased spouse's half gets step-up
+
+**Example:**
+- Married couple in CA, community property, $10M stock portfolio (basis $1M)
+- Both spouses die: $10M receives **double step-up** (both halves)
+- Heirs get $10M basis (no capital gains tax)
+- Same couple in NY: Only decedent's half ($5M) steps up
+- Surviving spouse's half retains $500K basis (taxable when sold)
+
+**Planning implication:** Community property status is extremely valuable for estate planning.
+
+### Making Common Law Property Community
+
+Some states (like AK) allow elective community property.
+
+**Benefit:** Convert property to community property for double step-up benefit.
+
+---
+
+## 8. Key Planning Considerations
+
+### Before Making Large Gifts
+
+| Consideration | Action |
+|-------------|--------|
+| Cash flow needs | Ensure gift won't strain finances |
+| Emergency reserves | Maintain 6-12 months expenses |
+| Retirement security | Fund retirement fully first |
+| Long-term care | Consider LTC insurance or self-insurance |
+
+### Documentation Requirements
+
+| Document | Purpose |
+|----------|---------|
+| Gift tax return (Form 709) | Track lifetime exemption usage |
+| Appraisal | For non-cash gifts >$15K |
+| Business valuation | For business interest gifts |
+| Trust documents | For ILIT, GRAT, other trusts |
+
+### Family Dynamics
+
+| Issue | Consideration |
+|-------|--------------|
+| Unequal gifting | Can cause family conflict |
+| Spendthrift children | Use trusts with distributions |
+| Blended families | Spousal lifetime access trusts (SLATs) |
+| Minors | UGMA/UTMA or 529 plans |
+
+### GST (Generation-Skipping Transfer) Tax
+
+| Feature | Details |
+|---------|---------|
+| Rate | 40% (same as estate tax) |
+| Exemption | Same as lifetime exemption ($15M in 2026) |
+| Applicability | Transfers to grandchildren or more remote descendants |
+| Planning | Allocate GST exemption to skip-generation gifts |
+
+---
+
+## 9. Maven Product Implications
+
+### Feature Ideas
+
+1. **Estate Tax Calculator**
+   - Input: Assets, debts, marital status, state
+   - Output: Estimated estate tax liability
+   - Optimization suggestions
+
+2. **Lifetime Exemption Tracker**
+   - Track gifts year by year
+   - Visualize remaining exemption
+   - Alert when approaching limits
+
+3. **Annual Exclusion Reminder**
+   - Annual reminder to use exclusions
+   - Suggest recipients (grandchildren, etc.)
+   - Track year-by-year gifts
+
+4. **Basis Tracking Dashboard**
+   - Track cost basis of all assets
+   - Estimate step-up value at death
+   - Compare to lifetime gifting alternatives
+
+5. **State Tax Comparison**
+   - Input: Current state, proposed new state
+   - Output: Estate/inheritance tax implications
+   - Suggest domicile strategies
+
+6. **Gifting Strategy Builder**
+   - Input: Goals, assets, family situation
+   - Output: Recommended gifting strategy
+   - Step-by-step implementation plan
 
 ---
 
 ## Sources
 
-- IRS: Estate and Gift Tax FAQs, Instructions for Forms 706 and 709
-- IRS Revenue Procedure 2025-32 (2026 inflation adjustments)
+- IRC Sections 1014 (step-up basis), 2001-2014 (estate tax), 2501-2505 (gift tax), 2601-2663 (GST tax)
+- IRS Publications 551 (Basis of Assets), 559 (Survivors), 950 (Life Insurance)
+- IRS Form 706 Instructions (Estate Tax)
+- IRS Form 709 Instructions (Gift Tax)
+- IRS Notice 2025-67 (2026 inflation adjustments)
+- One Big Beautiful Bill Act (OBBBA) — P.L. 119-21, signed July 2025
 - Tax Foundation: Estate and Inheritance Taxes by State (November 2025)
 - ACTEC: State Death Tax Chart (2025)
-- Morgan Lewis: Estate Tax Alert (August 2025)
-- Wealthspire: 2026 Federal & State Estate and Gift Tax Cheat Sheet (February 2026)
-- Fidelity: SLAT guidance (January 2026)
+- Estate of McKelvey v. Commissioner (2d Cir. 2018) — GRAT valuation
+- Treasury Decision 9884 (Anti-Claw-Back Rules)
+- Rev. Proc. 2022-32 (Simplified Portability Election)
 - Kitces.com: Step-Up in Basis analysis
-- Cornell Law: IRC §§ 1014, 2010, 2040, 7872
+- Cornell Law: IRC §§ 1014, 2001, 2010, 2503, 2505, 2601, 2702, 7520
 
 ---
 
 *This document is for educational purposes and does not constitute legal or tax advice. Consult qualified professionals for specific situations.*
+
+*Maven Research — Estate & Gift Track — February 2026*

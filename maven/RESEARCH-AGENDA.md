@@ -166,44 +166,29 @@ Every research session:
 
 ---
 
-### Track 6: Fixed Income Deep Dive (PRIORITY - CURRENT GAP)
+### Track 6: Fixed Income Deep Dive ✅ *Completed 2026-02-13*
 
-- [ ] Treasury bonds, notes, bills: taxation, SALT exemption
-- [ ] Corporate bonds: credit risk, yield spreads
-- [ ] Municipal bonds: GO vs revenue, AMT implications
-- [ ] State-specific munis: CA, NY, NJ, TX, FL analysis
-- [ ] Tax-equivalent yield formula and application
-- [ ] I-Bonds: limits, taxation, redemption rules
-- [ ] Bond ladders and duration management
-- [ ] Preferred stock: taxation, risks
+- [x] Treasury bonds, notes, bills: taxation, SALT exemption
+- [x] Corporate bonds: credit risk, yield spreads
+- [x] Municipal bonds: GO vs revenue, AMT implications
+- [x] State-specific munis: CA, NY, NJ, TX, FL analysis
+- [x] Tax-equivalent yield formula and application
+- [x] I-Bonds: limits, taxation, redemption rules (covered in Track 7)
+- [x] Bond ladders and duration management
+- [x] Preferred stock: taxation, risks
 
----
+**Research file:** `memory/research/fixed-income/tax-efficient-fixed-income.md`
 
-## Research Output Structure
+### Track 4: Estate & Gifting ✅ *Completed 2026-02-13*
 
-```
-memory/research/
-├── tax-efficient-investing/
-│   ├── asset-location.md ✅
-│   ├── municipal-bonds.md
-│   ├── tax-loss-harvesting.md ✅
-│   └── capital-gains.md
-├── retirement-accounts/
-│   ├── account-types.md
-│   ├── roth-conversions.md ✅
-│   ├── nua-net-unrealized-appreciation.md ✅
-│   └── distribution-strategies.md
-├── concentrated-positions/
-│   ├── exchange-funds.md
-│   ├── pvf-structures.md
-│   └── charitable-strategies.md
-├── estate-planning/
-│   └── basics.md
-├── college-planning/
-│   └── 529-plans.md ✅
-├── fixed-income/
-│   ├── municipal-bonds.md
-│   └── tax-equivalent-yield.md
+- [x] Gift tax exclusions ($18K/person, lifetime exemption)
+- [x] Step-up in basis at death (covered in TLH and NUA docs)
+- [x] Estate tax thresholds and rates
+- [x] Community property vs common law states
+- [x] State estate tax comparison
+- [x] Basic gifting strategies (529, ILIT, GRAT basics)
+
+**Research file:** `memory/research/estate-planning/estate-gift-basics.md`
 ├── backdoor-roth-strategies.md ✅ (Track 7)
 ├── i-bonds-strategies.md ✅ (Track 7)
 ├── hsa-retirement-vehicle.md ✅ (Track 7)

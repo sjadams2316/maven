@@ -643,12 +643,19 @@ export default function PortfolioLab() {
     return points;
   }, [totalValue, projectionYears, annualContribution, expectedReturn, userAge]);
 
-  // Redirect if not onboarded
+  // Redirect if not onboarded (only after loading is complete and demo mode is initialized)
   useEffect(() => {
-    if (!isLoading && !profile) {
+    // Don't redirect while still loading
+    if (isLoading) return;
+    
+    // Don't redirect in demo mode - demo users should see the demo portfolio
+    if (isDemoMode) return;
+    
+    // Only redirect if no profile and not in demo mode
+    if (!profile || !profile.onboardingComplete) {
       router.push('/onboarding');
     }
-  }, [isLoading, profile, router]);
+  }, [isLoading, profile, isDemoMode, router]);
 
   if (isLoading) {
     return (
