@@ -161,7 +161,7 @@ function getRelativeTime(date: Date): string {
 
 export default function AdvisorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [oracleOpen, setOracleOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'oracle'>('overview');
   
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -213,19 +213,28 @@ export default function AdvisorDashboard() {
           {/* Oracle Button */}
           <div className="flex justify-end mb-4">
             <button
-              onClick={() => setOracleOpen(!oracleOpen)}
+              onClick={() => setActiveTab(activeTab === 'oracle' ? 'overview' : 'oracle')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition ${
-                oracleOpen 
+                activeTab === 'oracle'
                   ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white'
                   : 'bg-white/10 hover:bg-white/20 text-gray-300'
               }`}
             >
               <span>🔮</span>
-              <span className="font-medium">Maven Oracle</span>
-              <span className="text-xs bg-purple-500/30 px-2 py-0.5 rounded-full">Research</span>
+              <span className="font-medium">Research</span>
             </button>
           </div>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'oracle' ? (
+          /* Research/Oracle Tab - Full Width */
+          <div className="h-[calc(100vh-200px)]">
+            <AdvisorOracle />
+          </div>
+        ) : (
+          <>
+        {/* Stats Row */}
         
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -484,19 +493,9 @@ export default function AdvisorDashboard() {
       </main>
 
       {/* Maven Oracle Panel */}
-      {oracleOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setOracleOpen(false)}
-          />
-          {/* Oracle Panel */}
-          <div className="relative w-full max-w-md h-full">
-            <AdvisorOracle />
           </div>
-        </div>
-      )}
+        )}
+      </>
     </div>
   );
 }

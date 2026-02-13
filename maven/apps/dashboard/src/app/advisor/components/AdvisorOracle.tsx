@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useUser } from '@clerk/nextjs';
 
 interface ClientContext {
   id: string;
@@ -91,12 +90,12 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMsg = client 
-        ? `Hi${user?.firstName ? `, ${user.firstName}` : ''}! I'm Maven Oracle. I'm ready to help you with ${client.firstName} ${client.lastName}'s portfolio. Choose a quick action or ask me anything.`
-        : `Hi${user?.firstName ? `, ${user.firstName}` : ''}! I'm Maven Oracle. Select a client to get started, or ask me general questions about portfolios, markets, or financial planning.`;
+        ? `Hi! I'm Maven Oracle. I'm ready to help you with ${client.firstName} ${client.lastName}'s portfolio. Choose a quick action or ask me anything.`
+        : `Hi! I'm Maven Oracle - your research assistant. Select a client to analyze, or ask me general questions about portfolios, markets, or financial planning.`;
       
       setMessages([{ role: 'assistant', content: welcomeMsg }]);
     }
-  }, [client, user]);
+  }, [client]);
 
   const handleQuickAction = async (action: typeof QUICK_ACTIONS[0]) => {
     setSelectedAction(action.id);
