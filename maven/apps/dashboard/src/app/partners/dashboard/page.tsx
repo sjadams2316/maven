@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Sparkline from '@/components/Sparkline';
+import ResearchOracle from '../components/ResearchOracle';
 
 // Quick action definitions
 const QUICK_ACTIONS = [
@@ -376,11 +377,11 @@ export default function PartnersDashboard() {
 
         {/* Research Mode Panel */}
         {researchMode && (
-          <div className="lg:col-span-3 bg-[#0f0f1a] border border-indigo-500/30 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🔮</span>
-                <h2 className="text-xl font-semibold text-white">Maven Research</h2>
+                <h2 className="text-xl font-semibold text-white">Maven Research Assistant</h2>
               </div>
               <button
                 onClick={() => setResearchMode(false)}
@@ -391,21 +392,7 @@ export default function PartnersDashboard() {
                 </svg>
               </button>
             </div>
-            <p className="text-gray-400 mb-4">Research any stock, ETF, or crypto. Try searching for SPY, QQQ, AAPL, NVDA, BTC, or TAO.</p>
-            <div className="flex gap-2 mb-4">
-              {['SPY', 'QQQ', 'AAPL', 'NVDA', 'BTC', 'TAO'].map((symbol) => (
-                <button
-                  key={symbol}
-                  onClick={() => {}}
-                  className="px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 text-sm rounded-lg transition-colors"
-                >
-                  {symbol}
-                </button>
-              ))}
-            </div>
-            <div className="bg-[#12121a] rounded-xl p-4 text-gray-400 text-center">
-              Connect to Oracle to search stocks →
-            </div>
+            <ResearchOracle />
           </div>
         )}
 
