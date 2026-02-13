@@ -136,7 +136,9 @@ const PASSWORD_COOKIE = 'maven_access';
 function checkPasswordGate(request: NextRequest): NextResponse | null {
   const pathname = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
-  const isDemoMode = searchParams.get('demo') === 'true';
+  const hasDemoParam = searchParams.get('demo') === 'true';
+  const hasDemoCookie = request.cookies.get(PASSWORD_COOKIE)?.value === 'authenticated';
+  const isDemoMode = hasDemoParam || hasDemoCookie;
   
   // Allow the password page, its API, cron jobs, and static assets
   if (pathname === '/gate' || pathname === '/api/gate') return null;
