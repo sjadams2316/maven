@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../../components/Header';
+import AdvisorOracle from '../../components/AdvisorOracle';
 
 // Mock data
 const MOCK_CLIENTS: Record<string, any> = {
@@ -188,6 +189,7 @@ export default function ClientDetailPage() {
   const [notes, setNotes] = useState('');
   const [clientTone, setClientTone] = useState<'conservative' | 'moderate' | 'engaged'>('moderate');
   const [viewAsClient, setViewAsClient] = useState(false);
+  const [oracleOpen, setOracleOpen] = useState(false);
   
   const client = MOCK_CLIENTS[clientId];
   const activity = MOCK_ACTIVITY[clientId] || [];
@@ -309,6 +311,17 @@ export default function ClientDetailPage() {
           </div>
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setOracleOpen(!oracleOpen)}
+              className={`px-4 py-2 min-h-[48px] rounded-xl transition flex items-center gap-2 ${
+                oracleOpen 
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white' 
+                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+              }`}
+            >
+              <span>🔮</span>
+              <span>{oracleOpen ? 'Close Oracle' : 'Maven Oracle'}</span>
+            </button>
             <button
               onClick={() => setViewAsClient(!viewAsClient)}
               className={`px-4 py-2 min-h-[48px] rounded-xl transition flex items-center gap-2 ${
@@ -731,6 +744,33 @@ export default function ClientDetailPage() {
           )}
         </div>
       </main>
+
+      {/* Maven Oracle Panel */}
+      {oracleOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setOracleOpen(false)}
+          />
+          {/* Oracle Panel */}
+          <div className="relative w-full max-w-md h-full">
+            <AdvisorOracle 
+              client={{
+                id: client.id,
+                firstName: client.firstName,
+                lastName: client.lastName,
+                aum: client.aum,
+                riskTolerance: client.riskTolerance,
+                holdings: client.holdings,
+                allocation: client.allocation,
+                accounts: client.accounts,
+                notes: client.notes,
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
