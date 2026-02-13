@@ -35,6 +35,7 @@ export type DataSourceId =
   // Centralized (Speed + Reasoning)
   | 'groq'
   | 'minimax'
+  | 'deepseek'
   | 'claude'
   | 'perplexity'
   | 'xai' // xAI/Grok - Twitter/X sentiment (first-party)

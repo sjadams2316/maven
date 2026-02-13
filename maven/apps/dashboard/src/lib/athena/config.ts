@@ -33,6 +33,17 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
     reliability: 0.98,
     enabled: true,
   },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek R1',
+    category: 'centralized',
+    description: 'Open-source reasoning model matching OpenAI o1 at 2% of cost',
+    capabilities: ['complex-reasoning', 'trading-decisions', 'multi-step-analysis', 'reasoning-trace'],
+    latencyMs: { min: 2000, max: 8000, typical: 4000 },
+    costPer1MTokens: { min: 0.5, max: 2 },
+    reliability: 0.95,
+    enabled: true,
+  },
   claude: {
     id: 'claude',
     name: 'Claude',
@@ -173,9 +184,9 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
 export const QUERY_TYPE_SOURCES: Record<QueryType, DataSourceId[]> = {
   chat: ['groq', 'minimax'], // Speed path - use either
   simple_lookup: ['minimax', 'groq'], // MiniMax preferred for speed
-  trading_decision: ['vanta', 'desearch'],
-  portfolio_analysis: ['chutes'],
-  research: ['perplexity', 'desearch'],
+  trading_decision: ['deepseek', 'vanta', 'desearch'], // DeepSeek reasoning + signals
+  portfolio_analysis: ['chutes', 'deepseek'],
+  research: ['perplexity', 'deepseek', 'desearch'],
 };
 
 // =============================================================================
@@ -215,9 +226,9 @@ export const ROUTING_PATHS: Record<
   },
   reasoning: {
     name: 'Reasoning Path',
-    description: 'Complex multi-step decisions',
-    primarySources: ['claude'],
-    maxLatencyMs: 5000,
+    description: 'Complex multi-step decisions with visible reasoning',
+    primarySources: ['deepseek', 'claude'],
+    maxLatencyMs: 10000,
     costWeight: 0.3,
   },
 };
@@ -320,6 +331,7 @@ export const DEFAULT_CLASSIFICATION = {
 export const SOURCE_WEIGHTS: Record<DataSourceId, number> = {
   groq: 0.7, // Fast but generic
   minimax: 0.72, // Fast, efficient, integrated with OpenClaw
+  deepseek: 0.88, // Strong reasoning, open-source
   claude: 0.95, // High quality reasoning
   perplexity: 0.9, // Good research
   xai: 0.9, // First-party Twitter sentiment

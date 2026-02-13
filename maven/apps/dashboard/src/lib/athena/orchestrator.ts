@@ -25,6 +25,7 @@ import { classifyQuery, routeQuery, extractTickers } from './router';
 import { chutesQuery, isChutesConfigured, CHUTES_MODELS } from './providers/chutes';
 import { groqQuery, groqClassify, isGroqConfigured, GROQ_MODELS } from './providers/groq';
 import { minimaxQuery, isMiniMaxConfigured } from './providers/minimax';
+import { deepseekCompletion, deepseekReasoning, deepseekOracleQuery, isDeepSeekConfigured } from './providers/deepseek';
 import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { getVantaConsensus, isVantaConfigured } from './providers/bittensor';
 import { 
@@ -714,6 +715,12 @@ async function fetchLLMResponse(
     return { response, provider: 'groq', model: GROQ_MODELS.llama3_70b };
   }
   
+  // Reasoning path: Use DeepSeek R1 first (open-source reasoning at 2% of o1's cost)
+  if (path === 'reasoning' && isDeepSeekConfigured()) {
+    const result = await deepseekReasoning(query, systemPrompt);
+    return { response: result.response, provider: 'deepseek', model: 'deepseek-reasoner' };
+  }
+  
   // Deep/Research path: Use Perplexity (real-time research with citations)
   if (path === 'deep' && isPerplexityConfigured()) {
     const result = await perplexityResearch(query, {
@@ -750,6 +757,19 @@ async function fetchLLMResponse(
     return { response, provider: 'chutes', model: CHUTES_MODELS.reasoning };
   }
   
+  // Reasoning fallback: Use Claude if DeepSeek not available
+  if (path === 'reasoning' && isClaudeConfigured()) {
+    const result = await claudeSynthesize({
+      query,
+      sources: [],
+      context: {},
+    }, {
+      model: 'claude-sonnet-4-20250514',
+      maxTokens: 4096,
+    });
+    return { response: result.synthesis, provider: 'claude', model: 'claude-sonnet-4-20250514' };
+  }
+  
   // MiniMax fallback
   if (isMiniMaxConfigured()) {
     const response = await minimaxQuery(query, systemPrompt);
@@ -774,6 +794,19 @@ async function fetchLLMResponse(
       maxTokens: 2048,
     });
     return { response, provider: 'chutes', model: CHUTES_MODELS.balanced };
+  }
+  
+  // Claude final fallback
+  if (isClaudeConfigured()) {
+    const result = await claudeSynthesize({
+      query,
+      sources: [],
+      context: {},
+    }, {
+      model: 'claude-sonnet-4-20250514',
+      maxTokens: 4096,
+    });
+    return { response: result.synthesis, provider: 'claude', model: 'claude-sonnet-4-20250514' };
   }
   
   throw new Error('No LLM providers available');

@@ -43,6 +43,18 @@ export {
   type MiniMaxResponse,
 } from './minimax';
 
+// DeepSeek R1 - Open-source reasoning model
+export {
+  deepseekCompletion,
+  deepseekReasoning,
+  deepseekOracleQuery,
+  isDeepSeekConfigured,
+  getDeepSeekStatus,
+  type DeepSeekMessage,
+  type DeepSeekCompletionOptions,
+  type DeepSeekResponse,
+} from './deepseek';
+
 // xAI - First-party Twitter/X sentiment via Grok
 export {
   xaiCompletion,

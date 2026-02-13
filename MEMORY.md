@@ -223,7 +223,41 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
-*Last updated: 2026-02-09*
+## Altruist + Hazel Strategic Context (2026-02-12)
+
+**Key Update:** Hazel AI launched tax planning Feb 10, 2026 — caused LPLA to drop 8.3%, billions erased from wealth sector.
+
+**Maven + Altruist Relationship:**
+- **Week of Feb 17:** Sam has intro call with Altruist custody team
+- Position Maven as **AI-native partner**, not just custody customer
+- Explore: API depth, integration partnerships, co-marketing
+
+**Hazel vs Maven Positioning:**
+| Dimension | Hazel | Maven |
+|-----------|-------|-------|
+| Focus | AI assistant (meetings, notes, tax) | Portfolio intelligence + signals |
+| Model | Single (Anthropic) | Multi-model (Athena) |
+| Signals | None | Vanta, xAI, Desearch |
+| Reasoning | Black box | Visible transparency |
+| Cost | $100/user/month | ~$0.002/query (95% cheaper) |
+| Custody | Altruist-only | Multi-custodian (Altruist + Schwab) |
+
+**Strategic Opportunity:**
+- Maven can **complement** Hazel, not compete
+- Hazel handles: meetings, notes, CRM, tax planning
+- Maven handles: portfolio analysis, signals, stress testing, Oracle
+- Together: Complete AI wealth platform
+
+**Differentiation vs Hazel:**
+1. Hybrid intelligence (multi-model routing)
+2. Trading signals consensus (Vanta + xAI + Desearch)
+3. Fragility Index + stress testing
+4. Transparent reasoning chain
+5. Cross-account aggregation (Plaid)
+
+---
+
+*Last updated: 2026-02-12*
 
 ---
 
