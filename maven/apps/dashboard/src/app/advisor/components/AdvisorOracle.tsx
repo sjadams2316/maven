@@ -68,11 +68,30 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
     const userMsg = { role: 'user' as const, content: action.prompt };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
-    // Simulate response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Analysis for: ${action.prompt}\n\n[Oracle would respond here with intelligent analysis based on client data]` }]);
+    
+    try {
+      const response = await fetch('/api/oracle-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: action.prompt,
+          clientContext: client || {}
+        })
+      });
+      
+      const data = await response.json();
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.insight || 'Oracle response unavailable' 
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Error connecting to Oracle. Please try again.' 
+      }]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,12 +99,33 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
     if (!input.trim() || isLoading) return;
     const userMsg = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMsg]);
+    const messageText = input;
     setInput('');
     setIsLoading(true);
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: `You asked: ${input}\n\n[Oracle would respond here]` }]);
+    
+    try {
+      const response = await fetch('/api/oracle-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageText,
+          clientContext: client || {}
+        })
+      });
+      
+      const data = await response.json();
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.insight || 'Oracle response unavailable' 
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Error connecting to Oracle. Please try again.' 
+      }]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleStockSearch = (e: React.FormEvent) => {
