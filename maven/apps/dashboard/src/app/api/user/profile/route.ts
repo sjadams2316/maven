@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/db';
+import { isDemoModeEnabled, DEMO_PROFILE } from '@/lib/demo-profile';
 
 // GET - Load user profile
 export async function GET() {
   try {
+    // Handle demo mode - return demo profile directly
+    if (isDemoModeEnabled()) {
+      return NextResponse.json(DEMO_PROFILE);
+    }
+
     const { userId } = await auth();
     
     if (!userId) {
@@ -70,6 +76,11 @@ export async function GET() {
 // POST - Save user profile
 export async function POST(request: NextRequest) {
   try {
+    // Demo mode is read-only
+    if (isDemoModeEnabled()) {
+      return NextResponse.json({ error: 'Demo mode: changes not permitted' }, { status: 403 });
+    }
+
     const { userId } = await auth();
     
     if (!userId) {
