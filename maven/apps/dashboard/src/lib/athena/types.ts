@@ -36,6 +36,7 @@ export type DataSourceId =
   | 'groq'
   | 'minimax'
   | 'deepseek'
+  | 'qwen'
   | 'claude'
   | 'perplexity'
   | 'xai' // xAI/Grok - Twitter/X sentiment (first-party)
@@ -70,9 +71,28 @@ export interface DataSourceConfig {
 
 export type RoutingPath = 'speed' | 'cost' | 'deep' | 'reasoning';
 
+/**
+ * Routing decision based on Founder Architecture Feedback:
+ * - Core thinking engine always runs
+ * - Signal augmentation bus modifies confidence (never routes)
+ * - Conditional modules activate only when needed
+ * - Forecasting (Precog) is a confidence modifier, not a route
+ */
 export interface RoutingDecision {
   primaryPath: RoutingPath;
-  dataSources: DataSourceId[];
+  
+  // CORE THINKING ENGINE - Always runs
+  coreSources: DataSourceId[];
+  
+  // SIGNAL AUGMENTATION BUS - Parallel, modifies confidence
+  signalAugmentation: DataSourceId[];
+  
+  // CONDITIONAL MODULES - Activated only when needed
+  conditionalSources?: DataSourceId[];
+  
+  // FORECASTING MODIFIERS - Confidence adjustment only
+  forecastingModifiers?: DataSourceId[];
+  
   estimatedLatencyMs: number;
   estimatedCostUsd: number;
   parallelizable: boolean;

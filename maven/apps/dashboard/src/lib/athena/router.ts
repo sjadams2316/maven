@@ -29,17 +29,16 @@ import {
 
 /**
  * Classify a query to determine type, urgency, complexity, and data sources.
- * Currently uses regex-based classification. Will add Groq when available.
+ * Uses regex-based classification per Founder Architecture:
+ * - Core thinking engine always runs
+ * - Signal augmentation modifies confidence
+ * - Conditional modules activate when needed
  */
 export async function classifyQuery(
   query: string,
   context?: ClientContext
 ): Promise<QueryClassification> {
-  // TODO: When Groq integration is ready, use fast model for classification
-  if (ATHENA_CONFIG.useGroqClassification) {
-    return classifyWithGroq(query, context);
-  }
-
+  // Use regex classification (fast, deterministic)
   return classifyWithRegex(query, context);
 }
 
@@ -140,9 +139,15 @@ export async function routeQuery(
   // Select fallback sources
   const fallbacks = selectFallbacks(enabledSources, type);
 
+  // Get the routing path config for signal augmentation
+  const pathConfig = ROUTING_PATHS[primaryPath];
+
   return {
     primaryPath,
-    dataSources: enabledSources,
+    coreSources: pathConfig?.coreSources || enabledSources,
+    signalAugmentation: pathConfig?.signalAugmentation || [],
+    conditionalSources: pathConfig?.conditionalSources,
+    forecastingModifiers: ['precog'], // Always include as confidence modifier
     estimatedLatencyMs: latencyEstimate,
     estimatedCostUsd: costEstimate,
     parallelizable,

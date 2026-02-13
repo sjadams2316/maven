@@ -3,22 +3,29 @@
  * 
  * THE BRAIN - Coordinates multiple AI providers into unified intelligence.
  * 
- * Architecture:
- * - Groq: Fast classification + simple chat (speed)
- * - Chutes: Cost-effective analysis (cost)
- * - Perplexity: Research with citations (research)
- * - xAI: Twitter sentiment (signals)
- * - Claude: THE SYNTHESIS BRAIN - takes all inputs and produces wisdom
+ * ARCHITECTURE (Founder Feedback Feb 2026):
  * 
- * Flow:
- * 1. Query arrives
- * 2. Groq classifies instantly (~10ms)
- * 3. Router determines providers needed
- * 4. Parallel fetch: Perplexity (research) + xAI (sentiment)
- * 5. Claude synthesizes EVERYTHING into final response
+ * Flow: hypothesis → evidence gathering → adjudication
  * 
- * Claude isn't competing with other models - it's DIRECTING them
- * and making sense of their outputs. This is the multiplier.
+ * 1. CORE THINKING ENGINE (always runs):
+ *    - MiniMax: Speed for simple queries
+ *    - DeepSeek R1: Reasoning with visible trace
+ *    - Claude: Synthesis and fallback
+ * 
+ * 2. SIGNAL AUGMENTATION BUS (parallel, never routes):
+ *    - Vanta: Trading signals (Sharpe, Omega, momentum)
+ *    - xAI: Twitter/X sentiment
+ *    - Desearch: Reddit/Google sentiment
+ *    - MANTIS: Multi-asset forecasts
+ *    - These MODIFY CONFIDENCE, not routing
+ * 
+ * 3. CONDITIONAL MODULES (when needed):
+ *    - Perplexity: Research with citations
+ *    - Numinous: Event forecasting
+ *    - Gopher: Real-time data
+ * 
+ * 4. FORECASTING MODIFIERS:
+ *    - Precog: BTC forecasting - adjusts confidence only
  */
 
 import { classifyQuery, routeQuery, extractTickers } from './router';
@@ -133,11 +140,18 @@ export interface OrchestratorResult {
 // ============================================================================
 
 const DEFAULT_CONFIG: OrchestratorConfig = {
-  useGroqClassification: true,   // Use Groq for fast classification
-  includeSentiment: true,         // Enrich with sentiment when relevant
-  includeTradingSignals: true,    // Include Vanta trading signals
-  includeResearch: true,          // Include Perplexity research
-  useClaudeSynthesis: true,       // Claude synthesizes all sources (THE MULTIPLIER)
+  // Architecture: Core + Signal Augmentation
+  useGroqClassification: false,  // Disabled - using regex per new architecture
+  
+  // Signal augmentation bus (parallel, modifies confidence)
+  includeSentiment: true,         // xAI + Desearch - signal augmentation
+  includeTradingSignals: true,    // Vanta - signal augmentation
+  
+  // Conditional modules (only when needed)
+  includeResearch: true,          // Perplexity - conditional
+  
+  // Core thinking engine (always runs)
+  useClaudeSynthesis: true,       // Claude synthesizes all sources
   maxParallelFetches: 5,
   providerTimeoutMs: 10000,
   claudeFallbackEnabled: true,
@@ -197,11 +211,23 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   ].slice(0, 5); // Limit to 5 symbols
   
   // -------------------------------------------------------------------------
-  // STEP 4: PARALLEL FETCH (LLM + Sentiment + Signals)
+  // STEP 4: PARALLEL FETCH
+  // 
+  // ARCHITECTURE: Core + Signal Augmentation
+  // - CORE SOURCES: Run first (MiniMax, DeepSeek R1, Claude)
+  // - SIGNAL AUGMENTATION: Run in parallel (Vanta, xAI, Desearch, MANTIS)
+  //   These MODIFY CONFIDENCE, not routing
+  // - CONDITIONAL SOURCES: Only when path requires it (Perplexity for research)
   // -------------------------------------------------------------------------
   const fetchPromises: Promise<void>[] = [];
   
-  // 4a. LLM Response
+  // Log routing decision for debugging
+  console.log(`[Athena] Routing: ${routing.primaryPath}`);
+  console.log(`[Athena] Core: ${routing.coreSources?.join(', ') || 'none'}`);
+  console.log(`[Athena] Signal Augmentation: ${routing.signalAugmentation?.join(', ') || 'none'}`);
+  console.log(`[Athena] Conditional: ${routing.conditionalSources?.join(', ') || 'none'}`);
+  
+  // 4a. CORE THINKING ENGINE (always runs)
   let llmResponse: string = '';
   let llmProvider: string = '';
   let llmModel: string = '';
@@ -240,12 +266,17 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   })();
   fetchPromises.push(llmPromise);
   
-  // 4b. Sentiment (if relevant and symbols found)
+  // -------------------------------------------------------------------------
+  // 4b. SIGNAL AUGMENTATION BUS (parallel, modifies confidence)
+  // These providers run in parallel with core, but MODIFY CONFIDENCE not routing
+  // -------------------------------------------------------------------------
+  
+  // 4b(i). Social Sentiment (xAI + Desearch)
   let sentimentData: Map<string, any> = new Map();
   let sentimentLatency = 0;
-  
-  const shouldFetchSentiment = config.includeSentiment && 
-    isXAIConfigured() && 
+
+  const shouldFetchSentiment = 
+    config.includeSentiment && 
     relevantSymbols.length > 0 &&
     ['trading_decision', 'portfolio_analysis', 'research'].includes(classification.type);
   
@@ -282,12 +313,13 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     fetchPromises.push(sentimentPromise);
   }
   
-  // 4c. Trading Signals from Vanta (if relevant)
+  // 4b(ii). Trading Signals (Vanta)
+  // These are part of SIGNAL AUGMENTATION BUS - they modify confidence, not routing
   let tradingSignals: Map<string, any> = new Map();
   let signalsLatency = 0;
   
-  const shouldFetchSignals = config.includeTradingSignals &&
-    isVantaConfigured() &&
+  const shouldFetchSignals = 
+    config.includeTradingSignals &&
     relevantSymbols.length > 0 &&
     ['trading_decision', 'portfolio_analysis'].includes(classification.type);
   

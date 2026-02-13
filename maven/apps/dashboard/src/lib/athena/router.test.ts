@@ -190,12 +190,13 @@ describe('Athena Router', () => {
   // Routing
   // ==========================================================================
   describe('routeQuery', () => {
-    it('should route trading_decision to cost path with Bittensor sources', async () => {
+    it('should route trading_decision to reasoning path with core + augmentation', async () => {
       const classification = await classifyQuery('Should I buy NVDA?');
       const routing = await routeQuery(classification);
 
-      expect(routing.primaryPath).toBe('cost');
-      expect(routing.dataSources.length).toBeGreaterThan(0);
+      expect(routing.primaryPath).toBe('reasoning');
+      expect(routing.coreSources.length).toBeGreaterThan(0);
+      expect(routing.signalAugmentation.length).toBeGreaterThan(0);
       expect(routing.parallelizable).toBe(true);
       expect(routing.fallbacks.length).toBeGreaterThan(0);
     });
@@ -208,11 +209,12 @@ describe('Athena Router', () => {
       expect(routing.estimatedLatencyMs).toBeLessThan(500);
     });
 
-    it('should route research to deep path', async () => {
+    it('should route research to deep path with Perplexity', async () => {
       const classification = await classifyQuery('Research on market cycles');
       const routing = await routeQuery(classification);
 
       expect(routing.primaryPath).toBe('deep');
+      expect(routing.conditionalSources).toContain('perplexity');
     });
 
     it('should provide cost estimates', async () => {
@@ -261,8 +263,8 @@ describe('Athena Router', () => {
       const result = await classifyAndRoute('Should I buy more TSLA?');
 
       expect(result.classification.type).toBe('trading_decision');
-      expect(result.routing.primaryPath).toBe('cost');
-      expect(result.routing.dataSources.length).toBeGreaterThan(0);
+      expect(result.routing.primaryPath).toBe('reasoning');
+      expect(result.routing.coreSources.length).toBeGreaterThan(0);
     });
 
     it('should handle context in pipeline', async () => {

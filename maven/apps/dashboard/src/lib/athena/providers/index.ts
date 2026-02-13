@@ -55,6 +55,18 @@ export {
   type DeepSeekResponse,
 } from './deepseek';
 
+// Qwen3 - Open-source reasoning model with agentic workflows
+export {
+  qwenCompletion,
+  qwenReasoning,
+  qwenOracleQuery,
+  isQwenConfigured,
+  getQwenStatus,
+  type QwenMessage,
+  type QwenCompletionOptions,
+  type QwenResponse,
+} from './qwen';
+
 // xAI - First-party Twitter/X sentiment via Grok
 export {
   xaiCompletion,
@@ -157,7 +169,17 @@ export function getAvailableProviders(): string[] {
   if (process.env.ANTHROPIC_API_KEY) {
     providers.push('claude');
   }
-  
+
+  // Check DeepSeek (reasoning)
+  if (process.env.DEEPSEEK_API_KEY) {
+    providers.push('deepseek');
+  }
+
+  // Check Qwen (agentic workflows)
+  if (process.env.QWEN_API_KEY) {
+    providers.push('qwen');
+  }
+
   // Check xAI (Twitter sentiment)
   if (process.env.XAI_API_KEY) {
     providers.push('xai');
