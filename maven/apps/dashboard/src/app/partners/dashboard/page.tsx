@@ -7,6 +7,7 @@ import Sparkline from '@/components/Sparkline';
 
 // Quick action definitions
 const QUICK_ACTIONS = [
+  { id: 'research', icon: '🔮', label: 'Research', shortcut: '⌘R', href: '#research', isAction: true },
   { id: 'add-client', icon: '➕', label: 'Add Client', shortcut: '⌘N', href: '/partners/clients/new' },
   { id: 'run-analysis', icon: '📊', label: 'Run Analysis', shortcut: '⌘A', href: '/partners/analysis' },
   { id: 'generate-report', icon: '📄', label: 'Generate Report', shortcut: '⌘R', href: '/partners/reports/new' },
@@ -356,21 +357,29 @@ export default function PartnersDashboard() {
         <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {QUICK_ACTIONS.map((action) => (
-              <Link
-                key={action.id}
-                href={demoHref(action.href)}
-                className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
-                style={{ minWidth: '48px', minHeight: '48px' }}
-              >
-                <span className="text-2xl">{action.icon}</span>
-                <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
-                {/* Keyboard shortcut tooltip */}
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {action.shortcut}
-                </span>
-              </Link>
-            ))}
+            {QUICK_ACTIONS.map((action) => {
+              const isResearch = action.id === 'research';
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => isResearch && setActiveTab(activeTab === 'research' ? 'overview' : 'research')}
+                  className={`group relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all min-h-[80px] md:min-h-[88px] ${
+                    isResearch 
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-500 hover:from-indigo-600 hover:to-purple-700' 
+                      : 'bg-white/5 border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10'
+                  }`}
+                  style={{ minWidth: '48px', minHeight: '48px' }}
+                >
+                  <span className="text-2xl">{action.icon}</span>
+                  <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
+                  {!isResearch && (
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      {action.shortcut}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
