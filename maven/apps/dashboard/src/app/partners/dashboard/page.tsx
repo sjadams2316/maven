@@ -112,8 +112,11 @@ function formatCurrency(value: number): string {
   return `$${(value / 1000).toFixed(0)}K`;
 }
 
+import AdvisorOracle from '../components/AdvisorOracle';
+
 export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
+  const [activeTab, setActiveTab] = useState<'overview' | 'research'>('overview');
   const [prepModal, setPrepModal] = useState<{ open: boolean; meeting: typeof DEMO_MEETINGS[0] | null }>({ open: false, meeting: null });
   const [livePrep, setLivePrep] = useState<{ summary: string; actionItems: string[]; talkingPoints: string[]; marketContext: string } | null>(null);
   const [prepLoading, setPrepLoading] = useState(false);
@@ -165,9 +168,34 @@ export default function PartnersDashboard() {
     <div className="p-4 md:p-8">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Good afternoon</h1>
-        <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Good afternoon</h1>
+            <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
+          </div>
+          
+          {/* Research Tab */}
+          <button
+            onClick={() => setActiveTab(activeTab === 'research' ? 'overview' : 'research')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition ${
+              activeTab === 'research'
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-gray-300'
+            }`}
+          >
+            <span>🔮</span>
+            <span className="font-medium">Research</span>
+          </button>
+        </div>
       </div>
+
+      {/* Tab Content */}
+      {activeTab === 'research' ? (
+        <div className="h-[calc(100vh-250px)]">
+          <AdvisorOracle />
+        </div>
+      ) : (
+        <>
 
       {/* Primary Stats Grid - Stack on mobile */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
@@ -610,6 +638,7 @@ export default function PartnersDashboard() {
           </div>
         </>
       )}
+      </>
     </div>
   );
 }
