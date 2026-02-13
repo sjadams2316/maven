@@ -197,7 +197,7 @@ export default function PartnersDashboard() {
       ) : (
         <>
 
-      {/* Primary Stats Grid - Stack on mobile */}
+      {/* Primary Stats Grid - Simplified: AUM & Clients only */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-start justify-between">
@@ -212,81 +212,69 @@ export default function PartnersDashboard() {
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">YTD Return</div>
-              <div className="text-xl md:text-3xl font-bold text-emerald-500">+{DASHBOARD_METRICS.ytdReturn}%</div>
-              <div className="text-gray-500 text-xs md:text-sm mt-1">Avg across clients</div>
+              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
+              <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
+              <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DEMO_STATS.avgClientAUM)}</div>
             </div>
-            <Sparkline data={SPARKLINE_DATA.ytdReturn} width={60} height={32} />
           </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
-          <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
-          <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DASHBOARD_METRICS.avgClientAum)}</div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Today's Meetings</div>
           <div className="text-xl md:text-3xl font-bold text-white">{DEMO_MEETINGS.length}</div>
           <div className="text-gray-500 text-xs md:text-sm mt-1">Next: {DEMO_MEETINGS[0]?.time || 'None'}</div>
         </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Action Items</div>
+          <div className="text-xl md:text-3xl font-bold text-amber-500">{DEMO_ALERTS.length}</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Requires attention</div>
+        </div>
       </div>
 
-      {/* Secondary Stats Grid - Performance & Risk Metrics */}
+      {/* Market Context - Real data, defensible */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Avg Risk Score</div>
-              <div className="text-lg md:text-xl font-bold text-amber-400">{DASHBOARD_METRICS.avgRiskScore.toFixed(1)}</div>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
-              <span className="text-sm">📊</span>
+              <div className="text-gray-500 text-xs">S&P 500</div>
+              <div className="text-lg md:text-xl font-bold text-white">6,833</div>
+              <div className="text-emerald-500 text-xs">+0.0%</div>
             </div>
           </div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Above Target</div>
-              <div className="text-lg md:text-xl font-bold text-emerald-400">{DASHBOARD_METRICS.clientsAboveTarget}</div>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <span className="text-sm">✓</span>
+              <div className="text-gray-500 text-xs">Bitcoin</div>
+              <div className="text-lg md:text-xl font-bold text-white">$66,986</div>
+              <div className="text-red-400 text-xs">-1.4%</div>
             </div>
           </div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Below Target</div>
-              <div className="text-lg md:text-xl font-bold text-red-400">{DASHBOARD_METRICS.clientsBelowTarget}</div>
+              <div className="text-gray-500 text-xs">10Y Treasury</div>
+              <div className="text-lg md:text-xl font-bold text-white">4.25%</div>
+              <div className="text-gray-400 text-xs">-12 bps</div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
-              <span className="text-sm">⚠</span>
-            </div>
-          </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-gray-500 text-xs">Tax Alpha Saved</div>
-              <div className="text-lg md:text-xl font-bold text-emerald-400">{formatCurrency(DASHBOARD_METRICS.taxAlphaSaved)}</div>
-            </div>
-            <Sparkline data={SPARKLINE_DATA.taxAlpha} width={40} height={24} />
           </div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Rebalances Needed</div>
-              <div className="text-lg md:text-xl font-bold text-amber-500">{DASHBOARD_METRICS.rebalancesNeeded}</div>
+              <div className="text-gray-500 text-xs">Fed Funds</div>
+              <div className="text-lg md:text-xl font-bold text-white">4.58%</div>
+              <div className="text-gray-400 text-xs">Current</div>
             </div>
-            <Link 
-              href={demoHref("/partners/rebalance")} 
-              className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 hover:bg-amber-500/30 transition-colors"
-            >
-              <span className="text-sm">→</span>
-            </Link>
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">TAO (Bittensor)</div>
+              <div className="text-lg md:text-xl font-bold text-white">$156</div>
+              <div className="text-red-400 text-xs">-1.0%</div>
+            </div>
           </div>
         </div>
       </div>
