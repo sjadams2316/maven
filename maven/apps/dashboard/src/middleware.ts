@@ -144,13 +144,25 @@ function checkPasswordGate(request: NextRequest): NextResponse | null {
   // Allow cron job endpoints (public market data only)
   if (pathname.startsWith('/api/cron/')) return null;
   
-  // Allow demo mode for specific routes
-  if (isDemoMode && (
-    pathname.startsWith('/partners/dashboard') ||
-    pathname.startsWith('/advisor') ||
-    pathname.startsWith('/demo') ||
-    pathname === '/'
-  )) {
+  // Allow demo mode for specific routes OR public demo routes that don't need ?demo=true
+  const isDemoRoute = pathname.startsWith('/partners/dashboard') ||
+                     pathname.startsWith('/partners/advisor-demo') ||
+                     pathname.startsWith('/advisor') ||
+                     pathname.startsWith('/demo') ||
+                     pathname.startsWith('/tax-harvesting') ||
+                     pathname.startsWith('/c/DEMO-') ||
+                     pathname.startsWith('/dashboard') ||
+                     pathname.startsWith('/oracle') ||
+                     pathname.startsWith('/portfolio') ||
+                     pathname.startsWith('/stock-research') ||
+                     pathname === '/' ||
+                     pathname === '/advisor-pro';
+
+  const isPublicDemoRoute = pathname === '/advisor-pro' ||
+                           pathname === '/partners/advisor-demo' ||
+                           pathname.startsWith('/c/DEMO-');
+                           
+  if ((isDemoMode && isDemoRoute) || isPublicDemoRoute) {
     return null;
   }
   
