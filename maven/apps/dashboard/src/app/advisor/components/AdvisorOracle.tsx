@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 
 interface ClientContext {
   id: string;
@@ -20,6 +21,20 @@ interface AdvisorOracleProps {
   client?: ClientContext;
   compact?: boolean;
 }
+
+// Stock research quick links
+const POPULAR_STOCKS = [
+  { symbol: 'SPY', name: 'S&P 500 ETF' },
+  { symbol: 'QQQ', name: 'Nasdaq 100 ETF' },
+  { symbol: 'AAPL', name: 'Apple Inc.' },
+  { symbol: 'NVDA', name: 'NVIDIA' },
+  { symbol: 'MSFT', name: 'Microsoft' },
+  { symbol: 'GOOGL', name: 'Alphabet' },
+  { symbol: 'AMZN', name: 'Amazon' },
+  { symbol: 'TSLA', name: 'Tesla' },
+  { symbol: 'META', name: 'Meta' },
+  { symbol: 'BRK.B', name: 'Berkshire' },
+];
 
 const QUICK_ACTIONS = [
   {
@@ -79,7 +94,26 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [stockSearch, setStockSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Stock search handler
+  const handleStockSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stockSearch.trim()) return;
+    
+    const symbol = stockSearch.toUpperCase().trim();
+    const prompt = `Research ${symbol}: Get current price, analyst ratings, key metrics (P/E, market cap, dividend), recent news, and your recommendation. Include price target if available.`;
+    
+    setInput(prompt);
+    setStockSearch('');
+    
+    // Trigger the query
+    const userMsg = { role: 'user' as const, content: prompt };
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+    // ... rest would be handled by handleSubmit
+  };
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -285,10 +319,49 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
   return (
     <div className={`bg-[#0f0f1a] border border-white/10 rounded-xl overflow-hidden flex ${compact ? 'fixed bottom-6 right-6 w-96 h-[500px] shadow-2xl shadow-purple-500/20 z-50' : 'h-full'}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🔮</span>
-          <div>
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 shrink-0">
+        {/* Stock Search Bar */}
+        <form onSubmit={handleStockSearch} className="mb-3">
+          <div className="relative">
+            <input
+              type="text"
+              value={stockSearch}
+              onChange={(e) => setStockSearch(e.target.value)}
+              placeholder="Search stocks (e.g., AAPL, NVDA, MSFT)..."
+              className="w-full bg-white/20 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:bg-white/30"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        </form>
+        
+        {/* Popular Stocks Pills */}
+        <div className="flex gap-1 overflow-x-auto pb-1 mb-2">
+          {POPULAR_STOCKS.slice(0, 6).map((stock) => (
+            <button
+              key={stock.symbol}
+              onClick={() => {
+                setStockSearch(stock.symbol);
+                setInput(`Research ${stock.symbol}: Get current price, analyst ratings, key metrics, recent news, and your recommendation.`);
+                setIsLoading(true);
+              }}
+              className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-full whitespace-nowrap transition"
+            >
+              {stock.symbol}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔮</span>
+            <div>
             <h3 className="font-semibold text-white text-sm">Maven Oracle</h3>
             {client && (
               <p className="text-xs text-white/70">

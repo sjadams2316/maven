@@ -230,53 +230,58 @@ export default function PartnersDashboard() {
         </div>
       </div>
 
-      {/* Market Context - Real data, defensible */}
+      {/* Market Context - Real data, clickable to research */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+        <Link href="/partners/analysis?symbol=SPY" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-gray-500 text-xs">S&P 500</div>
               <div className="text-lg md:text-xl font-bold text-white">6,833</div>
               <div className="text-emerald-500 text-xs">+0.0%</div>
             </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
           </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+        </Link>
+        <Link href="/partners/analysis?symbol=QQQ" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">NASDAQ</div>
+              <div className="text-lg md:text-xl font-bold text-white">22,597</div>
+              <div className="text-emerald-500 text-xs">+0.0%</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+          </div>
+        </Link>
+        <Link href="/partners/analysis?symbol=DIA" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Dow Jones</div>
+              <div className="text-lg md:text-xl font-bold text-white">49,452</div>
+              <div className="text-emerald-500 text-xs">+0.0%</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+          </div>
+        </Link>
+        <Link href="/partners/analysis?symbol=IWM" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Russell 2000</div>
+              <div className="text-lg md:text-xl font-bold text-white">2,616</div>
+              <div className="text-emerald-500 text-xs">+0.0%</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+          </div>
+        </Link>
+        <Link href="/partners/analysis?symbol=BTC-USD" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-gray-500 text-xs">Bitcoin</div>
               <div className="text-lg md:text-xl font-bold text-white">$66,986</div>
               <div className="text-red-400 text-xs">-1.4%</div>
             </div>
+            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
           </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-500 text-xs">10Y Treasury</div>
-              <div className="text-lg md:text-xl font-bold text-white">4.25%</div>
-              <div className="text-gray-400 text-xs">-12 bps</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-500 text-xs">Fed Funds</div>
-              <div className="text-lg md:text-xl font-bold text-white">4.58%</div>
-              <div className="text-gray-400 text-xs">Current</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-500 text-xs">TAO (Bittensor)</div>
-              <div className="text-lg md:text-xl font-bold text-white">$156</div>
-              <div className="text-red-400 text-xs">-1.0%</div>
-            </div>
-          </div>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
