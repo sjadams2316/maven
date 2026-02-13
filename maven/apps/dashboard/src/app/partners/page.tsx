@@ -108,25 +108,62 @@ export default function PartnersPage() {
                   </div>
                   <span className="text-white font-medium">Advisor Dashboard</span>
                 </div>
+                
+                {/* Tab Header */}
+                <div className="flex items-center gap-2 mb-3 p-1 bg-white/5 rounded-lg">
+                  <button className="flex-1 px-3 py-1.5 bg-amber-600 text-white text-xs rounded font-medium">Overview</button>
+                  <button className="flex-1 px-3 py-1.5 text-gray-400 text-xs rounded hover:text-white">Portfolio Lab</button>
+                  <button className="flex-1 px-3 py-1.5 text-gray-400 text-xs rounded hover:text-white flex items-center justify-center gap-1">
+                    <span>🔮</span> Research
+                  </button>
+                </div>
+                
                 {/* Mock Dashboard UI */}
                 <div className="space-y-3">
+                  {/* Market Summary */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-white/5 rounded-lg p-2">
+                      <div className="text-gray-500 text-[10px]">S&P 500</div>
+                      <div className="text-white text-sm font-bold">6,832</div>
+                      <div className="text-emerald-500 text-[10px]">+0.2%</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2">
+                      <div className="text-gray-500 text-[10px]">NASDAQ</div>
+                      <div className="text-white text-sm font-bold">22,597</div>
+                      <div className="text-emerald-500 text-[10px]">+0.4%</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2">
+                      <div className="text-gray-500 text-[10px]">BTC</div>
+                      <div className="text-white text-sm font-bold">$67K</div>
+                      <div className="text-red-500 text-[10px]">-1.4%</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2">
+                      <div className="text-gray-500 text-[10px]">TAO</div>
+                      <div className="text-white text-sm font-bold">$156</div>
+                      <div className="text-gray-500 text-[10px]">-0.3%</div>
+                    </div>
+                  </div>
+                  
+                  {/* Stats Row */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="bg-white/5 rounded-lg p-3">
                       <div className="text-gray-500 text-xs">Total AUM</div>
-                      <div className="text-white font-bold">$12.4M</div>
+                      <div className="text-white font-bold text-lg">$12.4M</div>
                     </div>
                     <div className="bg-white/5 rounded-lg p-3">
                       <div className="text-gray-500 text-xs">Clients</div>
-                      <div className="text-white font-bold">47</div>
+                      <div className="text-white font-bold text-lg">47</div>
                     </div>
                     <div className="bg-white/5 rounded-lg p-3">
                       <div className="text-gray-500 text-xs">Alerts</div>
-                      <div className="text-amber-500 font-bold">5</div>
+                      <div className="text-amber-500 font-bold text-lg">5</div>
                     </div>
                   </div>
+                  
+                  {/* Recent Clients */}
                   <div className="bg-white/5 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-400 text-sm">Recent Clients</span>
+                      <span className="text-gray-400 text-xs">Recent Clients</span>
                       <span className="text-amber-500 text-xs">View all →</span>
                     </div>
                     <div className="space-y-2">
@@ -159,20 +196,60 @@ export default function PartnersPage() {
                   </div>
                   <span className="text-gray-800 font-medium">Maven Partners</span>
                 </div>
+                
+                {/* Client Tab Header */}
+                <div className="flex items-center gap-2 mb-3 p-1 bg-gray-100 rounded-lg">
+                  <button className="flex-1 px-3 py-1.5 bg-indigo-600 text-white text-xs rounded font-medium">Overview</button>
+                  <button className="flex-1 px-3 py-1.5 text-gray-500 text-xs rounded hover:text-gray-800">Portfolio</button>
+                  <button className="flex-1 px-3 py-1.5 text-gray-500 text-xs rounded hover:text-gray-800">Insights</button>
+                </div>
+                
                 {/* Mock Client UI */}
                 <div className="space-y-3">
+                  {/* Net Worth Card */}
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-                    <div className="text-slate-500 text-xs mb-1">Your Portfolio</div>
+                    <div className="text-slate-500 text-xs mb-1">Total Net Worth</div>
                     <div className="text-slate-900 font-bold text-2xl">$850,000</div>
                     <div className="text-emerald-600 text-sm">+8.2% YTD</div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <div className="bg-slate-50 rounded p-2">
+                        <div className="text-slate-400 text-[10px]">Investments</div>
+                        <div className="text-slate-800 font-semibold">$720K</div>
+                      </div>
+                      <div className="bg-slate-50 rounded p-2">
+                        <div className="text-slate-400 text-[10px]">Cash</div>
+                        <div className="text-slate-800 font-semibold">$130K</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
-                    <div className="flex items-center gap-2 text-amber-600 text-sm font-medium mb-2">
+                  
+                  {/* AI Insight */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-indigo-100">
+                    <div className="flex items-center gap-2 text-indigo-600 text-xs font-medium mb-2">
                       <span>💡</span> Insight from your advisor
                     </div>
-                    <p className="text-slate-600 text-sm">
-                      You have a $3,200 tax-loss harvesting opportunity. I recommend we discuss this before year-end.
+                    <p className="text-slate-600 text-xs">
+                      You have a <span className="font-semibold text-emerald-600">$3,200 tax-loss harvesting opportunity</span>. We recommend discussing this before year-end.
                     </p>
+                  </div>
+                  
+                  {/* Holdings Preview */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                    <div className="text-slate-500 text-xs mb-2">Top Holdings</div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700 text-xs">VTI</span>
+                        <span className="text-slate-800 text-xs font-medium">42%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700 text-xs">VXUS</span>
+                        <span className="text-slate-800 text-xs font-medium">18%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700 text-xs">BND</span>
+                        <span className="text-slate-800 text-xs font-medium">15%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
