@@ -260,10 +260,10 @@ export default function PartnersPage() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-8">
             <Link
-              href="/partners/dashboard?demo=true"
+              href="/partners/advisor-demo"
               className="w-full sm:w-auto px-6 md:px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl transition-all text-base md:text-lg flex items-center justify-center gap-2 min-h-[48px] shadow-lg shadow-amber-500/20"
             >
-              👨‍💼 Try Advisor Demo
+              🔮 Try Oracle Demo
             </Link>
             <Link
               href="/c/DEMO-JS123"
@@ -275,7 +275,7 @@ export default function PartnersPage() {
 
           {/* Value Props */}
           <div className="text-center text-sm text-gray-500 mb-12">
-            No signup required • Full interactive demos • See both perspectives
+            No signup required • Full interactive AI experience • See what your clients experience
           </div>
         </div>
       </div>
@@ -354,14 +354,14 @@ export default function PartnersPage() {
           Ready to see it in action?
         </h2>
         <p className="text-gray-400 mb-6 max-w-lg mx-auto">
-          Try both demos — advisor and client — with no signup required.
+          Experience Oracle's AI intelligence — see what advisors and clients get — with no signup required.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/partners/dashboard?demo=true"
             className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl transition-colors min-h-[48px] flex items-center justify-center"
           >
-            Advisor Demo →
+            Oracle Demo →
           </Link>
           <Link
             href="/c/DEMO-JS123"
