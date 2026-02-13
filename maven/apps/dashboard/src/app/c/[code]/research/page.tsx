@@ -108,9 +108,9 @@ export default function ClientResearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const clientProfile = CLIENT_PROFILES[code];
-  const holdings = DEMO_HOLDINGS[code] || [];
-  const history = RESEARCH_HISTORY[code] || [];
+  const clientProfile = CLIENT_PROFILES[code as keyof typeof CLIENT_PROFILES];
+  const holdings = DEMO_HOLDINGS[code as keyof typeof DEMO_HOLDINGS] || [];
+  const history = RESEARCH_HISTORY[code as keyof typeof RESEARCH_HISTORY] || [];
   const suggestions = TIER_SUGGESTIONS[clientProfile?.tier || 'basic'];
 
   useEffect(() => {

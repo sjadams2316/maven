@@ -155,6 +155,7 @@ function checkPasswordGate(request: NextRequest): NextResponse | null {
                      pathname.startsWith('/oracle') ||
                      pathname.startsWith('/portfolio') ||
                      pathname.startsWith('/stock-research') ||
+                     pathname.startsWith('/api/') ||  // CRITICAL: Allow ALL API routes in demo mode
                      pathname === '/' ||
                      pathname === '/advisor-pro';
 
