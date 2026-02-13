@@ -70,24 +70,28 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/oracle-insight', {
+      const response = await fetch('/api/athena/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: action.prompt,
-          clientContext: client || {}
+          query: action.prompt,
+          context: {
+            clientContext: client || {},
+            interface: 'advisor_oracle',
+            source: 'quick_action'
+          }
         })
       });
       
       const data = await response.json();
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: data.insight || 'Oracle response unavailable' 
+        content: data.response || data.insight || 'Athena response unavailable' 
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Error connecting to Oracle. Please try again.' 
+        content: 'Error connecting to Athena Oracle. Please try again.' 
       }]);
     } finally {
       setIsLoading(false);
@@ -104,24 +108,28 @@ export default function AdvisorOracle({ client, compact = false }: AdvisorOracle
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/oracle-insight', {
+      const response = await fetch('/api/athena/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: messageText,
-          clientContext: client || {}
+          query: messageText,
+          context: {
+            clientContext: client || {},
+            interface: 'advisor_oracle',
+            source: 'user_input'
+          }
         })
       });
       
       const data = await response.json();
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: data.insight || 'Oracle response unavailable' 
+        content: data.response || data.insight || 'Athena response unavailable' 
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Error connecting to Oracle. Please try again.' 
+        content: 'Error connecting to Athena Oracle. Please try again.' 
       }]);
     } finally {
       setIsLoading(false);
