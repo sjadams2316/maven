@@ -1,336 +1,241 @@
 /**
  * Claude Provider
- * The synthesis brain of Athena
- * 
- * Claude's role in Athena:
- * - NOT just another LLM option
- * - THE reasoning layer that synthesizes all inputs
- * - Takes outputs from Groq, Chutes, Perplexity, xAI
- * - Produces final wisdom for wealth management decisions
- * 
- * This is the multiplier effect - Claude directs and synthesizes.
+ * Deep reasoning for complex queries that exceed fast path capabilities
  */
-
-import Anthropic from '@anthropic-ai/sdk';
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-export interface ClaudeSynthesisInput {
-  query: string;
-  
-  // Raw response from initial LLM (Groq/Chutes)
-  initialResponse?: string;
-  
-  // Research from Perplexity (with citations)
-  research?: {
-    content: string;
-    citations: Array<{ url: string; title?: string }>;
-  };
-  
-  // Analyst data from FMP (includes REAL CURRENT PRICE - critical!)
-  analystData?: {
-    symbol: string;
-    name?: string;
-    currentPrice: number;  // CRITICAL: Real-time price from FMP
-    previousClose?: number;
-    changePercent?: number;
-    fiftyTwoWeekHigh?: number;
-    fiftyTwoWeekLow?: number;
-    marketCap?: number;
-    analystRating: string;
-    targetMean: number;
-    targetHigh: number;
-    targetLow: number;
-    currentToTarget: number;
-    numberOfAnalysts: number;
-    earningsDate?: string;
-    peRatio?: number;
-  }[];
-  
-  // Sentiment from xAI
-  sentiment?: {
-    symbol: string;
-    direction: 'bullish' | 'bearish' | 'neutral';
-    score: number;
-    confidence: number;
-    summary: string;
-  }[];
-  
-  // Trading signals from Vanta
-  tradingSignals?: {
-    symbol: string;
-    direction: 'LONG' | 'SHORT' | 'FLAT';
-    confidence: number;
-  }[];
-  
-  // Client context
-  context?: {
-    holdings?: string[];
-    riskTolerance?: string;
-  };
+export interface ClaudeCompletionOptions {
+  model?: string;
+  messages: ClaudeMessage[];
+  maxTokens?: number;
+  temperature?: number;
+  systemPrompt?: string;
 }
 
 export interface ClaudeResponse {
   content: string;
-  thinking?: string;
   model: string;
   usage: {
-    inputTokens: number;
-    outputTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
   };
   latencyMs: number;
 }
 
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
+// Claude synthesis input (from orchestrator)
+export interface ClaudeSynthesisInput {
+  query: string;
+  sources: Array<{
+    id: string;
+    response: string;
+    metadata?: Record<string, unknown>;
+  }>;
+  context?: Record<string, unknown>;
+}
 
+// Claude synthesis output
+export interface ClaudeSynthesisOutput {
+  synthesis: string;
+  confidence: number;
+  citations: Array<{ sourceId: string; excerpt: string }>;
+  reasoning?: string;
+}
+
+// Available Claude models
 export const CLAUDE_MODELS = {
-  // Sonnet for most synthesis tasks (fast, capable)
   sonnet: 'claude-sonnet-4-20250514',
-  // Opus for complex reasoning (slower but deeper)
   opus: 'claude-opus-4-20250514',
-  // Haiku for simple tasks (fastest, cheapest)
-  haiku: 'claude-3-5-haiku-20241022',
+  haiku: 'claude-haiku-4-20250514',
 } as const;
 
 export const CLAUDE_DEFAULT_MODEL = CLAUDE_MODELS.sonnet;
 
-// ============================================================================
-// AVAILABILITY
-// ============================================================================
-
+/**
+ * Check if Claude is configured
+ */
 export function isClaudeConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
-export function getClaudeStatus(): { configured: boolean; model: string } {
+/**
+ * Get Claude API key
+ */
+function getApiKey(): string {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable not set');
+  }
+  return apiKey;
+}
+
+/**
+ * Call Claude API for chat completion
+ */
+export async function claudeCompletion(
+  options: ClaudeCompletionOptions
+): Promise<ClaudeResponse> {
+  const apiKey = getApiKey();
+  const model = options.model || CLAUDE_DEFAULT_MODEL;
+  const startTime = Date.now();
+
+  // Build messages array (Claude format)
+  const messages: { role: 'user' | 'assistant'; content: string }[] = [];
+  
+  if (options.systemPrompt) {
+    messages.push({ role: 'assistant', content: options.systemPrompt });
+  }
+  
+  messages.push(...options.messages);
+
+  const response = await fetch('https://api.anthropic.com/v1/complete', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model,
+      prompt: messages.map(m => `${m.role === 'user' ? 'Human' : 'Assistant'}: ${m.content}`).join('\n\n'),
+      max_tokens_to_sample: options.maxTokens || 4096,
+      temperature: options.temperature ?? 0.7,
+    }),
+  });
+
+  const latencyMs = Date.now() - startTime;
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
+  }
+
+  const data = await response.json();
+  
+  const promptTokens = data.usage?.prompt_tokens || 0;
+  const completionTokens = data.usage?.completion_tokens || 0;
+
   return {
-    configured: isClaudeConfigured(),
-    model: CLAUDE_DEFAULT_MODEL,
+    content: data.completion || '',
+    model,
+    usage: {
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+    },
+    latencyMs,
   };
 }
 
-// ============================================================================
-// CORE FUNCTIONS
-// ============================================================================
-
 /**
- * Get Anthropic client
+ * Simple completion helper for queries
  */
-function getClient(): Anthropic {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
-  }
-  return new Anthropic({ apiKey });
-}
-
-/**
- * Simple Claude completion
- */
-export async function claudeCompletion(
-  messages: ClaudeMessage[],
+export async function claudeQuery(
+  query: string,
   options?: {
     model?: string;
     systemPrompt?: string;
     maxTokens?: number;
   }
-): Promise<ClaudeResponse> {
-  const client = getClient();
-  const model = options?.model || CLAUDE_DEFAULT_MODEL;
-  const startTime = Date.now();
-
-  const response = await client.messages.create({
-    model,
-    max_tokens: options?.maxTokens || 2048,
-    system: options?.systemPrompt,
-    messages: messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    })),
+): Promise<string> {
+  const response = await claudeCompletion({
+    model: options?.model,
+    messages: [{ role: 'user', content: query }],
+    systemPrompt: options?.systemPrompt,
+    maxTokens: options?.maxTokens,
   });
+  
+  return response.content;
+}
 
-  const content = response.content[0].type === 'text' 
-    ? response.content[0].text 
-    : '';
-
+/**
+ * Extended reasoning completion for complex queries
+ */
+export async function claudeReasoning(
+  query: string,
+  systemPrompt: string,
+  options?: {
+    model?: string;
+    maxTokens?: number;
+  }
+): Promise<{ response: string; reasoning: string }> {
+  const response = await claudeCompletion({
+    model: options?.model || CLAUDE_MODELS.opus,
+    messages: [{ role: 'user', content: `${systemPrompt}\n\n${query}` }],
+    maxTokens: options?.maxTokens || 8192,
+    temperature: 0.5,
+  });
+  
+  // Extract reasoning from response (Claude can output structured reasoning)
+  const reasoningMatch = response.content.match(/<reasoning>([\s\S]*?)<\/reasoning>/);
+  const reasoning = reasoningMatch ? reasoningMatch[1] : '';
+  const cleanResponse = response.content.replace(/<reasoning>[\s\S]*?<\/reasoning>/g, '').trim();
+  
   return {
-    content,
-    model,
-    usage: {
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    },
-    latencyMs: Date.now() - startTime,
+    response: cleanResponse,
+    reasoning: reasoning.trim(),
   };
 }
 
 /**
- * Claude synthesis - THE BRAIN
- * Takes all gathered intelligence and produces unified wisdom
+ * Synthesis function for multi-source queries
+ * Combines responses from multiple sources into coherent answer
  */
 export async function claudeSynthesize(
   input: ClaudeSynthesisInput,
-  options?: { thinkingBudget?: number }
-): Promise<ClaudeResponse> {
-  const client = getClient();
-  const startTime = Date.now();
-
-  // Build the synthesis prompt
-  const synthesisPrompt = buildSynthesisPrompt(input);
-  
-  const thinkingBudget = options?.thinkingBudget || 0;
-  const useThinking = thinkingBudget > 0;
-
-  const requestParams: any = {
-    model: CLAUDE_DEFAULT_MODEL,
-    max_tokens: useThinking ? 16000 : 2048,
-    messages: [{ role: 'user', content: synthesisPrompt }],
-  };
-
-  // Extended thinking requires system prompt via messages, not the system param
-  // Actually the Anthropic SDK supports system with thinking - let's use it
-  if (useThinking) {
-    requestParams.thinking = { type: 'enabled', budget_tokens: thinkingBudget };
-    // When thinking is enabled, system must be provided as top-level param (still supported)
-  }
-
-  requestParams.system = `You are Maven Oracle's synthesis brain. Your job is to take multiple intelligence sources and produce a unified, actionable response for wealth management.
-
-CRITICAL RULE: When "Real-Time Market Data (FMP)" is provided, you MUST use those exact prices. Your training data contains STALE prices - NEVER quote stock prices from memory. The FMP data is real-time and authoritative.
-
-You have access to:
-- Real-time market data from FMP (AUTHORITATIVE - use these prices!)
-- Real-time research with citations from Perplexity  
-- Twitter sentiment from xAI
-- Trading signals from Vanta (when available)
-- Initial analysis from fast/cheap models (WARNING: may have stale prices)
-- Client context (holdings, risk tolerance)
-
-Your response should:
-1. ALWAYS use real-time FMP prices when provided (never make up prices)
-2. Synthesize all sources into coherent advice
-3. Highlight where sources agree or disagree
-4. Be specific and actionable with real numbers
-5. Cite sources when relevant
-6. Consider the client's context
-
-Do NOT just summarize each source - SYNTHESIZE them into wisdom.`;
-
-  const response = await client.messages.create(requestParams);
-
-  // Extract thinking and text blocks
-  const thinkingBlock = response.content.find((b: any) => b.type === 'thinking');
-  const textBlock = response.content.find((b: any) => b.type === 'text');
-  const content = textBlock && 'text' in textBlock ? textBlock.text : '';
-  const thinking = thinkingBlock && 'thinking' in thinkingBlock ? (thinkingBlock as any).thinking : undefined;
-
-  return {
-    content,
-    thinking,
-    model: CLAUDE_DEFAULT_MODEL,
-    usage: {
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    },
-    latencyMs: Date.now() - startTime,
-  };
-}
-
-/**
- * Build the synthesis prompt from all inputs
- */
-function buildSynthesisPrompt(input: ClaudeSynthesisInput): string {
-  const sections: string[] = [];
-  
-  sections.push(`## User Query\n${input.query}`);
-  
-  if (input.context?.holdings?.length) {
-    sections.push(`## Client Holdings\n${input.context.holdings.join(', ')}`);
-  }
-  
-  if (input.context?.riskTolerance) {
-    sections.push(`## Risk Tolerance\n${input.context.riskTolerance}`);
-  }
-  
-  if (input.initialResponse) {
-    sections.push(`## Initial Analysis\n${input.initialResponse}`);
-  }
-  
-  if (input.research) {
-    let researchSection = `## Research (Perplexity)\n${input.research.content}`;
-    if (input.research.citations.length > 0) {
-      researchSection += '\n\nSources:\n' + input.research.citations
-        .map((c, i) => `${i + 1}. ${c.title || c.url}`)
-        .join('\n');
-    }
-    sections.push(researchSection);
-  }
-  
-  if (input.analystData && input.analystData.length > 0) {
-    const analystLines = input.analystData.map(a => {
-      // CRITICAL: Start with the real current price - this grounds the entire response
-      const lines = [
-        `### ${a.symbol}${a.name ? ` (${a.name})` : ''}`,
-        `**CURRENT PRICE: $${a.currentPrice?.toFixed(2) || 'N/A'}**${a.changePercent ? ` (${a.changePercent > 0 ? '+' : ''}${a.changePercent.toFixed(2)}% today)` : ''}`,
-      ];
-      if (a.fiftyTwoWeekHigh && a.fiftyTwoWeekLow) {
-        lines.push(`52-Week Range: $${a.fiftyTwoWeekLow.toFixed(2)} - $${a.fiftyTwoWeekHigh.toFixed(2)}`);
-      }
-      if (a.marketCap) {
-        const mcFormatted = a.marketCap >= 1e9 ? `$${(a.marketCap / 1e9).toFixed(2)}B` : `$${(a.marketCap / 1e6).toFixed(0)}M`;
-        lines.push(`Market Cap: ${mcFormatted}`);
-      }
-      lines.push(`Analyst Rating: ${a.analystRating} (${a.numberOfAnalysts} analysts)`);
-      lines.push(`Price Target: $${a.targetMean?.toFixed(2)} (low: $${a.targetLow?.toFixed(2)}, high: $${a.targetHigh?.toFixed(2)})`);
-      lines.push(`Upside to Target: ${a.currentToTarget?.toFixed(1)}%`);
-      if (a.peRatio) lines.push(`P/E Ratio: ${a.peRatio.toFixed(1)}`);
-      if (a.earningsDate) lines.push(`Next Earnings: ${a.earningsDate}`);
-      return lines.join('\n');
-    });
-    sections.push(`## Real-Time Market Data (FMP)\n⚠️ USE THESE PRICES - they are real-time. Do NOT use training data prices.\n\n${analystLines.join('\n\n')}`);
-  }
-  
-  if (input.sentiment && input.sentiment.length > 0) {
-    const sentimentLines = input.sentiment.map(s => 
-      `- ${s.symbol}: ${s.direction} (score: ${s.score.toFixed(2)}, confidence: ${(s.confidence * 100).toFixed(0)}%)`
-    );
-    sections.push(`## Twitter Sentiment (xAI)\n${sentimentLines.join('\n')}`);
-  }
-  
-  if (input.tradingSignals && input.tradingSignals.length > 0) {
-    const signalLines = input.tradingSignals.map(s =>
-      `- ${s.symbol}: ${s.direction} (confidence: ${(s.confidence * 100).toFixed(0)}%)`
-    );
-    sections.push(`## Trading Signals (Vanta)\n${signalLines.join('\n')}`);
-  }
-  
-  sections.push(`## Your Task\nSynthesize all the above into a clear, actionable response. Where sources agree, emphasize confidence. Where they disagree, explain the nuance. Be specific to this client's situation.`);
-  
-  return sections.join('\n\n');
-}
-
-/**
- * Quick Claude query for simple reasoning tasks
- */
-export async function claudeQuery(
-  query: string,
   options?: {
-    systemPrompt?: string;
     model?: string;
+    maxTokens?: number;
   }
-): Promise<string> {
-  const response = await claudeCompletion(
-    [{ role: 'user', content: query }],
-    options
-  );
-  return response.content;
+): Promise<ClaudeSynthesisOutput> {
+  const { query, sources, context } = input;
+  
+  // Build synthesis prompt
+  const sourceContext = sources
+    .map((s, i) => `--- Source ${i + 1} (${s.id}) ---\n${s.response}`)
+    .join('\n\n');
+  
+  const systemPrompt = `You are a synthesis engine. Combine information from multiple sources into a coherent, accurate response.
+  
+Respond in the same language as the query. Provide a clear, concise synthesis that:
+1. Directly answers the user's question
+2. Cites sources where appropriate
+3. Acknowledges any uncertainty or conflicting information
+4. Provides actionable insights when relevant
+
+Context: ${JSON.stringify(context || {})}
+
+If sources conflict, explain the different perspectives.`;
+
+  const response = await claudeCompletion({
+    model: options?.model || CLAUDE_MODELS.sonnet,
+    messages: [{ role: 'user', content: `Query: ${query}\n\nSources:\n${sourceContext}` }],
+    systemPrompt,
+    maxTokens: options?.maxTokens || 2048,
+    temperature: 0.3,
+  });
+  
+  // Extract citations from response (format: [Source 1], [Source 2], etc.)
+  const citations: ClaudeSynthesisOutput['citations'] = [];
+  const citationRegex = /\[Source (\d+)\]/g;
+  let match;
+  while ((match = citationRegex.exec(response.content)) !== null) {
+    const sourceIndex = parseInt(match[1]) - 1;
+    if (sourceIndex >= 0 && sourceIndex < sources.length) {
+      citations.push({
+        sourceId: sources[sourceIndex].id,
+        excerpt: sources[sourceIndex].response.substring(0, 200),
+      });
+    }
+  }
+  
+  return {
+    synthesis: response.content,
+    confidence: 0.8, // Claude synthesis is generally high confidence
+    citations,
+  };
 }

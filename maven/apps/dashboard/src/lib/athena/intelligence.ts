@@ -14,6 +14,7 @@ import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { 
   getMarketIntelligence, 
   fetchDesearchSentiment,
+  fetchVantaSignals,
   getVantaConsensus,
   isDesearchConfigured,
   isVantaConfigured,
@@ -247,12 +248,14 @@ export async function enrichWithIntelligence(
       (async () => {
         for (const symbol of detectedSymbols) {
           try {
-            const signal = await getVantaConsensus(symbol);
-            context.tradingSignals.set(symbol, {
-              direction: signal.direction,
-              confidence: signal.confidence,
-              source: 'vanta',
-            });
+            const signal = await fetchVantaSignals(symbol);
+            if (signal) {
+              context.tradingSignals.set(symbol, {
+                direction: signal.signal,
+                confidence: signal.confidence,
+                source: 'vanta',
+              });
+            }
           } catch (e) {
             console.error(`Trading signal fetch failed for ${symbol}:`, e);
           }

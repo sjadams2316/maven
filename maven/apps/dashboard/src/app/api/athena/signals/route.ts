@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   
   // Get market intelligence for symbol
   try {
-    const intelligence = await getMarketIntelligence(symbol.toUpperCase());
+    const intelligence = await getMarketIntelligence();
     
     return NextResponse.json({
       success: true,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     
     // Fetch from requested sources
     if (sources.includes('all') || sources.includes('vanta')) {
-      results.vanta = await fetchVantaSignals(symbols);
+      results.vanta = await fetchVantaSignals(symbols[0]); // Vanta takes single ticker
     }
     
     if (sources.includes('all') || sources.includes('desearch')) {
@@ -79,13 +79,11 @@ export async function POST(request: NextRequest) {
     }
     
     if (sources.includes('all') || sources.includes('precog')) {
-      results.precog = await fetchPrecogForecast();
+      results.precog = await fetchPrecogForecast(symbols[0]); // Precog takes single ticker
     }
     
     // Get aggregated intelligence for each symbol
-    const intelligence = await Promise.all(
-      symbols.map((s: string) => getMarketIntelligence(s))
-    );
+    const intelligence = await getMarketIntelligence();
     
     return NextResponse.json({
       success: true,

@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       // Optionally get full market intelligence
       let fullIntel = null;
       if (full) {
-        fullIntel = await getMarketIntelligence(symbol.toUpperCase());
+        fullIntel = await getMarketIntelligence();
       }
 
       return NextResponse.json({

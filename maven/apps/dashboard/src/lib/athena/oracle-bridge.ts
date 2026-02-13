@@ -2,14 +2,18 @@
  * Athena Oracle Bridge
  * Connects Athena's hybrid intelligence layer to Maven Oracle
  * 
- * This enables A/B testing between:
- * - Claude-only (current)
- * - Athena hybrid (Chutes + signals + synthesis)
+ * Routing Architecture:
+ * - Simple queries → MiniMax/Groq (fast, cheap)
+ * - Complex queries → Claude (deep reasoning)
+ * - Signals → Vanta/Desearch (market intelligence)
+ * - Research → Perplexity (web search)
  */
 
 import { classifyAndRoute, quickClassify } from './router';
 import { chutesQuery, isChutesConfigured, CHUTES_MODELS } from './providers/chutes';
 import { groqQuery, isGroqConfigured, GROQ_MODELS } from './providers/groq';
+import { claudeQuery, isClaudeConfigured, CLAUDE_MODELS } from './providers/claude';
+import { vantaQuery, desearchQuery, formatBittensorContext, isBittensorConfigured, getConfiguredBittensorProviders } from './providers/bittensor';
 import type { QueryClassification, RoutingDecision, RoutingPath } from './types';
 
 // Feature flags
@@ -18,60 +22,95 @@ const ATHENA_FLAGS = {
   enabled: process.env.ATHENA_ENABLED === 'true',
   
   // A/B test percentage (0-100). 0 = all Claude, 100 = all Athena
-  abTestPercent: parseInt(process.env.ATHENA_AB_PERCENT || '0', 10),
+  abTestPercent: parseInt(process.env.ATHENA_AB_PERCENT || '50', 10),
   
-  // Query types to route through Athena (others use Claude)
-  athenaQueryTypes: ['simple_lookup', 'chat', 'portfolio_analysis'],
+  // Query types to route through fast path (others use Claude)
+  fastQueryTypes: ['simple_lookup', 'chat', 'simple_lookup'],
   
-  // Cost threshold - use Claude for complex queries above this
+  // Complexity threshold for Claude fallback
   complexityThreshold: 'high' as const,
 };
 
 interface OracleQueryResult {
   response: string;
-  provider: 'athena' | 'claude';
+  provider: 'athena' | 'claude' | 'minimax';
   model: string;
   classification?: QueryClassification;
   routing?: RoutingDecision;
   latencyMs: number;
   estimatedCost: number;
+  signals?: {
+    vanta?: any;
+    desearch?: any;
+  };
 }
 
 /**
- * Should this query use Athena?
+ * Should this query use fast path (Groq/Chutes)?
  */
-export function shouldUseAthena(
+export function shouldUseFastPath(
   query: string,
-  forceAthena?: boolean
-): { useAthena: boolean; reason: string } {
-  // Manual override
-  if (forceAthena) {
-    return { useAthena: true, reason: 'forced' };
+  classification?: QueryClassification
+): { useFast: boolean; reason: string } {
+  // Check if any fast provider is configured
+  if (!isGroqConfigured() && !isChutesConfigured()) {
+    return { useFast: false, reason: 'no_fast_provider' };
   }
   
-  // Check master switch
-  if (!ATHENA_FLAGS.enabled) {
-    return { useAthena: false, reason: 'athena_disabled' };
+  // Check query classification
+  if (classification) {
+    // High complexity always goes to Claude
+    if (classification.complexity === 'high') {
+      return { useFast: false, reason: 'high_complexity' };
+    }
+    
+    // Trading decisions need Claude for quality
+    if (classification.type === 'trading_decision') {
+      return { useFast: false, reason: 'trading_decision_needs_claude' };
+    }
   }
   
-  // Check if Chutes is configured
-  if (!isChutesConfigured()) {
-    return { useAthena: false, reason: 'chutes_not_configured' };
-  }
-  
-  // A/B test
-  const roll = Math.random() * 100;
-  if (roll > ATHENA_FLAGS.abTestPercent) {
-    return { useAthena: false, reason: 'ab_test_control' };
-  }
-  
-  // Quick classify to check query type
+  // Check query type
   const queryType = quickClassify(query);
-  if (!ATHENA_FLAGS.athenaQueryTypes.includes(queryType)) {
-    return { useAthena: false, reason: `query_type_${queryType}_uses_claude` };
+  if (ATHENA_FLAGS.fastQueryTypes.includes(queryType)) {
+    return { useFast: true, reason: `query_type_${queryType}` };
   }
   
-  return { useAthena: true, reason: 'ab_test_treatment' };
+  return { useFast: false, reason: 'default_to_claude' };
+}
+
+// Alias for backward compatibility
+export { shouldUseFastPath as shouldUseAthena };
+
+/**
+ * Should this query include Bittensor signals?
+ */
+export function shouldUseSignals(
+  query: string,
+  classification?: QueryClassification
+): { useSignals: boolean; providers: ('vanta' | 'desearch')[] } {
+  if (!isBittensorConfigured()) {
+    return { useSignals: false, providers: [] };
+  }
+  
+  // Check classification
+  if (classification) {
+    // Always include signals for trading decisions
+    if (classification.type === 'trading_decision') {
+      const providers = getConfiguredBittensorProviders() as ('vanta' | 'desearch')[];
+      return { useSignals: true, providers };
+    }
+    
+    // Include for portfolio analysis
+    if (classification.type === 'portfolio_analysis') {
+      const providers = getConfiguredBittensorProviders() as ('vanta' | 'desearch')[];
+      return { useSignals: true, providers };
+    }
+  }
+  
+  // Default: include signals for any market-related query
+  const providers = getConfiguredBittensorProviders() as ('vanta' | 'desearch')[];
+  return { useSignals: providers.length > 0, providers };
 }
 
 /**
@@ -83,75 +122,140 @@ export async function athenaOracleQuery(
   options?: {
     history?: { role: 'user' | 'assistant'; content: string }[];
     context?: Record<string, any>;
+    holdings?: string[]; // For signal enrichment
   }
 ): Promise<OracleQueryResult> {
   const startTime = Date.now();
+  const signals: { vanta?: any; desearch?: any } = {};
   
-  // Classify and route the query
+  // Step 1: Classify the query
   const { classification, routing } = await classifyAndRoute(query);
   
-  // Select provider and model based on routing path
-  let provider: 'groq' | 'chutes' = 'chutes';
-  let model: string;
+  // Step 2: Determine routing
+  const { useFast, reason: fastReason } = shouldUseFastPath(query, classification);
+  const { useSignals, providers: signalProviders } = shouldUseSignals(query, classification);
   
-  // Use Groq for speed path if available (sub-second latency)
-  if (routing.primaryPath === 'speed' && isGroqConfigured()) {
-    provider = 'groq';
-    model = GROQ_MODELS.llama3_70b;
-  } else {
-    // Fall back to Chutes
-    switch (routing.primaryPath) {
-      case 'speed':
-        model = CHUTES_MODELS.cheap; // Mistral - fastest on Chutes
-        break;
-      case 'cost':
-        model = CHUTES_MODELS.balanced; // DeepSeek R1 - good balance
-        break;
-      case 'deep':
-        model = CHUTES_MODELS.reasoning; // Qwen3 - best reasoning
-        break;
-      default:
-        model = CHUTES_MODELS.balanced;
+  // Step 3: Fetch signals if needed (in parallel with main query)
+  if (useSignals && options?.holdings) {
+    const signalPromises: Promise<void>[] = [];
+    
+    // Fetch Vanta signals for holdings
+    if (signalProviders.includes('vanta')) {
+      signalPromises.push(
+        (async () => {
+          const ticker = options.holdings?.[0] || 'SPY';
+          const vanta = await vantaQuery(ticker);
+          if (vanta) signals.vanta = vanta;
+        })()
+      );
     }
+    
+    // Fetch Desearch sentiment for holdings
+    if (signalProviders.includes('desearch')) {
+      signalPromises.push(
+        (async () => {
+          const ticker = options.holdings?.[0] || 'SPY';
+          const desearch = await desearchQuery(ticker);
+          if (desearch) signals.desearch = desearch;
+        })()
+      );
+    }
+    
+    // Fire and forget signals (don't block main response)
+    Promise.allSettled(signalPromises);
   }
   
-  try {
-    let response: string;
-    
-    if (provider === 'groq') {
-      // Use Groq for ultra-fast inference
+  // Step 4: Route to appropriate provider
+  let response: string;
+  let provider: 'groq' | 'chutes' | 'claude' = 'claude';
+  let model: string;
+  
+  if (useFast) {
+    // Fast path: Groq or Chutes
+    if (isGroqConfigured()) {
+      provider = 'groq';
+      model = GROQ_MODELS.llama3_70b;
+      
+      // Build enriched prompt with signals if available
+      const enrichedPrompt = signals && Object.keys(signals).length > 0
+        ? `${systemPrompt}\n\n${formatBittensorContext(
+            Object.entries(signals).map(([key, val]) => ({
+              source: key as 'vanta' | 'desearch',
+              data: val,
+              latencyMs: 0
+            }))
+          )}`
+        : systemPrompt;
+      
       response = await groqQuery(query, {
         model,
-        systemPrompt,
+        systemPrompt: enrichedPrompt,
         maxTokens: 2048,
       });
     } else {
-      // Use Chutes for cost-effective inference
+      provider = 'chutes';
+      model = CHUTES_MODELS.balanced;
+      
+      const enrichedPrompt = signals && Object.keys(signals).length > 0
+        ? `${systemPrompt}\n\n${formatBittensorContext(
+            Object.entries(signals).map(([key, val]) => ({
+              source: key as 'vanta' | 'desearch',
+              data: val,
+              latencyMs: 0
+            }))
+          )}`
+        : systemPrompt;
+      
       response = await chutesQuery(query, {
         model,
-        systemPrompt,
+        systemPrompt: enrichedPrompt,
         maxTokens: 2048,
       });
     }
+  } else {
+    // Deep path: Claude for complex queries
+    if (!isClaudeConfigured()) {
+      throw new Error('Claude not configured and query requires deep reasoning');
+    }
     
-    const latencyMs = Date.now() - startTime;
+    provider = 'claude';
+    model = CLAUDE_MODELS.sonnet;
     
-    // Estimate cost (Groq is free tier, Chutes is ~$0.0001/query)
-    const estimatedCost = provider === 'groq' ? 0 : (routing.estimatedCostUsd || 0.0001);
+    // Claude gets full context including signals
+    const enrichedPrompt = signals && Object.keys(signals).length > 0
+      ? `${systemPrompt}\n\n${formatBittensorContext(
+          Object.entries(signals).map(([key, val]) => ({
+            source: key as 'vanta' | 'desearch',
+            data: val,
+            latencyMs: 0
+          }))
+        )}`
+      : systemPrompt;
     
-    return {
-      response,
-      provider: 'athena',
-      model: `${provider}/${model}`,
-      classification,
-      routing,
-      latencyMs,
-      estimatedCost,
-    };
-  } catch (error) {
-    console.error('Athena query failed:', error);
-    throw error;
+    response = await claudeQuery(query, {
+      model,
+      systemPrompt: enrichedPrompt,
+      maxTokens: 4096,
+    });
   }
+  
+  const latencyMs = Date.now() - startTime;
+  
+  // Estimate cost
+  let estimatedCost = 0;
+  if (provider === 'chutes') estimatedCost = routing?.estimatedCostUsd || 0.0001;
+  if (provider === 'claude') estimatedCost = 0.003; // ~$0.003 per query
+  
+  return {
+    response,
+    provider: provider === 'groq' || provider === 'chutes' ? 'athena' : 'claude',
+    model: `${provider}/${model}`,
+    classification,
+    routing,
+    latencyMs,
+    estimatedCost,
+    signals: Object.keys(signals).length > 0 ? signals : undefined,
+  };
 }
 
 /**
@@ -160,10 +264,12 @@ export async function athenaOracleQuery(
 export function getRoutingInfo(query: string): {
   queryType: string;
   recommendedPath: RoutingPath;
-  shouldUseAthena: boolean;
+  shouldUseFast: boolean;
+  shouldUseSignals: boolean;
 } {
   const queryType = quickClassify(query);
-  const { useAthena } = shouldUseAthena(query);
+  const { useFast } = shouldUseFastPath(query);
+  const { useSignals } = shouldUseSignals(query);
   
   // Determine recommended path
   let recommendedPath: RoutingPath = 'cost';
@@ -176,7 +282,8 @@ export function getRoutingInfo(query: string): {
   return {
     queryType,
     recommendedPath,
-    shouldUseAthena: useAthena,
+    shouldUseFast: useFast,
+    shouldUseSignals: useSignals,
   };
 }
 
@@ -184,7 +291,11 @@ export function getRoutingInfo(query: string): {
  * Format Athena response metrics for logging
  */
 export function formatMetrics(result: OracleQueryResult): string {
+  const signalInfo = result.signals 
+    ? ` signals=${Object.keys(result.signals).join(',')}` 
+    : '';
+  
   return `[Athena] provider=${result.provider} model=${result.model} ` +
     `latency=${result.latencyMs}ms cost=$${result.estimatedCost.toFixed(6)} ` +
-    `type=${result.classification?.type || 'unknown'}`;
+    `type=${result.classification?.type || 'unknown'}${signalInfo}`;
 }
