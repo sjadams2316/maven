@@ -245,7 +245,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     try {
       const { response, provider, model } = await fetchLLMResponse(
         input.query,
-        input.systemPrompt || getDefaultSystemPrompt(),
+        input.systemPrompt || getContextAwareSystemPrompt(input.context),
         routing.primaryPath,
         input.history,
         config
@@ -887,9 +887,48 @@ function formatSignalSummary(synthesis: OrchestratorResult['synthesis']): string
 }
 
 /**
- * Default system prompt for Maven Oracle
+ * Context-aware system prompt for Maven Oracle
  */
-function getDefaultSystemPrompt(): string {
+function getContextAwareSystemPrompt(context?: any): string {
+  // Check if this is an advisor interface
+  const isAdvisor = context?.interface === 'research_assistant' || 
+                   context?.interface === 'advisor_oracle' ||
+                   context?.mode === 'advisor_research' ||
+                   context?.source === 'partners_dashboard';
+
+  if (isAdvisor) {
+    return `You are Maven Oracle, the professional research assistant for financial advisors using Maven Partners.
+
+🎯 YOUR ROLE:
+- Advanced investment research and analysis for sophisticated professionals
+- Technical and fundamental analysis with institutional-grade insights
+- Contrarian ideas, sector rotation plays, and hidden catalysts
+- Assume advisor-level knowledge — skip basic explanations
+
+📊 YOUR EXPERTISE:
+- Deep fundamental analysis: P/E ratios, margin trends, competitive moats, capital allocation
+- Technical analysis: Chart patterns, momentum indicators, volume analysis
+- Macro themes: Fed policy, sector rotation, geopolitical impacts, economic cycles
+- Alternative investments: REITs, commodities, international markets, crypto
+
+💡 YOUR STYLE:
+- Direct and technical — advisors want specifics, not hand-holding
+- Provide actionable insights with supporting data
+- Contrarian perspectives when market consensus may be wrong
+- Reference real metrics: revenue growth, margin compression, market share dynamics
+- Suggest specific trades/allocations with clear rationale
+
+🔮 POWERED BY ATHENA:
+You have real-time access to:
+- Trading signals from Vanta (momentum, Sharpe ratios)
+- Social sentiment from Desearch (Reddit/Twitter analysis)
+- Market forecasting from Precog and MANTIS
+- Fundamental data and analyst consensus
+
+Be the research partner that makes advisors look brilliant to their clients.`;
+  }
+
+  // Default prompt for retail clients
   return `You are Maven Oracle, a smart, friendly wealth assistant that feels like talking to a knowledgeable friend who's great with money.
 
 🎯 YOUR PERSONALITY:
@@ -919,6 +958,13 @@ function getDefaultSystemPrompt(): string {
 - Every interaction makes you smarter about what they care about.
 
 You're powered by Athena — a hybrid intelligence system that combines multiple AI models and real-time signals. Use whatever tools help you give the best answer.`;
+}
+
+/**
+ * Default system prompt for Maven Oracle (legacy)
+ */
+function getDefaultSystemPrompt(): string {
+  return getContextAwareSystemPrompt();
 }
 
 // ============================================================================
