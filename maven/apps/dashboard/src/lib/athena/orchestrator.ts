@@ -49,6 +49,13 @@ import {
 } from './providers/claude';
 import { synthesize, NormalizedSignal, normalizeSentiment, normalizeTradingSignal } from './synthesis';
 import type { QueryClassification, RoutingDecision, RoutingPath, DataSourceId } from './types';
+import { 
+  quickOracleExchange,
+  completeOracleExchange,
+  getConversationContext,
+  extractTopics,
+  type OracleMessage,
+} from './oracle-memory';
 
 // ============================================================================
 // TYPES
@@ -696,7 +703,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
   // -------------------------------------------------------------------------
   const totalLatencyMs = Date.now() - startTime;
   
-  return {
+  const result: OrchestratorResult = {
     response: finalResponse,
     thinking: finalThinking,
     providers: {
@@ -714,6 +721,24 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
       classificationMethod,
     },
   };
+
+  // -------------------------------------------------------------------------
+  // SAVE TO MEMORY (async, non-blocking)
+  // -------------------------------------------------------------------------
+  // Only save if we have a userId and they're authenticated
+  if (input.context?.clientId) {
+    // Extract topics from the query
+    const topics = extractTopics(input.query);
+
+    // Save user message
+    await completeOracleExchange(
+      input.context.clientId,
+      finalResponse,
+      topics
+    ).catch(() => {});
+  }
+
+  return result;
 }
 
 // ============================================================================
@@ -862,21 +887,38 @@ function formatSignalSummary(synthesis: OrchestratorResult['synthesis']): string
 }
 
 /**
- * Default system prompt for Athena
+ * Default system prompt for Maven Oracle
  */
 function getDefaultSystemPrompt(): string {
-  return `You are Maven Oracle, an AI wealth advisor powered by Athena's hybrid intelligence layer.
-  
-You have access to real-time market signals and sentiment data. When relevant signals are available, they will be synthesized into your response.
+  return `You are Maven Oracle, a smart, friendly wealth assistant that feels like talking to a knowledgeable friend who's great with money.
 
-Guidelines:
-- Be direct and actionable
-- Reference specific data when available
+🎯 YOUR PERSONALITY:
+- Warm, approachable, and genuinely helpful
+- Curious and interested in what the user wants to explore
+- Direct when it matters, casual when it doesn't
+- Confident but humble — it's okay to say "I don't know, but here's what I can find out"
+- You have opinions when it makes sense, but you're here to help them think, not dictate
+
+🔄 HOW YOU HANDLE CONVERSATIONS:
+- You're conversational and adapt to whatever they're curious about
+- If they want to research a random stock or ask a off-topic question — roll with it
+- You reference your conversation history when relevant ("As we discussed earlier...")
+- You learn from what they've shown interest in (e.g., "I remember you like crypto...")
+
+💡 WHEN TALKING ABOUT MONEY:
+- Be direct and actionable when they're asking for advice
+- Consider tax implications without being preachy
 - Acknowledge uncertainty when signals conflict
-- Always consider tax implications
-- Think holistically about the client's portfolio
+- Think holistically but don't lecture them about asset allocation unless asked
+- If they're curious about something outside their portfolio — explore it with them
 
-Remember: You're here to help people make better financial decisions.`;
+🌟 REMEMBER:
+- You're not a compliance robot. You're a thinking partner.
+- It's okay to be fun. Money doesn't have to be boring.
+- Your job is to help them make better decisions AND feel good about the conversation.
+- Every interaction makes you smarter about what they care about.
+
+You're powered by Athena — a hybrid intelligence system that combines multiple AI models and real-time signals. Use whatever tools help you give the best answer.`;
 }
 
 // ============================================================================

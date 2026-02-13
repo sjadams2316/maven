@@ -139,6 +139,60 @@ Full spec: `maven/docs/TIERING.md`
 
 ---
 
+## Athena — Maven's Hybrid Intelligence Layer (v2.0 - Feb 2026)
+
+**Founder Architecture Refactor (Feb 12, 2026):**
+- Simplified from multi-layer routing to **CORE THINKING ENGINE + SIGNAL AUGMENTATION BUS**
+- **New Flow:** hypothesis → evidence gathering → adjudication
+
+### Architecture (v2.0)
+
+```
+ORACLE CORE (always active)
+├── MiniMax (speed)
+├── DeepSeek R1 (reasoning)
+└── Claude (synthesis)
+
+SIGNAL AUGMENTATION BUS (parallel, confidence only)
+├── Vanta (trading signals)
+├── xAI (Twitterearch (social sentiment)
+├── Des sentiment)
+├── MANTIS (multi-asset forecasts)
+└── BitQuant (DeFi analysis)
+
+CONDITIONAL MODULES (on-demand)
+├── Perplexity (research with citations)
+├── Numinous (event forecasting)
+└── Gopher (real-time data)
+
+FORECASTING MODIFIERS
+└── Precog (BTC forecasting) — Confidence only, NOT a route
+```
+
+### Provider Status
+
+| Provider | Status | Cost/M | Latency |
+|----------|--------|--------|---------|
+| MiniMax | ✅ | $0.02-0.15 | 15-50ms |
+| DeepSeek R1 | ✅ | $0.50-2.00 | 2-8s |
+| Claude | ✅ | $3-15 | 2-5s |
+| Perplexity | ✅ | $3-15 | 2-10s |
+| Vanta | ✅ | $0.50-2.00 | 200-800ms |
+| xAI | ✅ | $0.30-3.00 | 500-1500ms |
+| Qwen3 | 🔲 Pending | $0.10-0.50 | 1-5s |
+
+### Key Principles (from Founder Feedback)
+1. **LLMs decide** — Core thinking engine always runs
+2. **Signals augment** — Modify confidence, never route
+3. **Forecasting = confidence only** — Precog doesn't drive decisions
+4. **Single intelligence feel** — User experiences one Oracle, not multiple models
+
+### Dual-Mode Response (Pending)
+- **Simple Mode** (default for clients): 1-2 sentences + emoji indicators
+- **Deep Mode** (advisors): Full reasoning trace + signals + citations + methodology
+
+---
+
 ## Full Roadmap
 
 ### Phase 1: Foundation (Now - March 2026)
