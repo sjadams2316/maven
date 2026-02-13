@@ -5,6 +5,7 @@
 
 export interface PrecogForecast {
   ticker: string;
+  currentPrice: number;
   prediction: number;
   confidence: number;
   timeframe: string;

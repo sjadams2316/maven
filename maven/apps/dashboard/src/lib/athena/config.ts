@@ -22,6 +22,17 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
     reliability: 0.99,
     enabled: true,
   },
+  minimax: {
+    id: 'minimax',
+    name: 'MiniMax',
+    category: 'centralized',
+    description: 'Fast efficient inference via OpenClaw - speed path for simple queries',
+    capabilities: ['chat', 'classification', 'simple-responses', 'fast-reasoning'],
+    latencyMs: { min: 15, max: 150, typical: 50 },
+    costPer1MTokens: { min: 0.02, max: 0.15 },
+    reliability: 0.98,
+    enabled: true,
+  },
   claude: {
     id: 'claude',
     name: 'Claude',
@@ -91,7 +102,7 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
     latencyMs: { min: 100, max: 1000, typical: 400 },
     costPer1MTokens: { min: 0.3, max: 1 },
     reliability: 0.88,
-    enabled: true,
+    enabled: false, // Disabled per Sam - not needed for Oracle
   },
   desearch: {
     id: 'desearch',
@@ -160,9 +171,9 @@ export const DATA_SOURCES: Record<DataSourceId, DataSourceConfig> = {
 // =============================================================================
 
 export const QUERY_TYPE_SOURCES: Record<QueryType, DataSourceId[]> = {
-  chat: ['groq'],
-  simple_lookup: ['groq'],
-  trading_decision: ['vanta', 'precog', 'desearch'],
+  chat: ['groq', 'minimax'], // Speed path - use either
+  simple_lookup: ['minimax', 'groq'], // MiniMax preferred for speed
+  trading_decision: ['vanta', 'desearch'],
   portfolio_analysis: ['chutes'],
   research: ['perplexity', 'desearch'],
 };
@@ -184,7 +195,7 @@ export const ROUTING_PATHS: Record<
   speed: {
     name: 'Speed Path',
     description: 'Real-time UX, sub-second responses',
-    primarySources: ['groq'],
+    primarySources: ['minimax', 'groq'], // MiniMax preferred, Groq fallback
     maxLatencyMs: 500,
     costWeight: 0.2,
   },
@@ -308,6 +319,7 @@ export const DEFAULT_CLASSIFICATION = {
 
 export const SOURCE_WEIGHTS: Record<DataSourceId, number> = {
   groq: 0.7, // Fast but generic
+  minimax: 0.72, // Fast, efficient, integrated with OpenClaw
   claude: 0.95, // High quality reasoning
   perplexity: 0.9, // Good research
   xai: 0.9, // First-party Twitter sentiment

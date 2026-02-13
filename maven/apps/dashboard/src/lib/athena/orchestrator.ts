@@ -24,6 +24,7 @@
 import { classifyQuery, routeQuery, extractTickers } from './router';
 import { chutesQuery, isChutesConfigured, CHUTES_MODELS } from './providers/chutes';
 import { groqQuery, groqClassify, isGroqConfigured, GROQ_MODELS } from './providers/groq';
+import { minimaxQuery, isMiniMaxConfigured } from './providers/minimax';
 import { getCombinedSentiment, isXAIConfigured } from './providers/xai';
 import { getVantaConsensus, isVantaConfigured } from './providers/bittensor';
 import { 
@@ -293,13 +294,11 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     const signalsPromise = (async () => {
       const sigStart = Date.now();
       try {
-        const results = await Promise.allSettled(
-          relevantSymbols.map(s => getVantaConsensus(s))
-        );
+        const results = await getVantaConsensus(relevantSymbols);
         
-        results.forEach((result, i) => {
-          if (result.status === 'fulfilled') {
-            tradingSignals.set(relevantSymbols[i], result.value);
+        Object.entries(results).forEach(([symbol, signal]) => {
+          if (symbol && signal) {
+            tradingSignals.set(symbol, signal);
           }
         });
         
@@ -542,6 +541,7 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
       const synthesisInput: ClaudeSynthesisInput = {
         query: input.query,
         initialResponse: llmResponse,
+        sources: [],
         context: input.context,
       };
       
@@ -609,9 +609,9 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
       
       // Claude synthesizes everything
       const claudeResult = await claudeSynthesize(synthesisInput, { thinkingBudget });
-      finalResponse = claudeResult.content;
+      finalResponse = claudeResult.synthesis || claudeResult.content || '';
       finalThinking = claudeResult.thinking;
-      claudeLatency = claudeResult.latencyMs;
+      claudeLatency = claudeResult.latencyMs || 0;
       
       providerResults.push({
         providerId: 'claude',
@@ -698,7 +698,13 @@ async function fetchLLMResponse(
   config?: OrchestratorConfig
 ): Promise<{ response: string; provider: string; model: string; citations?: PerplexityCitation[] }> {
   
-  // Speed path: Use Groq (sub-second)
+  // Speed path: Use MiniMax first (OpenClaw integration), then Groq
+  if (path === 'speed' && isMiniMaxConfigured()) {
+    const response = await minimaxQuery(query, systemPrompt);
+    return { response, provider: 'minimax', model: 'MiniMax-M2.1' };
+  }
+  
+  // Speed path fallback: Groq (sub-second)
   if (path === 'speed' && isGroqConfigured()) {
     const response = await groqQuery(query, {
       model: GROQ_MODELS.llama3_70b,
@@ -742,6 +748,12 @@ async function fetchLLMResponse(
       maxTokens: 4096,
     });
     return { response, provider: 'chutes', model: CHUTES_MODELS.reasoning };
+  }
+  
+  // MiniMax fallback
+  if (isMiniMaxConfigured()) {
+    const response = await minimaxQuery(query, systemPrompt);
+    return { response, provider: 'minimax', model: 'MiniMax-M2.1' };
   }
   
   // Groq fallback

@@ -30,6 +30,19 @@ export {
   type GroqResponse,
 } from './groq';
 
+// MiniMax - Fast inference via OpenClaw for speed path queries
+export {
+  minimaxCompletion,
+  minimaxQuery,
+  minimaxOracleQuery,
+  minimaxStream,
+  isMiniMaxConfigured,
+  getMiniMaxStatus,
+  type MiniMaxMessage,
+  type MiniMaxCompletionOptions,
+  type MiniMaxResponse,
+} from './minimax';
+
 // xAI - First-party Twitter/X sentiment via Grok
 export {
   xaiCompletion,
@@ -107,6 +120,11 @@ export {
 // Provider availability check
 export function getAvailableProviders(): string[] {
   const providers: string[] = [];
+  
+  // Check MiniMax (speed - OpenClaw integration)
+  if (process.env.MINIMAX_API_KEY) {
+    providers.push('minimax');
+  }
   
   // Check Groq (speed)
   if (process.env.GROQ_API_KEY) {

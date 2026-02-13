@@ -635,16 +635,21 @@ export async function synthesizeSymbol(
   // Fetch trading signals
   if (includeTrading && isVantaConfigured()) {
     try {
-      const signal = await getVantaConsensus(symbol);
-      signals.push({
-        sourceId: 'vanta',
-        sourceName: 'Vanta Trading',
-        sourceCategory: 'trading',
-        value: normalizeTradingSignal(signal.direction, signal.confidence),
-        confidence: signal.confidence,
-        timestamp,
-        rawData: signal,
-      });
+      const result = await getVantaConsensus([symbol]);
+      const signal = result[symbol];
+      if (signal) {
+        // Map Vanta signal to expected format
+        const signalDirection = signal.signal === 'bullish' ? 'LONG' : signal.signal === 'bearish' ? 'SHORT' : 'FLAT';
+        signals.push({
+          sourceId: 'vanta',
+          sourceName: 'Vanta Trading',
+          sourceCategory: 'trading',
+          value: normalizeTradingSignal(signalDirection, signal.confidence),
+          confidence: signal.confidence,
+          timestamp,
+          rawData: signal,
+        });
+      }
     } catch (e) {
       console.error('Trading signal fetch error:', e);
     }
@@ -653,18 +658,21 @@ export async function synthesizeSymbol(
   // Fetch forecasts (BTC only)
   if (includeForecasts && symbol.toUpperCase() === 'BTC' && isPrecogConfigured()) {
     try {
-      const forecast = await fetchPrecogForecast();
-      const percentChange = ((forecast.forecastPrice - forecast.currentPrice) / forecast.currentPrice) * 100;
+      const forecast = await fetchPrecogForecast('BTC');
+      if (forecast) {
+        const percentChange = forecast.currentPrice ? ((forecast.prediction - forecast.currentPrice) / forecast.currentPrice) * 100 : 0;
+        const direction = percentChange > 0 ? 'up' : percentChange < 0 ? 'down' : 'sideways';
       
-      signals.push({
-        sourceId: 'precog',
-        sourceName: 'Precog Forecast',
-        sourceCategory: 'forecast',
-        value: normalizeForecast(forecast.direction, Math.abs(percentChange), forecast.confidence),
-        confidence: forecast.confidence,
-        timestamp,
-        rawData: forecast,
-      });
+        signals.push({
+          sourceId: 'precog',
+          sourceName: 'Precog Forecast',
+          sourceCategory: 'forecast',
+          value: normalizeForecast(direction, Math.abs(percentChange), forecast.confidence),
+          confidence: forecast.confidence,
+          timestamp,
+          rawData: forecast,
+        });
+      }
     } catch (e) {
       console.error('Forecast fetch error:', e);
     }

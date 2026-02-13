@@ -34,6 +34,7 @@ export interface QueryClassification {
 export type DataSourceId =
   // Centralized (Speed + Reasoning)
   | 'groq'
+  | 'minimax'
   | 'claude'
   | 'perplexity'
   | 'xai' // xAI/Grok - Twitter/X sentiment (first-party)

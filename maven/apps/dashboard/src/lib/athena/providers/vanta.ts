@@ -20,6 +20,9 @@ export interface VantaSignal {
   timestamp: string;
 }
 
+// Alias for compatibility
+export type TradingSignal = VantaSignal;
+
 export interface VantaResponse {
   signals: VantaSignal[];
   marketRegime?: 'bull' | 'bear' | 'sideways';

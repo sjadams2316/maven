@@ -28,6 +28,9 @@ export interface DesearchResponse {
   mostDiscussed: { ticker: string; mentions: number }[];
 }
 
+// Alias for compatibility
+export type SentimentData = DesearchSentiment;
+
 // Provider config
 const DESEARCH_CONFIG = {
   apiUrl: 'https://api.dResearch.io/v1',

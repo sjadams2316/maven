@@ -30,10 +30,47 @@ export interface ClaudeResponse {
 // Claude synthesis input (from orchestrator)
 export interface ClaudeSynthesisInput {
   query: string;
+  initialResponse?: string; // Initial LLM response to synthesize
   sources: Array<{
     id: string;
     response: string;
     metadata?: Record<string, unknown>;
+  }>;
+  research?: {
+    content: string;
+    citations: Array<{ title: string; url: string }>;
+  };
+  sentiment?: Array<{
+    symbol: string;
+    direction: string;
+    score: number;
+    confidence: number;
+    summary: string;
+  }>;
+  signals?: Array<{
+    symbol: string;
+    signal: string;
+    confidence: number;
+    reason: string;
+  }>;
+  tradingSignals?: Array<{
+    symbol: string;
+    direction: string;
+    confidence: number;
+  }>;
+  analystData?: Array<{
+    symbol: string;
+    name: string;
+    currentPrice: number;
+    previousClose?: number;
+    changePercent?: number;
+    fiftyTwoWeekHigh?: number;
+    fiftyTwoWeekLow?: number;
+    marketCap?: number;
+    analystRating?: string;
+    targetMean?: number;
+    targetHigh?: number;
+    targetLow?: number;
   }>;
   context?: Record<string, unknown>;
 }
@@ -41,9 +78,17 @@ export interface ClaudeSynthesisInput {
 // Claude synthesis output
 export interface ClaudeSynthesisOutput {
   synthesis: string;
+  content?: string; // Alias for synthesis for compatibility
   confidence: number;
   citations: Array<{ sourceId: string; excerpt: string }>;
   reasoning?: string;
+  thinking?: string; // Extended thinking output
+  latencyMs?: number;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 // Available Claude models
@@ -60,6 +105,63 @@ export const CLAUDE_DEFAULT_MODEL = CLAUDE_MODELS.sonnet;
  */
 export function isClaudeConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
+}
+
+export interface ClaudeStatus {
+  configured: boolean;
+  latencyMs: number;
+  error?: string;
+}
+
+/**
+ * Get Claude provider status
+ */
+export async function getClaudeStatus(): Promise<ClaudeStatus> {
+  if (!isClaudeConfigured()) {
+    return {
+      configured: false,
+      latencyMs: 0,
+      error: 'ANTHROPIC_API_KEY not configured',
+    };
+  }
+
+  const startTime = Date.now();
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/complete', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.ANTHROPIC_API_KEY}`,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: CLAUDE_DEFAULT_MODEL,
+        prompt: 'Human: hi\nAssistant: ',
+        max_tokens_to_sample: 5,
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      return {
+        configured: true,
+        latencyMs: Date.now() - startTime,
+        error: `API error: ${response.status}`,
+      };
+    }
+
+    return {
+      configured: true,
+      latencyMs: Date.now() - startTime,
+    };
+  } catch (error) {
+    return {
+      configured: true,
+      latencyMs: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }
 
 /**
@@ -190,6 +292,7 @@ export async function claudeSynthesize(
   options?: {
     model?: string;
     maxTokens?: number;
+    thinkingBudget?: number; // For extended thinking
   }
 ): Promise<ClaudeSynthesisOutput> {
   const { query, sources, context } = input;
@@ -235,7 +338,10 @@ If sources conflict, explain the different perspectives.`;
   
   return {
     synthesis: response.content,
+    content: response.content, // Alias for compatibility
     confidence: 0.8, // Claude synthesis is generally high confidence
     citations,
+    latencyMs: response.latencyMs,
+    usage: response.usage,
   };
 }
