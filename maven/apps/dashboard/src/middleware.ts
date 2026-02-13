@@ -135,12 +135,24 @@ const PASSWORD_COOKIE = 'maven_access';
 
 function checkPasswordGate(request: NextRequest): NextResponse | null {
   const pathname = request.nextUrl.pathname;
+  const searchParams = request.nextUrl.searchParams;
+  const isDemoMode = searchParams.get('demo') === 'true';
   
   // Allow the password page, its API, cron jobs, and static assets
   if (pathname === '/gate' || pathname === '/api/gate') return null;
   
   // Allow cron job endpoints (public market data only)
   if (pathname.startsWith('/api/cron/')) return null;
+  
+  // Allow demo mode for specific routes
+  if (isDemoMode && (
+    pathname.startsWith('/partners/dashboard') ||
+    pathname.startsWith('/advisor') ||
+    pathname.startsWith('/demo') ||
+    pathname === '/'
+  )) {
+    return null;
+  }
   
   // Check for valid password cookie
   const accessCookie = request.cookies.get(PASSWORD_COOKIE)?.value;
