@@ -59,6 +59,30 @@ curl -s https://mavenwealth.ai/api/health | jq '.status, .checks.marketData, .al
 
 ---
 
+## Demo Mode Health Check (MANDATORY - Every Heartbeat)
+
+**Verify demo mode returns real data (not $0 or errors):**
+
+```bash
+# Step 1: Enable demo mode cookie
+curl -s -X POST https://mavenwealth.ai/api/gate -H "Content-Type: application/json" \
+  -d '{"password":"BanksNavy10"}' -c demo-cookies.txt
+
+# Step 2: Hit demo API with demo cookie
+curl -s https://mavenwealth.ai/api/user/profile -b demo-cookies.txt | jq '.retirementAccounts, .investmentAccounts'
+
+# CRITICAL: Verify holdings have values, not null/empty
+```
+
+**Action required if:**
+- `/api/user/profile` returns 401/403 → Demo auth broken (CRITICAL)
+- Holdings return $0 or null values → Data not loading (CRITICAL)
+- Any demo route returns HTML instead of JSON → Auth gate misconfigured (CRITICAL)
+
+**This check exists because:** Demo mode was broken for 24+ hours (Feb 12-13) while crons reported "success" despite hitting auth walls. The data consistency cron documented issues but didn't treat them as failures.
+
+---
+
 ## Bug Post-Mortem Trigger
 
 If Sam catches a bug → immediately ask:
