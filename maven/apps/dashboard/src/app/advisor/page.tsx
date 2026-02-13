@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import IntegratedOracle from './components/IntegratedOracle';
 import MeetingPrepIntelligence from './components/MeetingPrepIntelligence';
+import ClientOnboardingSystem from './components/ClientOnboardingSystem';
 
 // Mock data for MVP - will be replaced with real data
 const MOCK_CLIENTS = [
@@ -72,7 +73,7 @@ const MOCK_INSIGHTS = [
 
 export default function AdvisorDashboard() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'quarter'>('week');
-  const [activeTab, setActiveTab] = useState<'overview' | 'meetings' | 'oracle'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'meetings' | 'onboarding' | 'oracle'>('overview');
 
   const totalAUM = MOCK_CLIENTS.reduce((sum, client) => sum + client.aum, 0);
   const avgReturn = MOCK_CLIENTS.reduce((sum, client) => sum + client.ytdReturn, 0) / MOCK_CLIENTS.length;
@@ -127,6 +128,16 @@ export default function AdvisorDashboard() {
             Meeting Prep
           </button>
           <button
+            onClick={() => setActiveTab('onboarding')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'onboarding'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Client Onboarding
+          </button>
+          <button
             onClick={() => setActiveTab('oracle')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'oracle'
@@ -140,6 +151,8 @@ export default function AdvisorDashboard() {
 
         {/* Tab Content */}
         {activeTab === 'meetings' && <MeetingPrepIntelligence />}
+        
+        {activeTab === 'onboarding' && <ClientOnboardingSystem />}
 
         {activeTab === 'oracle' && (
           <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
