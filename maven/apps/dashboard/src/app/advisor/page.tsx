@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
-import AdvisorOracle from './components/AdvisorOracle';
 
 // Mock data for MVP - will be replaced with real data
 const MOCK_CLIENTS = [
@@ -161,7 +160,6 @@ function getRelativeTime(date: Date): string {
 
 export default function AdvisorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'overview' | 'oracle'>('overview');
   
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -209,32 +207,7 @@ export default function AdvisorDashboard() {
               <p className="text-gray-400 text-sm">Advisor Dashboard</p>
             </div>
           </div>
-          
-          {/* Oracle Button */}
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => setActiveTab(activeTab === 'oracle' ? 'overview' : 'oracle')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition ${
-                activeTab === 'oracle'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white'
-                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
-              }`}
-            >
-              <span>🔮</span>
-              <span className="font-medium">Research</span>
-            </button>
-          </div>
         </div>
-
-        {/* Tab Content */}
-        {activeTab === 'oracle' ? (
-          /* Research/Oracle Tab - Full Width */
-          <div className="h-[calc(100vh-200px)]">
-            <AdvisorOracle />
-          </div>
-        ) : (
-          <>
-        {/* Stats Row */}
         
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -491,11 +464,6 @@ export default function AdvisorDashboard() {
           </div>
         </div>
       </main>
-
-      {/* Maven Oracle Panel */}
-          </div>
-        )}
-      </>
     </div>
   );
 }

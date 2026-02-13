@@ -7,7 +7,6 @@ import Sparkline from '@/components/Sparkline';
 
 // Quick action definitions
 const QUICK_ACTIONS = [
-  { id: 'research', icon: '🔮', label: 'Research', shortcut: '⌘R', href: '#research', isAction: true },
   { id: 'add-client', icon: '➕', label: 'Add Client', shortcut: '⌘N', href: '/partners/clients/new' },
   { id: 'run-analysis', icon: '📊', label: 'Run Analysis', shortcut: '⌘A', href: '/partners/analysis' },
   { id: 'generate-report', icon: '📄', label: 'Generate Report', shortcut: '⌘R', href: '/partners/reports/new' },
@@ -113,11 +112,8 @@ function formatCurrency(value: number): string {
   return `$${(value / 1000).toFixed(0)}K`;
 }
 
-import AdvisorOracle from '../components/AdvisorOracle';
-
 export default function PartnersDashboard() {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('week');
-  const [activeTab, setActiveTab] = useState<'overview' | 'research'>('overview');
   const [prepModal, setPrepModal] = useState<{ open: boolean; meeting: typeof DEMO_MEETINGS[0] | null }>({ open: false, meeting: null });
   const [livePrep, setLivePrep] = useState<{ summary: string; actionItems: string[]; talkingPoints: string[]; marketContext: string } | null>(null);
   const [prepLoading, setPrepLoading] = useState(false);
@@ -169,36 +165,11 @@ export default function PartnersDashboard() {
     <div className="p-4 md:p-8">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Good afternoon</h1>
-            <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
-          </div>
-          
-          {/* Research Tab */}
-          <button
-            onClick={() => setActiveTab(activeTab === 'research' ? 'overview' : 'research')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition ${
-              activeTab === 'research'
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white'
-                : 'bg-white/10 hover:bg-white/20 text-gray-300'
-            }`}
-          >
-            <span>🔮</span>
-            <span className="font-medium">Research</span>
-          </button>
-        </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Good afternoon</h1>
+        <p className="text-gray-400 text-sm md:text-base">Here's what's happening with your practice today.</p>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'research' ? (
-        <div className="h-[calc(100vh-250px)]">
-          <AdvisorOracle />
-        </div>
-      ) : (
-        <>
-
-      {/* Primary Stats Grid - Simplified: AUM & Clients only */}
+      {/* Primary Stats Grid - Stack on mobile */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-start justify-between">
@@ -213,76 +184,83 @@ export default function PartnersDashboard() {
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
-              <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
-              <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DEMO_STATS.avgClientAUM)}</div>
+              <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">YTD Return</div>
+              <div className="text-xl md:text-3xl font-bold text-emerald-500">+{DASHBOARD_METRICS.ytdReturn}%</div>
+              <div className="text-gray-500 text-xs md:text-sm mt-1">Avg across clients</div>
             </div>
+            <Sparkline data={SPARKLINE_DATA.ytdReturn} width={60} height={32} />
           </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Clients</div>
+          <div className="text-xl md:text-3xl font-bold text-white">{DEMO_STATS.clientCount}</div>
+          <div className="text-gray-500 text-xs md:text-sm mt-1">Avg {formatCurrency(DASHBOARD_METRICS.avgClientAum)}</div>
         </div>
         <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Today's Meetings</div>
           <div className="text-xl md:text-3xl font-bold text-white">{DEMO_MEETINGS.length}</div>
           <div className="text-gray-500 text-xs md:text-sm mt-1">Next: {DEMO_MEETINGS[0]?.time || 'None'}</div>
         </div>
-        <div className="bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
-          <div className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">Action Items</div>
-          <div className="text-xl md:text-3xl font-bold text-amber-500">{DEMO_ALERTS.length}</div>
-          <div className="text-gray-500 text-xs md:text-sm mt-1">Requires attention</div>
-        </div>
       </div>
 
-      {/* Market Context - Real data, clickable to research */}
+      {/* Secondary Stats Grid - Performance & Risk Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
-        <Link href="/partners/analysis?symbol=SPY" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">S&P 500</div>
-              <div className="text-lg md:text-xl font-bold text-white">6,833</div>
-              <div className="text-emerald-500 text-xs">+0.0%</div>
+              <div className="text-gray-500 text-xs">Avg Risk Score</div>
+              <div className="text-lg md:text-xl font-bold text-amber-400">{DASHBOARD_METRICS.avgRiskScore.toFixed(1)}</div>
             </div>
-            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+              <span className="text-sm">📊</span>
+            </div>
           </div>
-        </Link>
-        <Link href="/partners/analysis?symbol=QQQ" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">NASDAQ</div>
-              <div className="text-lg md:text-xl font-bold text-white">22,597</div>
-              <div className="text-emerald-500 text-xs">+0.0%</div>
+              <div className="text-gray-500 text-xs">Above Target</div>
+              <div className="text-lg md:text-xl font-bold text-emerald-400">{DASHBOARD_METRICS.clientsAboveTarget}</div>
             </div>
-            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <span className="text-sm">✓</span>
+            </div>
           </div>
-        </Link>
-        <Link href="/partners/analysis?symbol=DIA" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Dow Jones</div>
-              <div className="text-lg md:text-xl font-bold text-white">49,452</div>
-              <div className="text-emerald-500 text-xs">+0.0%</div>
+              <div className="text-gray-500 text-xs">Below Target</div>
+              <div className="text-lg md:text-xl font-bold text-red-400">{DASHBOARD_METRICS.clientsBelowTarget}</div>
             </div>
-            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+            <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+              <span className="text-sm">⚠</span>
+            </div>
           </div>
-        </Link>
-        <Link href="/partners/analysis?symbol=IWM" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-gray-500 text-xs">Tax Alpha Saved</div>
+              <div className="text-lg md:text-xl font-bold text-emerald-400">{formatCurrency(DASHBOARD_METRICS.taxAlphaSaved)}</div>
+            </div>
+            <Sparkline data={SPARKLINE_DATA.taxAlpha} width={40} height={24} />
+          </div>
+        </div>
+        <div className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-gray-500 text-xs">Russell 2000</div>
-              <div className="text-lg md:text-xl font-bold text-white">2,616</div>
-              <div className="text-emerald-500 text-xs">+0.0%</div>
+              <div className="text-gray-500 text-xs">Rebalances Needed</div>
+              <div className="text-lg md:text-xl font-bold text-amber-500">{DASHBOARD_METRICS.rebalancesNeeded}</div>
             </div>
-            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
+            <Link 
+              href={demoHref("/partners/rebalance")} 
+              className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 hover:bg-amber-500/30 transition-colors"
+            >
+              <span className="text-sm">→</span>
+            </Link>
           </div>
-        </Link>
-        <Link href="/partners/analysis?symbol=BTC-USD" className="bg-[#12121a] border border-white/10 rounded-xl p-3 md:p-4 hover:border-indigo-500/50 transition cursor-pointer">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-gray-500 text-xs">Bitcoin</div>
-              <div className="text-lg md:text-xl font-bold text-white">$66,986</div>
-              <div className="text-red-400 text-xs">-1.4%</div>
-            </div>
-            <Sparkline data={SPARKLINE_DATA.aum} width={40} height={24} />
-          </div>
-        </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -357,29 +335,21 @@ export default function PartnersDashboard() {
         <div className="lg:col-span-2 bg-[#12121a] border border-white/10 rounded-2xl p-4 md:p-6">
           <h2 className="text-lg md:text-xl font-semibold text-white mb-4 md:mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {QUICK_ACTIONS.map((action) => {
-              const isResearch = action.id === 'research';
-              return (
-                <button
-                  key={action.id}
-                  onClick={() => isResearch && setActiveTab(activeTab === 'research' ? 'overview' : 'research')}
-                  className={`group relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all min-h-[80px] md:min-h-[88px] ${
-                    isResearch 
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-500 hover:from-indigo-600 hover:to-purple-700' 
-                      : 'bg-white/5 border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10'
-                  }`}
-                  style={{ minWidth: '48px', minHeight: '48px' }}
-                >
-                  <span className="text-2xl">{action.icon}</span>
-                  <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
-                  {!isResearch && (
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                      {action.shortcut}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            {QUICK_ACTIONS.map((action) => (
+              <Link
+                key={action.id}
+                href={demoHref(action.href)}
+                className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 transition-all min-h-[80px] md:min-h-[88px]"
+                style={{ minWidth: '48px', minHeight: '48px' }}
+              >
+                <span className="text-2xl">{action.icon}</span>
+                <span className="text-white text-xs md:text-sm text-center font-medium">{action.label}</span>
+                {/* Keyboard shortcut tooltip */}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  {action.shortcut}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -640,7 +610,6 @@ export default function PartnersDashboard() {
           </div>
         </>
       )}
-      </>
     </div>
   );
 }
