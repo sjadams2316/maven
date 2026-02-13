@@ -217,6 +217,12 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   if (isVoiceAPIRoute(request)) {
     return addSecurityHeaders(NextResponse.next());
   }
+
+  // Skip Clerk processing for API routes when in demo mode (password authenticated)
+  const hasDemoCookie = request.cookies.get(PASSWORD_COOKIE)?.value === 'authenticated';
+  if (hasDemoCookie && pathname.startsWith('/api/')) {
+    return addSecurityHeaders(NextResponse.next());
+  }
   
   const { userId } = await auth();
   
